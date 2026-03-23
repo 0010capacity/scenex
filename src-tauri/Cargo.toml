@@ -1,0 +1,29 @@
+[package]
+name = "scenex"
+version = "0.1.0"
+description = "Scenario-based storyboard creation app"
+authors = ["SceneX"]
+edition = "2021"
+
+[lib]
+name = "scenex_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+which = "7"
+tokio = { version = "1", features = ["process", "io-util", "time"] }
+base64 = "0.22"
+printpdf = "0.7"
+zip = "2"
+thiserror = "2"
+dirs = "6"
