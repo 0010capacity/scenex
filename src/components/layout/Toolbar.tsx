@@ -1,27 +1,7 @@
-import {
-  Group,
-  ActionIcon,
-  Select,
-  Button,
-  Slider,
-  Tooltip,
-  Box,
-  Text,
-} from '@mantine/core';
-import {
-  IconPlus,
-  IconFolder,
-  IconDeviceFloppy,
-  IconDownload,
-  IconLayoutGrid,
-  IconList,
-  IconZoomIn,
-  IconZoomOut,
-  IconChevronDown,
-} from '@tabler/icons-react';
+import { Box } from '@mantine/core';
+import { IconPlus, IconMinus } from '@tabler/icons-react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
-import { useProject } from '@/hooks/useProject';
 
 export function Toolbar() {
   const { project, addScene, selectedSceneId, selectScene } = useProjectStore();
@@ -31,155 +11,103 @@ export function Toolbar() {
     viewMode,
     setViewMode,
     openAddPanelModal,
+    toggleRightSidebar,
+    rightSidebarOpen,
   } = useUIStore();
-  const { saveProject, isDirty } = useProject();
 
-  const sceneOptions =
-    project?.scenes.map((s) => ({
-      value: s.id,
-      label: s.name,
-    })) ?? [];
+  const sceneOptions = [
+    { value: 'all', label: '전체 장면' },
+    ...(project?.scenes.map((s, i) => ({ value: s.id, label: `S${i + 1} — ${s.name}` })) ?? []),
+  ];
+
+  const viewModes = [
+    { key: 'grid', label: '그리드' },
+    { key: 'strip', label: '스트립' },
+    { key: 'slide', label: '슬라이드' },
+  ] as const;
 
   return (
-    <Box
-      style={{
-        height: 48,
-        backgroundColor: '#13141A',
-        borderBottom: '1px solid #2A2826',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 16px',
-        gap: 16,
-      }}
-    >
-      {/* Left section - File operations */}
-      <Group gap={4}>
-        <Tooltip label="New Project">
-          <ActionIcon
-            variant="subtle"
-            size="lg"
-            color="gray"
-            onClick={() => {
-              if (window.confirm('Create a new project? Unsaved changes will be lost.')) {
-                useProjectStore.getState().newProject('My Storyboard');
-              }
-            }}
-          >
-            <IconFolder size={20} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label={isDirty ? 'Save (Cmd+S)' : 'Save'}>
-          <ActionIcon
-            variant="subtle"
-            size="lg"
-            color={isDirty ? 'gold' : 'gray'}
-            onClick={() => saveProject()}
-          >
-            <IconDeviceFloppy size={20} />
-          </ActionIcon>
-        </Tooltip>
-      </Group>
-
-      <Box style={{ width: 1, height: 24, backgroundColor: '#2A2826' }} />
-
+    <Box className="toolbar">
       {/* Scene selector */}
-      <Select
-        value={selectedSceneId}
-        onChange={(value) => value && selectScene(value)}
-        data={sceneOptions}
-        placeholder="Select scene"
-        size="sm"
-        style={{ width: 200 }}
-        rightSection={<IconChevronDown size={14} />}
-      />
+      <Box className="tool-group">
+        <select
+          className="scene-select"
+          value={selectedSceneId ?? 'all'}
+          onChange={(e) => selectScene(e.target.value === 'all' ? null : e.target.value)}
+        >
+          {sceneOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </Box>
 
-      {/* Add scene button */}
-      <Button
-        size="compact-sm"
-        variant="light"
-        leftSection={<IconPlus size={16} />}
-        onClick={() => addScene()}
-      >
-        Add Scene
-      </Button>
+      <Box className="tool-sep" />
 
-      <Box style={{ flex: 1 }} />
+      {/* Add scene / add panel */}
+      <Box className="tool-group">
+        <button className="tool-btn" onClick={() => {
+          const name = prompt('새 장면 이름:');
+          if (name) addScene(name);
+        }}>
+          <IconPlus size={14} stroke={1.5} />
+          장면 추가
+        </button>
+        <button
+          className="tool-btn"
+          onClick={() => {
+            const sceneId = selectedSceneId ?? project?.scenes[0]?.id;
+            if (sceneId) openAddPanelModal(sceneId);
+          }}
+          style={{
+            background: selectedSceneId ? 'var(--accent-dim)' : undefined,
+            borderColor: selectedSceneId ? 'rgba(79, 70, 229, 0.4)' : undefined,
+            color: selectedSceneId ? 'var(--accent)' : undefined,
+          }}
+        >
+          <IconPlus size={14} stroke={1.5} />
+          패널 추가
+        </button>
+      </Box>
 
-      {/* Add panel button */}
-      <Button
-        size="compact-sm"
-        variant="filled"
-        color="gold"
-        leftSection={<IconPlus size={16} />}
-        onClick={() => selectedSceneId && openAddPanelModal(selectedSceneId)}
-        disabled={!selectedSceneId}
-      >
-        Add Panel
-      </Button>
-
-      <Box style={{ width: 1, height: 24, backgroundColor: '#2A2826' }} />
+      <Box className="tool-sep" />
 
       {/* View toggle */}
-      <Group gap={4}>
-        <ActionIcon
-          variant={viewMode === 'grid' ? 'light' : 'subtle'}
-          size="lg"
-          color={viewMode === 'grid' ? 'gold' : 'gray'}
-          onClick={() => setViewMode('grid')}
-        >
-          <IconLayoutGrid size={20} />
-        </ActionIcon>
-        <ActionIcon
-          variant={viewMode === 'list' ? 'light' : 'subtle'}
-          size="lg"
-          color={viewMode === 'list' ? 'gold' : 'gray'}
-          onClick={() => setViewMode('list')}
-        >
-          <IconList size={20} />
-        </ActionIcon>
-      </Group>
+      <Box className="tool-group">
+        <Box className="view-toggle">
+          {viewModes.map((v) => (
+            <button
+              key={v.key}
+              className={`vt-btn ${viewMode === v.key ? 'active' : ''}`}
+              onClick={() => setViewMode(v.key)}
+            >
+              {v.label}
+            </button>
+          ))}
+        </Box>
+      </Box>
 
-      {/* Zoom controls */}
-      <Group gap={8}>
-        <ActionIcon
-          variant="subtle"
-          size="lg"
-          color="gray"
-          onClick={() => setZoomLevel(zoomLevel - 10)}
-        >
-          <IconZoomOut size={18} />
-        </ActionIcon>
-        <Slider
-          value={zoomLevel}
-          onChange={setZoomLevel}
-          min={50}
-          max={200}
-          step={10}
-          style={{ width: 100 }}
-          label={null}
-          color="gold"
-        />
-        <ActionIcon
-          variant="subtle"
-          size="lg"
-          color="gray"
-          onClick={() => setZoomLevel(zoomLevel + 10)}
-        >
-          <IconZoomIn size={18} />
-        </ActionIcon>
-        <Text size="xs" c="dimmed" style={{ width: 36 }}>
-          {zoomLevel}%
-        </Text>
-      </Group>
+      <Box className="tool-sep" />
 
-      <Box style={{ width: 1, height: 24, backgroundColor: '#2A2826' }} />
+      {/* Inspector toggle */}
+      <button
+        className={`tool-btn ${rightSidebarOpen ? 'active' : ''}`}
+        onClick={toggleRightSidebar}
+      >
+        속성 패널
+      </button>
 
-      {/* Export */}
-      <Tooltip label="Export">
-        <ActionIcon variant="subtle" size="lg" color="gray">
-          <IconDownload size={20} />
-        </ActionIcon>
-      </Tooltip>
+      {/* Zoom */}
+      <Box className="zoom-group">
+        <button className="tool-btn" onClick={() => setZoomLevel(zoomLevel - 10)}>
+          <IconMinus size={14} stroke={1.5} />
+        </button>
+        <span className="zoom-val">{zoomLevel}%</span>
+        <button className="tool-btn" onClick={() => setZoomLevel(zoomLevel + 10)}>
+          <IconPlus size={14} stroke={1.5} />
+        </button>
+      </Box>
     </Box>
   );
 }

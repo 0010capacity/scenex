@@ -1,29 +1,10 @@
-import {
-  Modal,
-  Text,
-  Group,
-  Card,
-  Stack,
-  Button,
-  Textarea,
-  Select,
-  Chip,
-  Alert,
-  Box,
-} from '@mantine/core';
-import {
-  IconSquare,
-  IconUpload,
-  IconSparkles,
-  IconFileImport,
-  IconAlertCircle,
-} from '@tabler/icons-react';
-import { useState } from 'react';
+import { Box, Text, Select, Button } from '@mantine/core';
+import { IconSquare, IconDownload, IconSparkles, IconX, IconArrowLeft } from '@tabler/icons-react';
+import { useState, useEffect } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
-import { useAIStore } from '@/stores/aiStore';
-import { useClaude } from '@/hooks/useClaude';
-import { useUIStore } from '@/stores/uiStore';
-import { SHOT_TYPE_OPTIONS, MOOD_TAG_OPTIONS, MoodTag } from '@/types';
+import { SHOT_TYPE_OPTIONS, MoodTag } from '@/types';
+
+type AddMethod = 'blank' | 'import' | 'ai' | null;
 
 interface AddPanelModalProps {
   opened: boolean;
@@ -31,398 +12,434 @@ interface AddPanelModalProps {
   sceneId: string | null;
 }
 
-type AddMethod = 'blank' | 'import' | 'ai' | null;
+const MOOD_OPTIONS: { value: MoodTag; label: string }[] = [
+  { value: 'emotional', label: '감성적' },
+  { value: 'golden', label: '황금빛' },
+  { value: 'tension', label: '긴장감' },
+  { value: 'humor', label: '유머' },
+  { value: 'excitement', label: '설렘' },
+  { value: 'sadness', label: '슬픔' },
+];
 
 export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) {
   const { addPanel, project } = useProjectStore();
-  const { addTask, updateTask, removeTask } = useAIStore();
-  const { generatePanel } = useClaude();
-  const { claudeStatus } = useUIStore();
   const [selectedMethod, setSelectedMethod] = useState<AddMethod>(null);
-  const [description, setDescription] = useState('');
+
+  // Blank form
   const [shotType, setShotType] = useState<string | null>(null);
+  const [duration, setDuration] = useState('');
+  const [description, setDescription] = useState('');
+  const [dialogue, setDialogue] = useState('');
+  const [sound, setSound] = useState('');
   const [moodTags, setMoodTags] = useState<MoodTag[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
-  const isLoading = useAIStore((state) => state.isProcessing);
+  // AI form
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiShotHint, setAiShotHint] = useState<string | null>(null);
 
-  const handleAddBlank = () => {
-    if (!sceneId) return;
+  useEffect(() => {
+    if (!opened) {
+      setSelectedMethod(null);
+      setShotType(null);
+      setDuration('');
+      setDescription('');
+      setDialogue('');
+      setSound('');
+      setMoodTags([]);
+      setAiPrompt('');
+      setAiShotHint(null);
+    }
+  }, [opened]);
+
+  if (!opened) return null;
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  const handleMethodSelect = (method: AddMethod) => {
+    setSelectedMethod(method);
+  };
+
+  const handleConfirm = () => {
+    if (!sceneId || !selectedMethod) return;
 
     const scene = project?.scenes.find((s) => s.id === sceneId);
     const panelNumber = scene ? scene.panels.length + 1 : 1;
 
-    addPanel(sceneId, {
-      number: panelNumber,
-      sourceType: 'manual',
-    });
+    if (selectedMethod === 'blank') {
+      addPanel(sceneId, {
+        number: panelNumber,
+        shotType: shotType as any,
+        duration: duration || '3s',
+        description,
+        dialogue,
+        sound,
+        moodTags,
+        sourceType: 'empty',
+      });
+    } else if (selectedMethod === 'ai') {
+      addPanel(sceneId, {
+        number: panelNumber,
+        shotType: aiShotHint as any,
+        description: aiPrompt,
+        sourceType: 'ai',
+        moodTags,
+      });
+    } else if (selectedMethod === 'import') {
+      addPanel(sceneId, {
+        number: panelNumber,
+        sourceType: 'imported',
+      });
+    }
 
     onClose();
-    setSelectedMethod(null);
-    resetForm();
   };
 
-  const resetForm = () => {
-    setDescription('');
-    setShotType(null);
-    setMoodTags([]);
-    setError(null);
-  };
-
-  const handleAddAI = async () => {
-    if (!sceneId || !description.trim()) return;
-
-    const scene = project?.scenes.find((s) => s.id === sceneId);
-    const panelNumber = scene ? scene.panels.length + 1 : 1;
-
-    // Create AI task for tracking
-    const taskId = addTask({
-      type: 'generate_panel',
-      status: 'running',
-      progress: 0,
-      message: 'Generating panel...',
-      sceneId,
-    });
-
-    setError(null);
-
-    try {
-      const response = await generatePanel(
-        description,
-        shotType ?? undefined,
-        moodTags
-      );
-
-      if (response.success && response.svg_data) {
-        // Add panel with AI-generated SVG
-        addPanel(sceneId, {
-          number: panelNumber,
-          description: response.description || description,
-          svgData: response.svg_data,
-          sourceType: 'ai',
-          shotType: shotType as any,
-          moodTags: moodTags,
-        });
-
-        updateTask(taskId, { status: 'completed', progress: 100 });
-        setTimeout(() => removeTask(taskId), 1000);
-
-        onClose();
-        setSelectedMethod(null);
-        resetForm();
-      } else {
-        // Generation failed - still add panel but without SVG
-        addPanel(sceneId, {
-          number: panelNumber,
-          description: description,
-          sourceType: 'ai',
-          shotType: shotType as any,
-          moodTags: moodTags,
-        });
-
-        updateTask(taskId, {
-          status: 'failed',
-          message: response.error || 'Generation failed'
-        });
-        setError(response.error || 'AI generation failed. Panel added without image.');
-      }
-    } catch (err) {
-      updateTask(taskId, {
-        status: 'failed',
-        message: err instanceof Error ? err.message : 'Unknown error'
-      });
-      setError(err instanceof Error ? err.message : 'Failed to generate panel');
-    }
-  };
-
-  const handleFileImport = async () => {
-    if (!sceneId) return;
-
-    try {
-      const { open } = await import('@tauri-apps/plugin-dialog');
-      const filePath = await open({
-        multiple: false,
-        filters: [
-          { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp'] },
-          { name: 'All Files', extensions: ['*'] },
-        ],
-      });
-
-      if (filePath && typeof filePath === 'string') {
-        const { readFile } = await import('@tauri-apps/plugin-fs');
-        const fileData = await readFile(filePath);
-        const base64 = btoa(
-          new Uint8Array(fileData).reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
-
-        // Detect mime type from extension
-        const ext = filePath.split('.').pop()?.toLowerCase() || 'png';
-        const mimeTypes: Record<string, string> = {
-          png: 'image/png',
-          jpg: 'image/jpeg',
-          jpeg: 'image/jpeg',
-          gif: 'image/gif',
-          webp: 'image/webp',
-        };
-        const mimeType = mimeTypes[ext] || 'image/png';
-
-        const scene = project?.scenes.find((s) => s.id === sceneId);
-        const panelNumber = scene ? scene.panels.length + 1 : 1;
-
-        addPanel(sceneId, {
-          number: panelNumber,
-          imageData: `data:${mimeType};base64,${base64}`,
-          sourceType: 'imported',
-        });
-
-        onClose();
-        setSelectedMethod(null);
-      }
-    } catch (err) {
-      console.error('Failed to import file:', err);
-      setError(err instanceof Error ? err.message : 'Failed to import file');
-    }
-  };
-
-  const handlePaste = async () => {
-    try {
-      const clipboardItems = await navigator.clipboard.read();
-      let foundImage = false;
-
-      for (const item of clipboardItems) {
-        const imageType = item.types.find((type) => type.startsWith('image/'));
-        if (imageType) {
-          foundImage = true;
-          const blob = await item.getType(imageType);
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64 = reader.result as string;
-            if (sceneId) {
-              const scene = project?.scenes.find((s) => s.id === sceneId);
-              const panelNumber = scene ? scene.panels.length + 1 : 1;
-              addPanel(sceneId, {
-                number: panelNumber,
-                imageData: base64,
-                sourceType: 'imported',
-              });
-            }
-          };
-          reader.readAsDataURL(blob);
-          onClose();
-          setSelectedMethod(null);
-          break;
-        }
-      }
-
-      if (!foundImage) {
-        setError('No image found in clipboard. Copy an image first, then try again.');
-      }
-    } catch (err) {
-      console.error('Failed to paste image:', err);
-      // This can happen if permission is denied or clipboard is empty
-      setError('Could not read clipboard. Make sure you have an image copied and try again.');
-    }
+  const getConfirmLabel = () => {
+    if (!selectedMethod) return '방식을 선택하세요';
+    if (selectedMethod === 'blank') return '빈 패널 추가';
+    if (selectedMethod === 'import') return '파일 선택 후 추가';
+    if (selectedMethod === 'ai') return '✦ AI 생성 후 추가';
+    return '패널 추가';
   };
 
   return (
-    <Modal
-      opened={opened}
-      onClose={() => {
-        onClose();
-        setSelectedMethod(null);
-        setDescription('');
-      }}
-      title="Add Panel"
-      size="lg"
-      centered
-    >
-      {!selectedMethod ? (
-        <Stack gap={16}>
-          <Text size="sm" c="dimmed">
-            Choose how you want to add a new panel
+    <Box className={`modal-backdrop open`} onClick={handleBackdropClick}>
+      <Box className="ap-modal">
+        {/* Header */}
+        <Box className="ap-header">
+          <Text style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>
+            패널 추가
           </Text>
-
-          <Group grow>
-            <Card
-              padding="lg"
-              style={{
-                cursor: 'pointer',
-                backgroundColor: '#1A1C24',
-                border: '1px solid #2A2826',
-                transition: 'border-color 0.15s ease',
-              }}
-              onClick={handleAddBlank}
-            >
-              <Stack align="center" gap={12}>
-                <IconSquare size={32} color="#E8A838" />
-                <Text size="sm" fw={500}>
-                  Blank Panel
-                </Text>
-                <Text size="xs" c="dimmed" ta="center">
-                  Start with an empty panel
-                </Text>
-              </Stack>
-            </Card>
-
-            <Card
-              padding="lg"
-              style={{
-                cursor: 'pointer',
-                backgroundColor: '#1A1C24',
-                border: '1px solid #2A2826',
-                transition: 'border-color 0.15s ease',
-              }}
-              onClick={() => setSelectedMethod('import')}
-            >
-              <Stack align="center" gap={12}>
-                <IconUpload size={32} color="#4ECDC4" />
-                <Text size="sm" fw={500}>
-                  Import Image
-                </Text>
-                <Text size="xs" c="dimmed" ta="center">
-                  Upload or paste an image
-                </Text>
-              </Stack>
-            </Card>
-
-            <Card
-              padding="lg"
-              style={{
-                cursor: 'pointer',
-                backgroundColor: '#1A1C24',
-                border: '1px solid #2A2826',
-                transition: 'border-color 0.15s ease',
-              }}
-              onClick={() => setSelectedMethod('ai')}
-            >
-              <Stack align="center" gap={12}>
-                <IconSparkles size={32} color="#FF6B6B" />
-                <Text size="sm" fw={500}>
-                  AI Generate
-                </Text>
-                <Text size="xs" c="dimmed" ta="center">
-                  Describe the shot to generate
-                </Text>
-              </Stack>
-            </Card>
-          </Group>
-        </Stack>
-      ) : selectedMethod === 'import' ? (
-        <Stack gap={16}>
-          <Button
-            variant="light"
-            size="lg"
-            leftSection={<IconFileImport size={20} />}
-            onClick={handlePaste}
+          <button
+            className="ap-close"
+            onClick={onClose}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text3)')}
           >
-            Paste from Clipboard
-          </Button>
+            <IconX size={16} stroke={1.5} />
+          </button>
+        </Box>
 
-          <Text size="sm" c="dimmed" ta="center">
-            or
-          </Text>
+        {/* Body */}
+        <Box className="ap-body">
+          {/* Method cards */}
+          {!selectedMethod ? (
+            <>
+              {/* Blank */}
+              <Box className="method-card mc-blank" onClick={() => handleMethodSelect('blank')}>
+                <Box className="method-icon"><IconSquare size={16} stroke={1.5} /></Box>
+                <Box className="method-text">
+                  <Text style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', mb: 3 }}>
+                    빈 패널
+                  </Text>
+                  <Text style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
+                    빈 프레임으로 시작합니다. 텍스트로 설명을 직접 입력하거나 나중에 이미지를 추가할 수 있어요.
+                  </Text>
+                </Box>
+              </Box>
 
-          <Button
-            variant="outline"
-            size="lg"
-            leftSection={<IconUpload size={20} />}
-            onClick={handleFileImport}
+              {/* Import */}
+              <Box className="method-card mc-import" onClick={() => handleMethodSelect('import')}>
+                <Box className="method-icon"><IconDownload size={16} stroke={1.5} /></Box>
+                <Box className="method-text">
+                  <Text style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', mb: 3 }}>
+                    이미지 임포트
+                  </Text>
+                  <Text style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
+                    JPG, PNG, PSD, PDF 등 외부 이미지를 패널로 가져옵니다. 직접 그린 스케치도 OK.
+                  </Text>
+                </Box>
+              </Box>
+
+              {/* AI */}
+              <Box className="method-card mc-ai" onClick={() => handleMethodSelect('ai')}>
+                <Box className="method-icon"><IconSparkles size={16} stroke={1.5} /></Box>
+                <Box className="method-text">
+                  <Text style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', mb: 3 }}>
+                    AI 생성
+                  </Text>
+                  <Text style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
+                    설명을 입력하면 Claude가 이 패널에 맞는 스토리보드 설명과 카메라 설정을 자동으로 생성해요.
+                  </Text>
+                </Box>
+              </Box>
+            </>
+          ) : (
+            <>
+              {/* Back button */}
+              <Button
+                variant="subtle"
+                size="xs"
+                onClick={() => setSelectedMethod(null)}
+                style={{ color: 'var(--text3)', alignSelf: 'flex-start', marginBottom: 4 }}
+              >
+                <IconArrowLeft size={14} stroke={1.5} style={{ marginRight: 4 }} />
+                뒤로
+              </Button>
+
+              {/* Blank options */}
+              {selectedMethod === 'blank' && (
+                <Box className="blank-options show">
+                  <Box className="bo-row">
+                    <Box className="bo-field">
+                      <label>샷 타입</label>
+                      <Select
+                        value={shotType}
+                        onChange={setShotType}
+                        data={SHOT_TYPE_OPTIONS.map((o) => ({
+                          value: o.value,
+                          label: `${o.value} — ${o.description}`,
+                        }))}
+                        placeholder="지정 안 함"
+                        size="sm"
+                        clearable
+                      />
+                    </Box>
+                    <Box className="bo-field">
+                      <label>지속 시간</label>
+                      <input
+                        className="bo-field input"
+                        value={duration}
+                        onChange={(e) => setDuration(e.target.value)}
+                        placeholder="예: 3s"
+                        style={{ width: '100%', padding: '6px 9px', fontSize: 12 }}
+                      />
+                    </Box>
+                  </Box>
+                  <Box className="bo-field">
+                    <label>장면 설명 <span style={{ color: 'var(--text3)', fontSize: 9, textTransform: 'none', letterSpacing: 0 }}>(선택 사항)</span></label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="이 프레임에서 무슨 일이 일어나나요?"
+                      rows={2}
+                      style={{
+                        width: '100%',
+                        background: 'var(--bg2)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text)',
+                        padding: '6px 9px',
+                        borderRadius: 'var(--r4)',
+                        fontSize: 12,
+                        fontFamily: 'var(--sans)',
+                        outline: 'none',
+                        resize: 'none',
+                        lineHeight: 1.5,
+                      }}
+                    />
+                  </Box>
+                  <Box className="bo-row">
+                    <Box className="bo-field">
+                      <label>대사</label>
+                      <input
+                        value={dialogue}
+                        onChange={(e) => setDialogue(e.target.value)}
+                        placeholder="없음"
+                        style={{
+                          width: '100%',
+                          background: 'var(--bg2)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--text)',
+                          padding: '6px 9px',
+                          borderRadius: 'var(--r4)',
+                          fontSize: 12,
+                          fontFamily: 'var(--sans)',
+                          outline: 'none',
+                        }}
+                      />
+                    </Box>
+                    <Box className="bo-field">
+                      <label>사운드</label>
+                      <input
+                        value={sound}
+                        onChange={(e) => setSound(e.target.value)}
+                        placeholder="없음"
+                        style={{
+                          width: '100%',
+                          background: 'var(--bg2)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--text)',
+                          padding: '6px 9px',
+                          borderRadius: 'var(--r4)',
+                          fontSize: 12,
+                          fontFamily: 'var(--sans)',
+                          outline: 'none',
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                  <Box>
+                    <label style={{ display: 'block', fontSize: 10, color: 'var(--text3)', marginBottom: 5, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                      분위기
+                    </label>
+                    <Box className="mood-tags">
+                      {MOOD_OPTIONS.map((tag) => (
+                        <Box
+                          key={tag.value}
+                          className={`mood-tag ${moodTags.includes(tag.value) ? 'on' : ''}`}
+                          onClick={() => {
+                            setMoodTags((prev) =>
+                              prev.includes(tag.value)
+                                ? prev.filter((t) => t !== tag.value)
+                                : [...prev, tag.value]
+                            );
+                          }}
+                          style={
+                            moodTags.includes(tag.value)
+                              ? {
+                                  background: 'var(--accent-dim)',
+                                  borderColor: 'var(--accent)',
+                                  color: 'var(--accent)',
+                                }
+                              : {}
+                          }
+                        >
+                          {tag.label}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+
+              {/* Import options */}
+              {selectedMethod === 'import' && (
+                <Box className="import-options show">
+                  <Box
+                    className="drop-zone"
+                    onClick={() => {
+                      // TODO: trigger file select
+                      alert('파일 선택 대화상자가 열립니다 (구현 필요)');
+                    }}
+                  >
+                    <Box className="drop-zone-icon" style={{ fontSize: 22 }}>+</Box>
+                    <Box className="drop-zone-text">파일을 드래그하거나 클릭해서 선택</Box>
+                    <Box className="drop-zone-sub">또는 클립보드에서 붙여넣기</Box>
+                    <Box className="file-formats">
+                      {['JPG', 'PNG', 'PSD', 'PDF', 'TIFF', 'WEBP'].map((f) => (
+                        <Box key={f} className="fmt-badge">{f}</Box>
+                      ))}
+                    </Box>
+                  </Box>
+                  <Box className="import-meta">
+                    <Box className="bo-field">
+                      <label>샷 타입</label>
+                      <Select
+                        data={[{ value: 'auto', label: '자동 감지' }, { value: 'manual', label: '직접 지정' }]}
+                        placeholder="자동 감지"
+                        size="sm"
+                      />
+                    </Box>
+                    <Box className="bo-field">
+                      <label>지속 시간</label>
+                      <input
+                        placeholder="예: 3s"
+                        style={{
+                          width: '100%',
+                          background: 'var(--bg2)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--text)',
+                          padding: '6px 9px',
+                          borderRadius: 'var(--r4)',
+                          fontSize: 12,
+                          fontFamily: 'var(--sans)',
+                          outline: 'none',
+                        }}
+                      />
+                    </Box>
+                    <Box className="bo-field" style={{ gridColumn: 'span 2' }}>
+                      <label>설명 (선택)</label>
+                      <input
+                        placeholder="이 프레임 설명..."
+                        style={{
+                          width: '100%',
+                          background: 'var(--bg2)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--text)',
+                          padding: '6px 9px',
+                          borderRadius: 'var(--r4)',
+                          fontSize: 12,
+                          fontFamily: 'var(--sans)',
+                          outline: 'none',
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+
+              {/* AI options */}
+              {selectedMethod === 'ai' && (
+                <Box className="ai-options show">
+                  <Box className="ai-prompt-area">
+                    <Box className="ai-prompt-icon"><IconSparkles size={12} stroke={1.5} /></Box>
+                    <textarea
+                      className="ai-prompt-input"
+                      placeholder="예: 미소가 창밖을 바라보는 클로즈업. 수업 중이지만 딴생각을 하고 있다. 오후의 빛이 창문을 통해 들어온다."
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                    />
+                  </Box>
+                  <Box className="bo-row">
+                    <Box className="bo-field">
+                      <label>샷 타입 힌트</label>
+                      <Select
+                        value={aiShotHint}
+                        onChange={setAiShotHint}
+                        data={SHOT_TYPE_OPTIONS.map((o) => ({
+                          value: o.value,
+                          label: `${o.value} — ${o.description}`,
+                        }))}
+                        placeholder="AI 자동 결정"
+                        size="sm"
+                        clearable
+                      />
+                    </Box>
+                    <Box className="bo-field">
+                      <label>지속 시간</label>
+                      <input
+                        placeholder="AI 자동"
+                        style={{
+                          width: '100%',
+                          background: 'var(--bg2)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--text)',
+                          padding: '6px 9px',
+                          borderRadius: 'var(--r4)',
+                          fontSize: 12,
+                          fontFamily: 'var(--sans)',
+                          outline: 'none',
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+            </>
+          )}
+        </Box>
+
+        {/* Footer */}
+        <Box className="ap-footer">
+          <button className="btn-cancel" onClick={onClose}>
+            취소
+          </button>
+          <button
+            className="btn-confirm"
+            onClick={handleConfirm}
+            disabled={!selectedMethod}
+            style={
+              !selectedMethod
+                ? { background: 'var(--bg4)', color: 'var(--text3)', cursor: 'not-allowed' }
+                : {}
+            }
           >
-            Choose File
-          </Button>
-
-          <Button variant="subtle" onClick={() => setSelectedMethod(null)}>
-            Back
-          </Button>
-        </Stack>
-      ) : (
-        <Stack gap={16}>
-          {claudeStatus === 'unavailable' && (
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              title="AI Unavailable"
-              color="yellow"
-              variant="light"
-            >
-              Claude CLI is not available. Panel will be created without AI-generated image.
-            </Alert>
-          )}
-
-          {error && (
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              title="Error"
-              color="red"
-              variant="light"
-            >
-              {error}
-            </Alert>
-          )}
-
-          <Textarea
-            label="Describe the shot"
-            placeholder="A close-up of a character's face, looking thoughtfully out a window, golden hour lighting..."
-            value={description}
-            onChange={(e) => setDescription(e.currentTarget.value)}
-            minRows={4}
-            maxRows={8}
-            required
-          />
-
-          <Select
-            label="Shot Type (optional)"
-            placeholder="Select shot type"
-            value={shotType}
-            onChange={(value) => setShotType(value)}
-            data={SHOT_TYPE_OPTIONS.map((o) => ({
-              value: o.value,
-              label: `${o.label} - ${o.description}`,
-            }))}
-            clearable
-          />
-
-          <Box>
-            <Text size="sm" mb={8}>
-              Mood Tags (optional)
-            </Text>
-            <Group gap={8}>
-              {MOOD_TAG_OPTIONS.map((tag) => (
-                <Chip
-                  key={tag.value}
-                  checked={moodTags.includes(tag.value)}
-                  onChange={() => {
-                    setMoodTags((prev) =>
-                      prev.includes(tag.value)
-                        ? prev.filter((t) => t !== tag.value)
-                        : [...prev, tag.value]
-                    );
-                  }}
-                  color="gold"
-                  variant="light"
-                  size="sm"
-                >
-                  {tag.label}
-                </Chip>
-              ))}
-            </Group>
-          </Box>
-
-          <Group justify="flex-end" mt={8}>
-            <Button variant="subtle" onClick={() => { setSelectedMethod(null); resetForm(); }}>
-              Back
-            </Button>
-            <Button
-              variant="filled"
-              color="gold"
-              loading={isLoading}
-              onClick={handleAddAI}
-              disabled={!description.trim()}
-            >
-              Generate Panel
-            </Button>
-          </Group>
-        </Stack>
-      )}
-    </Modal>
+            {getConfirmLabel()}
+          </button>
+        </Box>
+      </Box>
+    </Box>
   );
 }

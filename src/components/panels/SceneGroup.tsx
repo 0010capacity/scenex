@@ -1,38 +1,41 @@
-import { Box, Text, Group, Badge } from '@mantine/core';
+import { Box, Group, Text } from '@mantine/core';
 import { Scene } from '@/types';
 import { PanelGrid } from './PanelGrid';
+import { calculateSceneDuration } from '@/utils/duration';
+import { useUIStore } from '@/stores/uiStore';
 
 interface SceneGroupProps {
   scene: Scene;
-  zoomLevel: number;
-  viewMode: 'grid' | 'list';
+  viewMode: 'grid' | 'list' | 'strip' | 'slide';
 }
 
-export function SceneGroup({ scene, zoomLevel, viewMode }: SceneGroupProps) {
+export function SceneGroup({ scene, viewMode }: SceneGroupProps) {
+  const { openAddPanelModal } = useUIStore();
+  const duration = calculateSceneDuration(scene.panels);
+
+  // Scene index from 1
+  const sceneIndex = scene.name.match(/^S(\d+)/)?.[1] ?? '?';
+
   return (
-    <Box mb={32}>
+    <Box className="scene-group">
       {/* Scene header */}
-      <Group mb={12} align="center" gap={8}>
-        <Text
-          size="lg"
-          fw={600}
-          style={{ fontFamily: "'Playfair Display', serif" }}
+      <Group className="scene-row" mb={12} align="center" gap={10}>
+        <Box className="scene-chip">{sceneIndex}</Box>
+        <Text className="scene-name">{scene.name}</Text>
+        <Text className="scene-dur">{duration}</Text>
+        <Box className="scene-line" />
+        <button
+          className="scene-add-btn"
+          onClick={() => openAddPanelModal(scene.id)}
         >
-          {scene.name}
-        </Text>
-        <Badge size="sm" variant="light" color="gray">
-          {scene.slugline}
-        </Badge>
-        <Badge size="sm" variant="outline" color="gray">
-          {scene.panels.length} panels
-        </Badge>
+          + 패널
+        </button>
       </Group>
 
       {/* Panel grid */}
       <PanelGrid
         panels={scene.panels}
         sceneId={scene.id}
-        zoomLevel={zoomLevel}
         viewMode={viewMode}
       />
     </Box>

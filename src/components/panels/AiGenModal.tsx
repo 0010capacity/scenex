@@ -1,0 +1,344 @@
+import { Box, Text, Select, Loader, Progress } from '@mantine/core';
+import { IconSparkles, IconX } from '@tabler/icons-react';
+import { useState } from 'react';
+import { useProjectStore } from '@/stores/projectStore';
+import { useAIStore } from '@/stores/aiStore';
+import { MoodTag, SHOT_TYPE_OPTIONS } from '@/types';
+
+interface AiGenModalProps {
+  opened: boolean;
+  onClose: () => void;
+}
+
+interface GeneratedPanelPreview {
+  description: string;
+  shotType: string;
+  duration: string;
+}
+
+const MOOD_OPTIONS: { value: MoodTag; label: string }[] = [
+  { value: 'emotional', label: '감성적' },
+  { value: 'golden', label: '황금빛' },
+  { value: 'tension', label: '긴장감' },
+  { value: 'humor', label: '유머' },
+  { value: 'excitement', label: '설렘' },
+  { value: 'sadness', label: '슬픔' },
+];
+
+export function AiGenModal({ opened, onClose }: AiGenModalProps) {
+  const { project, addPanel, addScene } = useProjectStore();
+  const { addTask, updateTask, removeTask } = useAIStore();
+
+  const [sceneDescription, setSceneDescription] = useState('');
+  const [shotTypeHint, setShotTypeHint] = useState<string | null>(null);
+  const [moodTags, setMoodTags] = useState<MoodTag[]>([]);
+  const [panelCount, setPanelCount] = useState<string>('4');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [previews, setPreviews] = useState<GeneratedPanelPreview[]>([]);
+
+  if (!opened) return null;
+
+  const handleClose = () => {
+    setSceneDescription('');
+    setShotTypeHint(null);
+    setMoodTags([]);
+    setPanelCount('4');
+    setPreviews([]);
+    setProgress(0);
+    setIsGenerating(false);
+    onClose();
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && !isGenerating) {
+      handleClose();
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!sceneDescription.trim() || !project) return;
+
+    setIsGenerating(true);
+    setProgress(0);
+    setPreviews([]);
+
+    const taskId = addTask({
+      type: 'batch_generate',
+      status: 'running',
+      progress: 0,
+      message: 'Generating panels...',
+    });
+
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+
+      const request = {
+        scene_description: sceneDescription,
+        shot_type_hint: shotTypeHint ?? undefined,
+        mood_tags: moodTags,
+        panel_count: parseInt(panelCount) || 4,
+      };
+
+      const response = await invoke<{
+        panels: Array<{
+          description: string;
+          shot_type: string;
+          duration: string;
+          svg_data: string | null;
+        }>;
+        success: boolean;
+        error: string | null;
+      }>('batch_generate_panels', { request });
+
+      if (response.success && response.panels) {
+        setProgress(50);
+
+        const sceneNumber = project.scenes.length + 1;
+        const newSceneName = `Scene ${sceneNumber}`;
+
+        await addScene(newSceneName);
+
+        const newScene = useProjectStore.getState().project?.scenes.find(
+          (s) => s.name === newSceneName
+        );
+
+        if (newScene) {
+          for (let i = 0; i < response.panels.length; i++) {
+            const panelData = response.panels[i];
+            addPanel(newScene.id, {
+              number: i + 1,
+              description: panelData.description,
+              svgData: panelData.svg_data,
+              shotType: panelData.shot_type as any,
+              duration: panelData.duration,
+              moodTags: moodTags,
+              sourceType: 'ai',
+            });
+            setProgress(50 + Math.floor((i / response.panels.length) * 50));
+          }
+
+          setPreviews(
+            response.panels.map((p) => ({
+              description: p.description,
+              shotType: p.shot_type,
+              duration: p.duration,
+            }))
+          );
+        }
+
+        updateTask(taskId, { status: 'completed', progress: 100 });
+        setTimeout(() => removeTask(taskId), 1000);
+      } else {
+        updateTask(taskId, {
+          status: 'failed',
+          message: response.error || 'Generation failed',
+        });
+      }
+    } catch (error) {
+      updateTask(taskId, {
+        status: 'failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <Box className="modal-backdrop open" onClick={handleBackdropClick}>
+      <Box className="ap-modal" style={{ width: 540 }}>
+        {/* Header */}
+        <Box className="ap-header">
+          <Text style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <IconSparkles size={16} stroke={1.5} color="var(--accent)" />
+            AI 일괄 생성
+          </Text>
+          <button
+            className="ap-close"
+            onClick={handleClose}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text3)')}
+          >
+            <IconX size={16} stroke={1.5} />
+          </button>
+        </Box>
+
+        {/* Body */}
+        <Box className="ap-body">
+          {/* Scene description */}
+          <Box className="bo-field">
+            <label>장면 설명</label>
+            <textarea
+              className="ai-prompt-input"
+              style={{
+                width: '100%',
+                minHeight: 80,
+                background: 'var(--bg2)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r6)',
+                padding: '10px',
+                color: 'var(--text)',
+                fontFamily: 'var(--sans)',
+                fontSize: 12,
+                outline: 'none',
+                resize: 'vertical',
+                lineHeight: 1.5,
+              }}
+              placeholder="예: 옥상에서 만나는 두 친구. 준혁이 미소에게 아이스크림을 건네며 이야기를 시작한다. 노을이 지고 있고 도심의 붉은 빛이 하늘을 물들이고 있다."
+              value={sceneDescription}
+              onChange={(e) => setSceneDescription(e.target.value)}
+            />
+          </Box>
+
+          {/* Options row */}
+          <Box className="bo-row">
+            <Box className="bo-field">
+              <label>샷 타입 힌트</label>
+              <Select
+                value={shotTypeHint}
+                onChange={setShotTypeHint}
+                data={SHOT_TYPE_OPTIONS.map((o) => ({
+                  value: o.value,
+                  label: `${o.value} — ${o.description}`,
+                }))}
+                placeholder="AI 자동 결정"
+                size="sm"
+                clearable
+              />
+            </Box>
+            <Box className="bo-field">
+              <label>패널 개수</label>
+              <Select
+                value={panelCount}
+                onChange={(v) => setPanelCount(v ?? '4')}
+                data={[
+                  { value: '2', label: '2개' },
+                  { value: '4', label: '4개' },
+                  { value: '6', label: '6개' },
+                  { value: '8', label: '8개' },
+                ]}
+                size="sm"
+              />
+            </Box>
+          </Box>
+
+          {/* Mood tags */}
+          <Box>
+            <label style={{ display: 'block', fontSize: 10, color: 'var(--text3)', marginBottom: 6, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              분위기
+            </label>
+            <Box className="mood-tags">
+              {MOOD_OPTIONS.map((tag) => (
+                <Box
+                  key={tag.value}
+                  className={`mood-tag ${moodTags.includes(tag.value) ? 'on' : ''}`}
+                  onClick={() => {
+                    setMoodTags((prev) =>
+                      prev.includes(tag.value)
+                        ? prev.filter((t) => t !== tag.value)
+                        : [...prev, tag.value]
+                    );
+                  }}
+                  style={
+                    moodTags.includes(tag.value)
+                      ? {
+                          background: 'var(--accent-dim)',
+                          borderColor: 'var(--accent)',
+                          color: 'var(--accent)',
+                        }
+                      : {}
+                  }
+                >
+                  {tag.label}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          {/* Progress */}
+          {isGenerating && (
+            <Box>
+              <Progress
+                value={progress}
+                size="lg"
+                color="indigo"
+                animated
+                style={{ background: 'var(--bg3)', borderRadius: 'var(--r4)' }}
+              />
+              <Text style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', marginTop: 6 }}>
+                생성 중... {progress}%
+              </Text>
+            </Box>
+          )}
+
+          {/* Preview */}
+          {previews.length > 0 && (
+            <Box
+              style={{
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--r8)',
+                padding: 14,
+                background: 'var(--bg3)',
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: 500, color: 'var(--text)', marginBottom: 10 }}>
+                생성 미리보기 ({previews.length}개 패널)
+              </Text>
+              <Box style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {previews.map((preview, index) => (
+                  <Box key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, color: 'var(--text2)', fontFamily: 'var(--mono)' }}>
+                      P{index + 1}: {preview.shotType} — {preview.duration}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        color: 'var(--text3)',
+                        maxWidth: 280,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {preview.description.slice(0, 50)}...
+                    </Text>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          )}
+        </Box>
+
+        {/* Footer */}
+        <Box className="ap-footer">
+          <button className="btn-cancel" onClick={handleClose} disabled={isGenerating}>
+            취소
+          </button>
+          <button
+            className="btn-confirm"
+            onClick={handleGenerate}
+            disabled={!sceneDescription.trim() || isGenerating}
+            style={
+              !sceneDescription.trim() || isGenerating
+                ? { background: 'var(--bg4)', color: 'var(--text3)', cursor: 'not-allowed' }
+                : {}
+            }
+          >
+            {isGenerating ? (
+              <>
+                <Loader size={12} color="#FFFFFF" />
+                생성 중...
+              </>
+            ) : (
+              <>
+                <IconSparkles size={12} stroke={1.5} style={{ marginRight: 4 }} />
+                스토리보드 생성
+              </>
+            )}
+          </button>
+        </Box>
+      </Box>
+    </Box>
+  );
+}

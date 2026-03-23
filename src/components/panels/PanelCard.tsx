@@ -1,8 +1,8 @@
-import { Box, Text, Badge, Group, ActionIcon } from '@mantine/core';
-import { IconPlayerPlay, IconTrash } from '@tabler/icons-react';
+import { Box, Text } from '@mantine/core';
+import { IconPlayerPlay } from '@tabler/icons-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Panel, SHOT_TYPE_OPTIONS, MOOD_TAG_OPTIONS } from '@/types';
+import { Panel } from '@/types';
 import { useProjectStore } from '@/stores/projectStore';
 
 interface PanelCardProps {
@@ -12,8 +12,25 @@ interface PanelCardProps {
   showDetails?: boolean;
 }
 
+const SHOT_LABELS: Record<string, string> = {
+  EWS: '익스트림 와이드',
+  WS: '와이드',
+  MS: '미디엄',
+  CU: '클로즈업',
+  ECU: '익스트림 CU',
+  OTS: '오버더숄더',
+  POV: '시점',
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  ai: 'AI',
+  manual: '수동',
+  imported: '임포트',
+  empty: '빈 패널',
+};
+
 export function PanelCard({ panel, sceneId: _sceneId, width, showDetails = false }: PanelCardProps) {
-  const { selectedPanelId, selectPanel, deletePanel } = useProjectStore();
+  const { selectedPanelId, selectPanel } = useProjectStore();
 
   const {
     attributes,
@@ -25,47 +42,56 @@ export function PanelCard({ panel, sceneId: _sceneId, width, showDetails = false
   } = useSortable({ id: panel.id });
 
   const isSelected = selectedPanelId === panel.id;
-  const height = width * (9 / 16); // 16:9 aspect ratio
+  const height = width * (9 / 16);
 
-  const shotTypeLabel = SHOT_TYPE_OPTIONS.find(
-    (o) => o.value === panel.shotType
-  )?.label;
-
-  const handleClick = () => {
-    selectPanel(panel.id);
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    deletePanel(panel.id);
-  };
-
-  const style = {
-    cursor: 'pointer',
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: '#1A1C24',
-    border: isSelected ? '2px solid #E8A838' : '2px solid transparent',
-    transition: transition,
-    opacity: isDragging ? 0.5 : 1,
-    transform: CSS.Transform.toString(transform),
-  };
+  const shotDesc = panel.shotType ? SHOT_LABELS[panel.shotType] ?? '' : '';
+  const sourceLabel = SOURCE_LABELS[panel.sourceType] ?? '';
+  const sourceClass = panel.sourceType === 'ai' ? 'badge-ai' : panel.sourceType === 'imported' ? 'badge-imported' : 'badge-manual';
 
   return (
     <Box
       ref={setNodeRef}
-      style={style}
-      onClick={handleClick}
+      style={{
+        cursor: 'pointer',
+        borderRadius: 'var(--r8)',
+        overflow: 'hidden',
+        backgroundColor: 'var(--bg2)',
+        border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+        boxShadow: isSelected ? '0 0 0 1px var(--accent)' : undefined,
+        opacity: isDragging ? 0.5 : 1,
+        transform: CSS.Transform.toString(transform),
+        transition,
+        position: 'relative',
+        width: '100%',
+      }}
+      onClick={() => selectPanel(panel.id)}
       {...attributes}
       {...listeners}
     >
+      {/* Drag handle */}
+      <Box
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 4,
+          background: 'transparent',
+          cursor: 'grab',
+          zIndex: 2,
+          transition: 'background 0.15s',
+        }}
+        className="drag-handle"
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--border2)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      />
+
       {/* Panel frame */}
       <Box
-        className="panel-frame"
         style={{
           width: '100%',
           height: height,
-          backgroundColor: '#0B0C10',
+          backgroundColor: 'var(--bg3)',
           position: 'relative',
           display: 'flex',
           alignItems: 'center',
@@ -73,7 +99,7 @@ export function PanelCard({ panel, sceneId: _sceneId, width, showDetails = false
           overflow: 'hidden',
         }}
       >
-        {/* Image or placeholder */}
+        {/* Image */}
         {panel.imageData ? (
           <img
             src={panel.imageData}
@@ -81,119 +107,187 @@ export function PanelCard({ panel, sceneId: _sceneId, width, showDetails = false
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : panel.svgData ? (
-          <div
+          <Box
             dangerouslySetInnerHTML={{ __html: panel.svgData }}
             style={{ width: '100%', height: '100%' }}
           />
         ) : (
+          /* Empty state */
           <Box
             style={{
-              width: '100%',
-              height: '100%',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#13141A',
-              color: '#4E4C48',
+              gap: 4,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'var(--bg2)',
             }}
           >
-            <IconPlayerPlay size={32} stroke={1} />
+            <IconPlayerPlay size={20} color="var(--text3)" stroke={1.5} />
+            <Text style={{ fontSize: 9, color: 'var(--text3)', opacity: 0.6 }}>
+              빈 프레임
+            </Text>
           </Box>
         )}
 
-        {/* Panel number badge */}
-        <Badge
-          size="sm"
-          variant="filled"
-          style={{
-            position: 'absolute',
-            top: 8,
-            left: 8,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            color: '#E8E5DC',
-          }}
-        >
-          {panel.number}
-        </Badge>
-
-        {/* Duration badge */}
-        {panel.duration && (
-          <Badge
-            size="xs"
-            variant="filled"
-            style={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              color: '#9A9790',
-            }}
-          >
-            {panel.duration}
-          </Badge>
-        )}
-
-        {/* Hover actions */}
+        {/* Panel number */}
         <Box
           style={{
             position: 'absolute',
-            bottom: 8,
-            right: 8,
-            opacity: 0,
-            transition: 'opacity 0.15s ease',
+            top: 5,
+            left: 6,
+            fontFamily: 'var(--mono)',
+            fontSize: 9,
+            color: 'var(--text3)',
+            background: 'rgba(0, 0, 0, 0.5)',
+            padding: '1px 5px',
+            borderRadius: 2,
           }}
-          className="panel-actions"
         >
-          <ActionIcon
-            size="sm"
-            variant="filled"
-            color="red"
-            onClick={handleDelete}
+          {String(panel.number).padStart(2, '0')}
+        </Box>
+
+        {/* Shot type tag (bottom-right) */}
+        {panel.shotType && (
+          <Box
+            style={{
+              position: 'absolute',
+              bottom: 5,
+              right: 5,
+              fontSize: 9,
+              color: 'var(--blue)',
+              background: 'var(--blue-dim)',
+              padding: '1px 5px',
+              borderRadius: 2,
+              fontFamily: 'var(--mono)',
+              border: '1px solid rgba(91, 141, 239, 0.2)',
+            }}
           >
-            <IconTrash size={14} />
-          </ActionIcon>
+            {panel.shotType}
+          </Box>
+        )}
+
+        {/* Source badge (top-right) */}
+        <Box
+          className={`panel-type-badge ${sourceClass}`}
+          style={{
+            position: 'absolute',
+            top: 5,
+            right: 5,
+            fontSize: 8,
+            padding: '1px 5px',
+            borderRadius: 2,
+            fontFamily: 'var(--mono)',
+            border: '1px solid currentColor',
+            background: panel.sourceType === 'ai' ? 'var(--accent-dim)' : panel.sourceType === 'imported' ? 'var(--purple-dim)' : undefined,
+            color: panel.sourceType === 'ai' ? 'var(--accent)' : panel.sourceType === 'imported' ? 'var(--purple)' : 'var(--text3)',
+          }}
+        >
+          {sourceLabel}
+        </Box>
+
+        {/* Hover overlay */}
+        <Box
+          className="frame-overlay"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0)',
+            transition: 'background 0.2s',
+            opacity: 0,
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.25)', e.currentTarget.style.opacity = '1')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0)', e.currentTarget.style.opacity = '0')}
+        >
+          <button
+            style={{
+              background: 'rgba(0,0,0,0.7)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'white',
+              padding: '4px 10px',
+              borderRadius: 'var(--r4)',
+              fontSize: 11,
+              cursor: 'pointer',
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              selectPanel(panel.id);
+            }}
+          >
+            편집
+          </button>
         </Box>
       </Box>
 
-      {/* Panel info */}
-      <Box style={{ padding: '8px 12px' }}>
-        <Group gap={6} wrap="wrap">
-          {shotTypeLabel && (
-            <Badge size="xs" variant="light" color="gray">
-              {shotTypeLabel}
-            </Badge>
-          )}
-          {panel.cameraMovement && (
-            <Badge size="xs" variant="outline" color="gray">
-              {panel.cameraMovement}
-            </Badge>
-          )}
-          {panel.moodTags.map((tag) => {
-            const mood = MOOD_TAG_OPTIONS.find((o) => o.value === tag);
-            return (
-              <Badge
-                key={tag}
-                size="xs"
-                style={{ backgroundColor: mood?.color, color: '#0B0C10' }}
-              >
-                {mood?.label}
-              </Badge>
-            );
-          })}
-        </Group>
+      {/* Panel meta */}
+      <Box style={{ padding: '8px 10px 10px' }}>
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: 'var(--text)',
+            marginBottom: 3,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {panel.shotType
+            ? `${panel.shotType} — ${shotDesc}`
+            : '빈 패널'}
+        </Text>
 
-        {showDetails && panel.description && (
-          <Text size="xs" c="dimmed" mt={8} lineClamp={2}>
+        {panel.description && (
+          <Text
+            style={{
+              fontSize: 10,
+              color: 'var(--text3)',
+              lineHeight: 1.5,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              minHeight: showDetails ? 'auto' : 28,
+            }}
+          >
             {panel.description}
           </Text>
         )}
-      </Box>
 
-      <style>{`
-        .panel-frame:hover .panel-actions {
-          opacity: 1;
-        }
-      `}</style>
+        <Box style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6 }}>
+          <Box
+            style={{
+              fontSize: 9,
+              padding: '2px 5px',
+              borderRadius: 2,
+              fontFamily: 'var(--mono)',
+              background: 'var(--bg4)',
+              color: 'var(--text3)',
+            }}
+          >
+            {panel.number}
+          </Box>
+          {panel.duration && (
+            <Box
+              style={{
+                fontSize: 9,
+                padding: '2px 5px',
+                borderRadius: 2,
+                fontFamily: 'var(--mono)',
+                background: 'var(--bg4)',
+                color: 'var(--text2)',
+              }}
+            >
+              {panel.duration}
+            </Box>
+          )}
+        </Box>
+      </Box>
     </Box>
   );
 }

@@ -1,14 +1,55 @@
-import { Box, Text, ActionIcon, Textarea, Group } from '@mantine/core';
-import { IconPlus, IconTrash, IconMovie } from '@tabler/icons-react';
+import { Box, Text, ActionIcon } from '@mantine/core';
+import { IconPlus, IconX, IconSparkles, IconFileText } from '@tabler/icons-react';
+import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useUIStore } from '@/stores/uiStore';
+import { ScriptLine } from '@/types';
 
 export function ScenarioSidebar() {
-  const { project, selectedSceneId, selectScene, updateScene, deleteScene, addScene } =
-    useProjectStore();
+  const { project, selectedSceneId, selectScene, addScene } = useProjectStore();
+  const { toggleLeftSidebar } = useUIStore();
+  const [aiInput, setAiInput] = useState('');
 
   if (!project) return null;
 
   const selectedScene = project.scenes.find((s) => s.id === selectedSceneId);
+
+  const renderScriptLine = (line: ScriptLine) => {
+    switch (line.type) {
+      case 'slugline':
+        return (
+          <Box key={line.id} className="script-slug">
+            {line.text}
+          </Box>
+        );
+      case 'action':
+        return (
+          <Box key={line.id} className="script-action" style={{ padding: '0 4px' }}>
+            {line.text}
+          </Box>
+        );
+      case 'character':
+        return (
+          <Box key={line.id} className="script-char">
+            {line.text}
+          </Box>
+        );
+      case 'paren':
+        return (
+          <Box key={line.id} className="script-paren">
+            ({line.text})
+          </Box>
+        );
+      case 'dialogue':
+        return (
+          <Box key={line.id} className="script-dialog">
+            "{line.text}"
+          </Box>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <Box
@@ -16,115 +57,157 @@ export function ScenarioSidebar() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#13141A',
+        backgroundColor: 'var(--bg1)',
       }}
     >
-      {/* Scene list */}
-      <Box style={{ padding: '12px 16px', borderBottom: '1px solid #2A2826' }}>
-        <Group justify="space-between" mb={8}>
-          <Text size="sm" fw={600} c="dimmed">
-            SCENES
-          </Text>
-          <ActionIcon size="sm" variant="subtle" onClick={() => addScene()}>
-            <IconPlus size={16} />
-          </ActionIcon>
-        </Group>
-        {project.scenes.map((scene, index) => (
+      {/* Sidebar header */}
+      <Box
+        style={{
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 14px',
+          borderBottom: '1px solid var(--border)',
+          flexShrink: 0,
+          gap: 8,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: '0.07em',
+            textTransform: 'uppercase',
+            color: 'var(--text3)',
+          }}
+        >
+          시나리오
+        </Text>
+        <button
+          onClick={toggleLeftSidebar}
+          style={{
+            marginLeft: 'auto',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text3)',
+            cursor: 'pointer',
+            fontSize: 13,
+            padding: '2px 4px',
+            borderRadius: 3,
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text3)')}
+        >
+          <IconX size={14} stroke={1.5} />
+        </button>
+      </Box>
+
+      {/* Scene tabs */}
+      <Box
+        style={{
+          padding: '8px 12px',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex',
+          gap: 4,
+          flexShrink: 0,
+          overflowX: 'auto',
+        }}
+      >
+        {project.scenes.map((scene, i) => (
           <Box
             key={scene.id}
             onClick={() => selectScene(scene.id)}
             style={{
-              padding: '8px 12px',
-              borderRadius: 6,
+              padding: '4px 10px',
+              borderRadius: 'var(--r4)',
+              fontSize: 10,
+              fontFamily: 'var(--mono)',
+              fontWeight: 500,
               cursor: 'pointer',
-              backgroundColor:
-                scene.id === selectedSceneId ? '#1A1C24' : 'transparent',
-              marginBottom: 4,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              background:
+                scene.id === selectedSceneId ? 'var(--bg3)' : 'transparent',
+              color:
+                scene.id === selectedSceneId ? 'var(--accent)' : 'var(--text3)',
+              border: '1px solid',
+              borderColor:
+                scene.id === selectedSceneId ? 'var(--border2)' : 'transparent',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s',
             }}
           >
-            <Text size="sm" truncate>
-              {index + 1}. {scene.name}
-            </Text>
-            {project.scenes.length > 1 && (
-              <ActionIcon
-                size="xs"
-                variant="subtle"
-                color="red"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteScene(scene.id);
-                }}
-              >
-                <IconTrash size={12} />
-              </ActionIcon>
-            )}
+            S{i + 1}
           </Box>
         ))}
+        <ActionIcon
+          size="xs"
+          variant="subtle"
+          onClick={() => addScene()}
+          style={{ color: 'var(--text3)', flexShrink: 0 }}
+        >
+          <IconPlus size={14} />
+        </ActionIcon>
       </Box>
 
-      {/* Scene details */}
-      {selectedScene ? (
-        <Box style={{ flex: 1, padding: 16, overflow: 'auto' }}>
-          <Text size="sm" fw={600} c="dimmed" mb={8}>
-            SCENE DETAILS
-          </Text>
-
-          <Box mb={12}>
-            <Text size="xs" c="dimmed" mb={4}>
-              Name
+      {/* Script content */}
+      <Box style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
+        {selectedScene?.scriptLines && selectedScene.scriptLines.length > 0 ? (
+          selectedScene.scriptLines.map(renderScriptLine)
+        ) : selectedScene ? (
+          <Box style={{ padding: '16px 14px' }}>
+            <Text style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>
+              {selectedScene.slugline || 'INT. LOCATION — DAY'}
             </Text>
-            <Textarea
-              value={selectedScene.name}
-              onChange={(e) =>
-                updateScene(selectedScene.id, { name: e.currentTarget.value })
-              }
-              autosize
-              minRows={1}
-              maxRows={2}
-            />
-          </Box>
-
-          <Box mb={12}>
-            <Text size="xs" c="dimmed" mb={4}>
-              Slugline
+            <Text style={{ fontSize: 10, color: 'var(--text3)', lineHeight: 1.6 }}>
+              시나리오 내용이 없습니다. 아래에서 AI를 통해 생성하거나 직접 입력하세요.
             </Text>
-            <Textarea
-              value={selectedScene.slugline}
-              onChange={(e) =>
-                updateScene(selectedScene.id, { slugline: e.currentTarget.value })
-              }
-              autosize
-              minRows={1}
-              maxRows={2}
-              placeholder="INT. LOCATION — DAY"
-            />
           </Box>
+        ) : (
+          <Box
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              gap: 8,
+              padding: 24,
+            }}
+          >
+            <IconFileText size={24} color="var(--text3)" stroke={1.5} />
+            <Text style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>
+              장면을 선택하세요
+            </Text>
+          </Box>
+        )}
+      </Box>
 
-          <Text size="sm" c="dimmed" mt={16} mb={8}>
-            {selectedScene.panels.length} panels
-          </Text>
-        </Box>
-      ) : (
-        <Box
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 24,
-            gap: 8,
+      {/* AI Input Bar */}
+      <Box className="sidebar-ai-bar">
+        <input
+          className="sidebar-ai-input"
+          placeholder="시나리오 수정 요청..."
+          value={aiInput}
+          onChange={(e) => setAiInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && aiInput.trim()) {
+              // TODO: send to AI
+              setAiInput('');
+            }
+          }}
+        />
+        <button
+          className="sidebar-ai-send"
+          onClick={() => {
+            if (aiInput.trim()) {
+              // TODO: send to AI
+              setAiInput('');
+            }
           }}
         >
-          <IconMovie size={32} color="#4E4C48" />
-          <Text size="sm" c="dimmed" ta="center">
-            Select a scene to view details
-          </Text>
-        </Box>
-      )}
+          <IconSparkles size={14} stroke={1.5} />
+        </button>
+      </Box>
     </Box>
   );
 }

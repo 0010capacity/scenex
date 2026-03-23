@@ -10,12 +10,11 @@ export function PanelCanvas() {
   if (!project) {
     return (
       <Center style={{ height: '100%' }}>
-        <Text c="dimmed">Loading...</Text>
+        <Text c="dimmed">로딩 중...</Text>
       </Center>
     );
   }
 
-  // Show only selected scene or all scenes
   const scenesToShow = selectedSceneId
     ? project.scenes.filter((s) => s.id === selectedSceneId)
     : project.scenes;
@@ -23,24 +22,27 @@ export function PanelCanvas() {
   if (scenesToShow.length === 0) {
     return (
       <Center style={{ height: '100%' }}>
-        <Text c="dimmed">No scenes yet. Add a scene to get started.</Text>
+        <Box className="canvas-empty">
+          <Box className="empty-icon">+</Box>
+          <Text className="empty-title">프로젝트가 비어있습니다</Text>
+          <Text className="empty-sub">시나리오를 입력하거나 AI로 자동 생성하세요</Text>
+        </Box>
       </Center>
     );
   }
 
   return (
     <Box
+      className="canvas-inner"
       style={{
-        padding: 24,
-        height: '100%',
-        overflow: 'auto',
+        transform: `scale(${zoomLevel / 100})`,
+        transformOrigin: 'top left',
       }}
     >
       {scenesToShow.map((scene) => (
         <SceneGroup
           key={scene.id}
           scene={scene}
-          zoomLevel={zoomLevel}
           viewMode={viewMode}
         />
       ))}
