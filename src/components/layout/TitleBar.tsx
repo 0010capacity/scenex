@@ -1,11 +1,54 @@
-import { Box, Group } from '@mantine/core';
-import { IconFileText, IconUpload, IconSparkles } from '@tabler/icons-react';
+import { Box, Group, Popover, Text } from '@mantine/core';
+import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo } from '@tabler/icons-react';
+import { useState, useEffect } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { useClaude } from '@/hooks/useClaude';
+import { useExport } from '@/hooks/useExport';
 
 export function TitleBar() {
-  const { toggleLeftSidebar, openAiGenModal } = useUIStore();
+  const { toggleLeftSidebar, claudeStatus } = useUIStore();
   const { project, isDirty } = useProjectStore();
+  const { checkAvailability } = useClaude();
+  const { exportPDF, exportImages, exportFCPXML, exportPremiereXML } = useExport();
+  const [exportPopoverOpened, setExportPopoverOpened] = useState(false);
+  const [claudeInfo, setClaudeInfo] = useState<{ version: string | null }>({ version: null });
+
+  useEffect(() => {
+    checkAvailability().then((status) => {
+      setClaudeInfo({ version: status.version });
+    });
+  }, [checkAvailability]);
+
+  const statusColor =
+    claudeStatus === 'available' ? '#22c55e' :
+    claudeStatus === 'unavailable' ? '#ef4444' : '#f59e0b';
+
+  const statusLabel =
+    claudeStatus === 'available' ? 'Connected' :
+    claudeStatus === 'unavailable' ? 'Unavailable' : 'Checking...';
+
+  const handleExport = async (type: 'pdf' | 'images' | 'fcp' | 'premiere') => {
+    setExportPopoverOpened(false);
+    try {
+      switch (type) {
+        case 'pdf':
+          await exportPDF();
+          break;
+        case 'images':
+          await exportImages();
+          break;
+        case 'fcp':
+          await exportFCPXML();
+          break;
+        case 'premiere':
+          await exportPremiereXML();
+          break;
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+    }
+  };
 
   return (
     <Box
@@ -57,13 +100,33 @@ export function TitleBar() {
 
       {/* Right controls */}
       <Box className="tb-right" style={{ marginLeft: 'auto', WebkitAppRegion: 'no-drag' }}>
-        <Box
-          className="ai-status"
-          onClick={() => alert('Claude Code 연결 상태: 정상\n모델: claude-opus-4\n버전: v1.0.3')}
+        <Popover
+          opened={exportPopoverOpened}
+          onChange={setExportPopoverOpened}
+          position="bottom-end"
+          withArrow
+          shadow="md"
         >
-          <Box className="ai-dot" />
-          <span className="ai-label">Claude Code</span>
-        </Box>
+          <Popover.Target>
+            <Box
+              className="ai-status"
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                if (claudeStatus === 'available') {
+                  alert(`Claude Code 연결 상태: 정상${claudeInfo.version ? `\n버전: ${claudeInfo.version}` : ''}`);
+                } else {
+                  alert(`Claude Code 연결 상태: ${statusLabel}`);
+                }
+              }}
+            >
+              <Box
+                className="ai-dot"
+                style={{ backgroundColor: statusColor }}
+              />
+              <span className="ai-label">Claude Code</span>
+            </Box>
+          </Popover.Target>
+        </Popover>
 
         <Box className="tb-divider" />
 
@@ -72,12 +135,112 @@ export function TitleBar() {
           시나리오
         </button>
 
-        <button className="tb-btn" onClick={() => alert('내보내기\n· PDF 스토리보드\n· 이미지 패키지 (ZIP)\n· 파이널 컷 XML\n· 프리미어 XML')}>
-          <IconUpload size={14} stroke={1.5} />
-          내보내기
-        </button>
+        <Popover
+          opened={exportPopoverOpened}
+          onChange={setExportPopoverOpened}
+          position="bottom-end"
+          withArrow
+          shadow="md"
+        >
+          <Popover.Target>
+            <button className="tb-btn" onClick={() => setExportPopoverOpened((o) => !o)}>
+              <IconUpload size={14} stroke={1.5} />
+              내보내기
+            </button>
+          </Popover.Target>
+          <Popover.Dropdown style={{ padding: 4, minWidth: 180 }}>
+            <Box
+              onClick={() => handleExport('pdf')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '8px 12px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 12,
+                color: 'var(--text)',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <IconFile size={16} stroke={1.5} />
+              <Box>
+                <Text size="xs" fw={500}>PDF 스토리보드</Text>
+                <Text size="xs" c="dimmed">인쇄용 문서</Text>
+              </Box>
+            </Box>
+            <Box
+              onClick={() => handleExport('images')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '8px 12px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 12,
+                color: 'var(--text)',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <IconPhoto size={16} stroke={1.5} />
+              <Box>
+                <Text size="xs" fw={500}>이미지 ZIP</Text>
+                <Text size="xs" c="dimmed">이미지 패키지</Text>
+              </Box>
+            </Box>
+            <Box
+              onClick={() => handleExport('fcp')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '8px 12px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 12,
+                color: 'var(--text)',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <IconBrandApple size={16} stroke={1.5} />
+              <Box>
+                <Text size="xs" fw={500}>Final Cut XML</Text>
+                <Text size="xs" c="dimmed">.fcpxml 파일</Text>
+              </Box>
+            </Box>
+            <Box
+              onClick={() => handleExport('premiere')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '8px 12px',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontSize: 12,
+                color: 'var(--text)',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <IconVideo size={16} stroke={1.5} />
+              <Box>
+                <Text size="xs" fw={500}>Premiere XML</Text>
+                <Text size="xs" c="dimmed">Adobe Premiere용</Text>
+              </Box>
+            </Box>
+          </Popover.Dropdown>
+        </Popover>
 
-        <button className="tb-btn accent" onClick={openAiGenModal}>
+        <button className="tb-btn accent" onClick={() => useUIStore.getState().openAiGenModal()}>
           <IconSparkles size={14} stroke={1.5} />
           AI 생성
         </button>

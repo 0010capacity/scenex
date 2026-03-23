@@ -3,6 +3,7 @@ import { IconX, IconSquare, IconSparkles } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useClaude } from '@/hooks/useClaude';
 import {
   SHOT_TYPE_OPTIONS,
   CAMERA_MOVEMENT_OPTIONS,
@@ -22,9 +23,41 @@ const MOOD_LABELS: Record<MoodTag, string> = {
 export function InspectorPanel() {
   const { getSelectedPanel, updatePanel } = useProjectStore();
   const { toggleRightSidebar } = useUIStore();
+  const { generatePanel, generateDescriptionSuggestion } = useClaude();
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const panel = getSelectedPanel();
+
+  const handleRegenerate = async () => {
+    if (!panel?.description.trim()) return;
+    setIsRegenerating(true);
+    try {
+      const result = await generatePanel(panel.description, panel.shotType ?? undefined, panel.moodTags);
+      if (result.success && result.svg_data) {
+        updatePanel(panel.id, { svgData: result.svg_data });
+      } else if (result.error) {
+        console.error('AI regeneration failed:', result.error);
+      }
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const handleAutoEnhance = async () => {
+    if (!panel?.description.trim()) return;
+    setIsEnhancing(true);
+    try {
+      const result = await generateDescriptionSuggestion(panel.description);
+      if (result.success && result.suggestion) {
+        updatePanel(panel.id, { description: result.suggestion });
+      } else if (result.error) {
+        console.error('Auto-enhance failed:', result.error);
+      }
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   return (
     <Box
@@ -254,11 +287,7 @@ export function InspectorPanel() {
               <Text className="insp-sec-label">AI</Text>
               <button
                 className="insp-ai-btn"
-                onClick={() => {
-                  if (!panel.description.trim()) return;
-                  setIsRegenerating(true);
-                  setTimeout(() => setIsRegenerating(false), 2000);
-                }}
+                onClick={handleRegenerate}
                 disabled={!panel.description.trim() || isRegenerating}
               >
                 {isRegenerating ? (
@@ -272,12 +301,17 @@ export function InspectorPanel() {
               </button>
               <button
                 className="insp-ai-btn secondary"
-                onClick={() => {
-                  // Auto-enhance description
-                }}
+                onClick={handleAutoEnhance}
+                disabled={!panel.description.trim() || isEnhancing}
               >
-                <IconSparkles size={12} stroke={1.5} style={{ marginRight: 4 }} />
-                설명 자동 완성
+                {isEnhancing ? (
+                  <Loader size={12} color="var(--accent)" />
+                ) : (
+                  <>
+                    <IconSparkles size={12} stroke={1.5} style={{ marginRight: 4 }} />
+                    설명 자동 완성
+                  </>
+                )}
               </button>
             </Box>
           </>

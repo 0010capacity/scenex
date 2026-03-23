@@ -10,11 +10,12 @@ interface UIState {
 
   // View states
   zoomLevel: number;
-  viewMode: 'grid' | 'list';
+  viewMode: 'grid' | 'list' | 'strip' | 'slide';
 
   // Modal states
   addPanelModalOpen: boolean;
   addPanelSceneId: string | null;
+  aiGenModalOpen: boolean;
 
   // AI status
   claudeStatus: 'checking' | 'available' | 'unavailable';
@@ -25,9 +26,11 @@ interface UIState {
   setLeftSidebarWidth: (width: number) => void;
   setRightSidebarWidth: (width: number) => void;
   setZoomLevel: (level: number) => void;
-  setViewMode: (mode: 'grid' | 'list') => void;
+  setViewMode: (mode: 'grid' | 'list' | 'strip' | 'slide') => void;
   openAddPanelModal: (sceneId: string) => void;
   closeAddPanelModal: () => void;
+  openAiGenModal: () => void;
+  closeAiGenModal: () => void;
   setClaudeStatus: (status: 'checking' | 'available' | 'unavailable') => void;
 }
 
@@ -42,6 +45,7 @@ export const useUIStore = create<UIState>()(
       viewMode: 'grid',
       addPanelModalOpen: false,
       addPanelSceneId: null,
+      aiGenModalOpen: false,
       claudeStatus: 'checking',
 
       toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
@@ -52,6 +56,8 @@ export const useUIStore = create<UIState>()(
       setViewMode: (mode) => set({ viewMode: mode }),
       openAddPanelModal: (sceneId) => set({ addPanelModalOpen: true, addPanelSceneId: sceneId }),
       closeAddPanelModal: () => set({ addPanelModalOpen: false, addPanelSceneId: null }),
+      openAiGenModal: () => set({ aiGenModalOpen: true }),
+      closeAiGenModal: () => set({ aiGenModalOpen: false }),
       setClaudeStatus: (status) => set({ claudeStatus: status }),
     }),
     {

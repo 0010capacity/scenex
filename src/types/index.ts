@@ -5,6 +5,14 @@ export type CameraMovement = 'Static' | 'Pan' | 'Tilt' | 'Dolly' | 'Pullback';
 export type MoodTag = 'emotional' | 'golden' | 'tension' | 'humor' | 'excitement' | 'sadness';
 export type Transition = 'cut' | 'fadein' | 'fadeout' | 'dissolve';
 export type SourceType = 'ai' | 'manual' | 'imported' | 'empty';
+export type ScriptLineType = 'slugline' | 'action' | 'character' | 'paren' | 'dialogue';
+
+export interface ScriptLine {
+  id: string;
+  type: ScriptLineType;
+  text: string;
+  character?: string;
+}
 
 export interface Panel {
   id: string;
@@ -26,6 +34,7 @@ export interface Scene {
   id: string;
   name: string;
   slugline: string;
+  scriptLines: ScriptLine[];
   panels: Panel[];
 }
 
@@ -94,6 +103,7 @@ export function createEmptyScene(name: string = 'Scene 1'): Scene {
     id: crypto.randomUUID(),
     name,
     slugline: 'INT. LOCATION — DAY',
+    scriptLines: [],
     panels: [],
   };
 }

@@ -12,10 +12,15 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::claude::check_claude_available,
             commands::claude::generate_panel,
+            commands::claude::generate_script_lines,
+            commands::claude::generate_description_suggestion,
+            commands::claude::batch_generate_panels,
             commands::file_io::save_project,
             commands::file_io::load_project,
             commands::export::export_pdf,
             commands::export::export_images,
+            commands::export::export_fcp_xml,
+            commands::export::export_premiere_xml,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]

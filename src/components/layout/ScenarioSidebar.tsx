@@ -1,18 +1,47 @@
-import { Box, Text, ActionIcon } from '@mantine/core';
+import { Box, Text, ActionIcon, Loader } from '@mantine/core';
 import { IconPlus, IconX, IconSparkles, IconFileText } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useClaude } from '@/hooks/useClaude';
 import { ScriptLine } from '@/types';
 
 export function ScenarioSidebar() {
-  const { project, selectedSceneId, selectScene, addScene } = useProjectStore();
+  const { project, selectedSceneId, selectScene, addScene, updateScene } = useProjectStore();
   const { toggleLeftSidebar } = useUIStore();
+  const { generateScriptLines } = useClaude();
   const [aiInput, setAiInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   if (!project) return null;
 
   const selectedScene = project.scenes.find((s) => s.id === selectedSceneId);
+
+  const handleAiSubmit = async () => {
+    if (!aiInput.trim() || !selectedSceneId || isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const result = await generateScriptLines(aiInput);
+      if (result.success && result.script_lines.length > 0) {
+        // Convert DTO to ScriptLine format and add to scene
+        const newLines: ScriptLine[] = result.script_lines.map((line) => ({
+          id: crypto.randomUUID(),
+          type: line.line_type as ScriptLine['type'],
+          text: line.text,
+          character: line.character ?? undefined,
+        }));
+
+        const currentLines = selectedScene?.scriptLines || [];
+        updateScene(selectedSceneId, {
+          scriptLines: [...currentLines, ...newLines],
+        });
+      }
+    } finally {
+      setIsLoading(false);
+      setAiInput('');
+    }
+  };
 
   const renderScriptLine = (line: ScriptLine) => {
     switch (line.type) {
@@ -190,22 +219,23 @@ export function ScenarioSidebar() {
           value={aiInput}
           onChange={(e) => setAiInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && aiInput.trim()) {
-              // TODO: send to AI
-              setAiInput('');
+            if (e.key === 'Enter' && aiInput.trim() && !isLoading) {
+              handleAiSubmit();
             }
           }}
+          disabled={isLoading}
         />
         <button
           className="sidebar-ai-send"
-          onClick={() => {
-            if (aiInput.trim()) {
-              // TODO: send to AI
-              setAiInput('');
-            }
-          }}
+          onClick={handleAiSubmit}
+          disabled={!aiInput.trim() || isLoading}
+          style={{ opacity: isLoading || !aiInput.trim() ? 0.5 : 1 }}
         >
-          <IconSparkles size={14} stroke={1.5} />
+          {isLoading ? (
+            <Loader size={14} color="var(--accent)" />
+          ) : (
+            <IconSparkles size={14} stroke={1.5} />
+          )}
         </button>
       </Box>
     </Box>

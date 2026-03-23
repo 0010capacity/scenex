@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { invoke } from '@tauri-apps/api/core';
 import {
   Project,
   Scene,
   Panel,
+  ScriptLine,
   createEmptyProject,
   createEmptyScene,
   createEmptyPanel,
@@ -79,12 +81,36 @@ export const useProjectStore = create<ProjectState>()(
         }));
       },
 
-      addScene: (name) => {
+      addScene: async (name) => {
         const state = get();
         if (!state.project) return;
 
         const sceneNumber = state.project.scenes.length + 1;
         const newScene = createEmptyScene(name ?? `Scene ${sceneNumber}`);
+
+        // Try to generate script lines with AI
+        try {
+          const response = await invoke<{
+            script_lines: Array<{
+              line_type: string;
+              text: string;
+              character: string | null;
+            }>;
+            success: boolean;
+          }>('generate_script_lines', { request: { slugline: newScene.slugline } });
+
+          if (response.success && response.script_lines) {
+            newScene.scriptLines = response.script_lines.map((line) => ({
+              id: crypto.randomUUID(),
+              type: line.line_type as ScriptLine['type'],
+              text: line.text,
+              character: line.character ?? undefined,
+            }));
+          }
+        } catch (e) {
+          // AI failed - continue with empty script lines
+          console.warn('Failed to generate script lines:', e);
+        }
 
         set((state) => ({
           project: state.project

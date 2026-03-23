@@ -1,6 +1,8 @@
 import { Box, Text, Select, Button } from '@mantine/core';
 import { IconSquare, IconDownload, IconSparkles, IconX, IconArrowLeft } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readFile } from '@tauri-apps/plugin-fs';
 import { useProjectStore } from '@/stores/projectStore';
 import { SHOT_TYPE_OPTIONS, MoodTag } from '@/types';
 
@@ -37,6 +39,12 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiShotHint, setAiShotHint] = useState<string | null>(null);
 
+  // Import form
+  const [importedImage, setImportedImage] = useState<string | null>(null);
+  const [importShotType, setImportShotType] = useState<string | null>(null);
+  const [importDuration, setImportDuration] = useState('');
+  const [importDescription, setImportDescription] = useState('');
+
   useEffect(() => {
     if (!opened) {
       setSelectedMethod(null);
@@ -48,6 +56,10 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
       setMoodTags([]);
       setAiPrompt('');
       setAiShotHint(null);
+      setImportedImage(null);
+      setImportShotType(null);
+      setImportDuration('');
+      setImportDescription('');
     }
   }, [opened]);
 
@@ -59,6 +71,24 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
 
   const handleMethodSelect = (method: AddMethod) => {
     setSelectedMethod(method);
+  };
+
+  const handleFileSelect = async () => {
+    try {
+      const file = await open({
+        multiple: false,
+        filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'tiff', 'psd', 'pdf'] }],
+      });
+      if (file) {
+        const data = await readFile(file as string);
+        const ext = (file as string).split('.').pop()?.toLowerCase() || 'png';
+        const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : 'image/png';
+        const base64 = btoa(String.fromCharCode(...data));
+        setImportedImage(`data:${mimeType};base64,${base64}`);
+      }
+    } catch (error) {
+      console.error('Failed to read file:', error);
+    }
   };
 
   const handleConfirm = () => {
@@ -89,6 +119,10 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
     } else if (selectedMethod === 'import') {
       addPanel(sceneId, {
         number: panelNumber,
+        shotType: importShotType as any,
+        duration: importDuration || '3s',
+        description: importDescription,
+        imageData: importedImage,
         sourceType: 'imported',
       });
     }
@@ -99,7 +133,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
   const getConfirmLabel = () => {
     if (!selectedMethod) return '방식을 선택하세요';
     if (selectedMethod === 'blank') return '빈 패널 추가';
-    if (selectedMethod === 'import') return '파일 선택 후 추가';
+    if (selectedMethod === 'import') return importedImage ? '가져오기 완료' : '파일 선택 후 추가';
     if (selectedMethod === 'ai') return '✦ AI 생성 후 추가';
     return '패널 추가';
   };
@@ -309,32 +343,59 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                 <Box className="import-options show">
                   <Box
                     className="drop-zone"
-                    onClick={() => {
-                      // TODO: trigger file select
-                      alert('파일 선택 대화상자가 열립니다 (구현 필요)');
-                    }}
+                    onClick={handleFileSelect}
+                    style={{ cursor: 'pointer' }}
                   >
-                    <Box className="drop-zone-icon" style={{ fontSize: 22 }}>+</Box>
-                    <Box className="drop-zone-text">파일을 드래그하거나 클릭해서 선택</Box>
-                    <Box className="drop-zone-sub">또는 클립보드에서 붙여넣기</Box>
-                    <Box className="file-formats">
-                      {['JPG', 'PNG', 'PSD', 'PDF', 'TIFF', 'WEBP'].map((f) => (
-                        <Box key={f} className="fmt-badge">{f}</Box>
-                      ))}
-                    </Box>
+                    {importedImage ? (
+                      <>
+                        <Box
+                          component="img"
+                          src={importedImage}
+                          alt="Imported"
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: 150,
+                            objectFit: 'contain',
+                            borderRadius: 4,
+                          }}
+                        />
+                        <Box className="drop-zone-sub" style={{ marginTop: 8 }}>
+                          클릭하여 다른 파일 선택
+                        </Box>
+                      </>
+                    ) : (
+                      <>
+                        <Box className="drop-zone-icon" style={{ fontSize: 22 }}>+</Box>
+                        <Box className="drop-zone-text">파일을 드래그하거나 클릭해서 선택</Box>
+                        <Box className="drop-zone-sub">또는 클립보드에서 붙여넣기</Box>
+                        <Box className="file-formats">
+                          {['JPG', 'PNG', 'PSD', 'PDF', 'TIFF', 'WEBP'].map((f) => (
+                            <Box key={f} className="fmt-badge">{f}</Box>
+                          ))}
+                        </Box>
+                      </>
+                    )}
                   </Box>
                   <Box className="import-meta">
                     <Box className="bo-field">
                       <label>샷 타입</label>
                       <Select
-                        data={[{ value: 'auto', label: '자동 감지' }, { value: 'manual', label: '직접 지정' }]}
-                        placeholder="자동 감지"
+                        value={importShotType}
+                        onChange={setImportShotType}
+                        data={SHOT_TYPE_OPTIONS.map((o) => ({
+                          value: o.value,
+                          label: `${o.value} — ${o.description}`,
+                        }))}
+                        placeholder="지정 안 함"
                         size="sm"
+                        clearable
                       />
                     </Box>
                     <Box className="bo-field">
                       <label>지속 시간</label>
                       <input
+                        value={importDuration}
+                        onChange={(e) => setImportDuration(e.target.value)}
                         placeholder="예: 3s"
                         style={{
                           width: '100%',
@@ -352,6 +413,8 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                     <Box className="bo-field" style={{ gridColumn: 'span 2' }}>
                       <label>설명 (선택)</label>
                       <input
+                        value={importDescription}
+                        onChange={(e) => setImportDescription(e.target.value)}
                         placeholder="이 프레임 설명..."
                         style={{
                           width: '100%',
@@ -429,9 +492,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
           <button
             className="btn-confirm"
             onClick={handleConfirm}
-            disabled={!selectedMethod}
+            disabled={!selectedMethod || (selectedMethod === 'import' && !importedImage)}
             style={
-              !selectedMethod
+              !selectedMethod || (selectedMethod === 'import' && !importedImage)
                 ? { background: 'var(--bg4)', color: 'var(--text3)', cursor: 'not-allowed' }
                 : {}
             }
