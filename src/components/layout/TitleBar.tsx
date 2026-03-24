@@ -6,6 +6,50 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useClaude } from '@/hooks/useClaude';
 import { useExport } from '@/hooks/useExport';
 
+// Window API type definitions
+interface WindowApi {
+  close?: () => void;
+  minimize?: () => void;
+  maximize?: () => void;
+}
+
+declare global {
+  interface Window {
+    api?: WindowApi;
+  }
+}
+
+// Type-safe window API wrapper
+const windowApi = {
+  close: () => {
+    if (typeof window !== 'undefined' && window.api?.close) {
+      try {
+        window.api.close();
+      } catch (e) {
+        console.warn('[WindowAPI] close failed:', e);
+      }
+    }
+  },
+  minimize: () => {
+    if (typeof window !== 'undefined' && window.api?.minimize) {
+      try {
+        window.api.minimize();
+      } catch (e) {
+        console.warn('[WindowAPI] minimize failed:', e);
+      }
+    }
+  },
+  maximize: () => {
+    if (typeof window !== 'undefined' && window.api?.maximize) {
+      try {
+        window.api.maximize();
+      } catch (e) {
+        console.warn('[WindowAPI] maximize failed:', e);
+      }
+    }
+  },
+};
+
 const MODEL_OPTIONS = [
   { value: 'haiku', label: 'Haiku' },
   { value: 'sonnet', label: 'Sonnet' },
@@ -84,19 +128,19 @@ export function TitleBar() {
           component="span"
           className="t-close"
           style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-          onClick={() => (window as any).api?.close?.()}
+          onClick={() => windowApi.close()}
         />
         <Box
           component="span"
           className="t-min"
           style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-          onClick={() => (window as any).api?.minimize?.()}
+          onClick={() => windowApi.minimize()}
         />
         <Box
           component="span"
           className="t-max"
           style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-          onClick={() => (window as any).api?.maximize?.()}
+          onClick={() => windowApi.maximize()}
         />
       </Group>
 
