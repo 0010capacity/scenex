@@ -32,12 +32,6 @@ pub async fn get_default_workspaces_dir() -> Result<String, String> {
     Ok(workspaces_dir.to_string_lossy().to_string())
 }
 
-/// Check if a path is a git repository
-#[command]
-pub async fn is_git_workspace(path: String) -> Result<bool, String> {
-    let path = PathBuf::from(&path);
-    Ok(Repository::discover(&path).is_ok())
-}
 
 /// Create a new workspace (folder with git init)
 #[command]

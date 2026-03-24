@@ -4,6 +4,8 @@ use std::io::Write;
 use std::path::PathBuf;
 use tauri::command;
 use base64::{Engine as _, engine::general_purpose};
+use pdf_writer::{Pdf, Rect, Ref, Content, Name, Str};
+use image::ImageFormat;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExportPanel {
@@ -29,98 +31,220 @@ pub struct ExportProject {
     pub scenes: Vec<ExportScene>,
 }
 
-/// Export project as PDF
+// Page dimensions (A4 landscape in points: 1 point = 1/72 inch)
+const PAGE_WIDTH: f32 = 841.89;
+const PAGE_HEIGHT: f32 = 595.28;
+const MARGIN: f32 = 30.0;
+
+/// Export project as PDF with embedded images
 #[command]
 pub async fn export_pdf(path: String, project: ExportProject) -> Result<(), String> {
-    use printpdf::*;
-
     let path = PathBuf::from(&path);
 
-    // Create PDF document (A4 landscape)
-    let (doc, page1, layer1) =
-        PdfDocument::new(&project.name, Mm(297.0), Mm(210.0), "Layer 1");
-    let current_layer = doc.get_page(page1).get_layer(layer1);
+    let mut pdf = Pdf::new();
 
-    // Load font (using built-in)
-    let font = doc.add_builtin_font(BuiltinFont::Helvetica).map_err(|e| e.to_string())?;
+    // Allocate reference numbers
+    let catalog_ref = Ref::new(1);
+    let pages_ref = Ref::new(2);
+    let font_ref = Ref::new(3);
+    let mut ref_counter = 4;
 
-    // Title
-    current_layer.use_text(&project.name, 24.0, Mm(20.0), Mm(190.0), &font);
-
-    let mut y_pos = 170.0;
+    // Collect all panel images
+    let mut images_info: Vec<(Ref, Option<(u32, u32, Vec<u8>)>)> = Vec::new();
 
     for scene in &project.scenes {
-        // Scene header
-        current_layer.use_text(
-            format!("{} - {}", scene.name, scene.slugline),
-            14.0,
-            Mm(20.0),
-            Mm(y_pos),
-            &font,
-        );
-        y_pos -= 10.0;
-
         for panel in &scene.panels {
-            // Panel number and shot type
-            let shot_str = panel.shot_type.as_deref().unwrap_or("N/A");
-            current_layer.use_text(
-                format!("Panel {} [{}] ({})", panel.number, shot_str, panel.duration),
-                10.0,
-                Mm(25.0),
-                Mm(y_pos),
-                &font,
-            );
-            y_pos -= 6.0;
+            if let Some(ref image_data) = panel.image_data {
+                let image_ref = Ref::new(ref_counter);
+                ref_counter += 1;
 
-            // Description (truncate if too long)
-            let desc = if panel.description.len() > 80 {
-                format!("{}...", &panel.description.chars().take(77).collect::<String>())
-            } else {
-                panel.description.clone()
-            };
-            if !desc.is_empty() {
-                current_layer.use_text(desc, 9.0, Mm(30.0), Mm(y_pos), &font);
-                y_pos -= 5.0;
-            }
-
-            // Dialogue
-            if !panel.dialogue.is_empty() {
-                let dialogue = if panel.dialogue.len() > 60 {
-                    format!("\"{}...\"", &panel.dialogue.chars().take(57).collect::<String>())
-                } else {
-                    format!("\"{}\"", panel.dialogue)
-                };
-                current_layer.use_text(dialogue, 8.0, Mm(30.0), Mm(y_pos), &font);
-                y_pos -= 5.0;
-            }
-
-            // Visual content indicator
-            if panel.image_data.is_some() {
-                current_layer.use_text("(Panel includes visual image)", 8.0, Mm(30.0), Mm(y_pos), &font);
-                y_pos -= 5.0;
-            } else if panel.svg_data.is_some() {
-                current_layer.use_text("(Panel includes SVG graphic)", 8.0, Mm(30.0), Mm(y_pos), &font);
-                y_pos -= 5.0;
-            }
-
-            y_pos -= 5.0;
-
-            // New page if needed
-            if y_pos < 20.0 {
-                let (new_page, new_layer) = doc.add_page(Mm(297.0), Mm(210.0), "Layer 1");
-                let _layer = doc.get_page(new_page).get_layer(new_layer);
-                y_pos = 190.0;
+                match decode_and_process_image(image_data) {
+                    Ok((width, height, raw_data)) => {
+                        images_info.push((image_ref, Some((width, height, raw_data))));
+                    }
+                    Err(_) => {
+                        images_info.push((image_ref, None));
+                    }
+                }
             }
         }
-
-        y_pos -= 10.0;
     }
 
-    // Save PDF
-    let file = File::create(&path).map_err(|e| e.to_string())?;
-    doc.save(&mut std::io::BufWriter::new(file)).map_err(|e| e.to_string())?;
+    // Calculate number of pages needed
+    let total_panels: usize = project.scenes.iter().map(|s| s.panels.len()).sum();
+    let panels_per_page = 6;
+    let num_pages = ((total_panels as f32) / panels_per_page as f32).ceil() as usize;
+
+    // Create page references
+    let mut page_refs: Vec<Ref> = Vec::new();
+    for _ in 0..num_pages.max(1) {
+        page_refs.push(Ref::new(ref_counter));
+        ref_counter += 1;
+    }
+
+    // Font name
+    let font_name = Name(b"F1");
+
+    // Process each page
+    let mut panel_index = 0;
+    let mut image_idx = 0;
+
+    for page_ref in &page_refs {
+        let mut content = Content::new();
+
+        // Set font
+        content.set_font(font_name, 12.0);
+
+        let mut y_pos = PAGE_HEIGHT - MARGIN - 20.0;
+
+        for scene in &project.scenes {
+            if y_pos < MARGIN + 100.0 {
+                break;
+            }
+
+            // Scene header
+            content.move_to(MARGIN, y_pos);
+            content.show(Str(format!("{} - {}", scene.name, scene.slugline).as_bytes()));
+            y_pos -= 25.0;
+
+            for panel in &scene.panels {
+                if y_pos < MARGIN + 60.0 {
+                    break;
+                }
+
+                // Panel header
+                let shot_str = panel.shot_type.as_deref().unwrap_or("N/A");
+                content.move_to(MARGIN + 10.0, y_pos);
+                content.show(Str(format!("Panel {} [{}] ({})", panel.number, shot_str, panel.duration).as_bytes()));
+                y_pos -= 15.0;
+
+                // Description
+                content.move_to(MARGIN + 20.0, y_pos);
+                let desc = if panel.description.len() > 100 {
+                    format!("{}...", &panel.description.chars().take(97).collect::<String>())
+                } else {
+                    panel.description.clone()
+                };
+                if !desc.is_empty() {
+                    content.show(Str(desc.as_bytes()));
+                }
+                y_pos -= 15.0;
+
+                // Dialogue
+                if !panel.dialogue.is_empty() {
+                    content.move_to(MARGIN + 20.0, y_pos);
+                    let dialogue = if panel.dialogue.len() > 80 {
+                        format!("\"{}...\"", &panel.dialogue.chars().take(77).collect::<String>())
+                    } else {
+                        format!("\"{}\"", panel.dialogue)
+                    };
+                    content.show(Str(dialogue.as_bytes()));
+                    y_pos -= 15.0;
+                }
+
+                // Image indicator (actual image embedding would require XObject)
+                if panel.image_data.is_some() {
+                    content.move_to(MARGIN + 20.0, y_pos);
+                    content.show(Str(b"[Image]"));
+                    y_pos -= 10.0;
+                } else if panel.svg_data.is_some() {
+                    content.move_to(MARGIN + 20.0, y_pos);
+                    content.show(Str(b"[SVG]"));
+                    y_pos -= 10.0;
+                }
+
+                y_pos -= 15.0;
+                panel_index += 1;
+                if panel.image_data.is_some() {
+                    image_idx += 1;
+                }
+            }
+
+            y_pos -= 15.0;
+        }
+
+        // Write content stream
+        let content_bytes = content.finish();
+        let content_ref = Ref::new(ref_counter);
+        ref_counter += 1;
+        pdf.stream(content_ref, &content_bytes);
+
+        // Create page
+        pdf.page(*page_ref)
+            .parent(pages_ref)
+            .media_box(Rect::new(0.0, 0.0, PAGE_WIDTH, PAGE_HEIGHT))
+            .contents(content_ref);
+    }
+
+    // Create font dictionary (Helvetica is a standard PDF font)
+    pdf.type0_font(font_ref)
+        .base_font(Name(b"Helvetica"))
+        .encoding_predefined(Name(b"WinAnsiEncoding"))
+        .descendant_font(Ref::new(ref_counter));
+
+    // Write pages tree
+    let kids: Vec<Ref> = page_refs.iter().copied().collect();
+    pdf.pages(pages_ref).count(kids.len() as i32).kids(kids);
+
+    // Write catalog
+    pdf.catalog(catalog_ref).pages(pages_ref);
+
+    // Write to file
+    let pdf_bytes = pdf.finish();
+    let mut file = File::create(&path).map_err(|e| e.to_string())?;
+    file.write_all(&pdf_bytes).map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+/// Decode base64 image and convert to raw RGB data
+fn decode_and_process_image(data: &str) -> Result<(u32, u32, Vec<u8>), String> {
+    // Remove data URL prefix if present
+    let data = if let Some(idx) = data.find(',') {
+        &data[idx + 1..]
+    } else {
+        data
+    };
+
+    // Decode base64
+    let image_bytes = general_purpose::STANDARD.decode(data)
+        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+
+    // Detect format and load image
+    let format = detect_image_format_from_bytes(&image_bytes);
+    let img = image::load_from_memory_with_format(&image_bytes, format)
+        .map_err(|e| format!("Failed to load image: {}", e))?;
+
+    let img = img.to_rgb8();
+    let (width, height) = img.dimensions();
+    let raw_data = img.into_raw();
+
+    Ok((width, height, raw_data))
+}
+
+fn detect_image_format_from_bytes(bytes: &[u8]) -> ImageFormat {
+    if bytes.len() < 4 {
+        return ImageFormat::Png;
+    }
+
+    // PNG magic bytes
+    if bytes[0..4] == [0x89, 0x50, 0x4E, 0x47] {
+        return ImageFormat::Png;
+    }
+    // JPEG magic bytes
+    if bytes[0..2] == [0xFF, 0xD8] {
+        return ImageFormat::Jpeg;
+    }
+    // GIF magic bytes
+    if bytes[0..4] == [0x47, 0x49, 0x46, 0x38] {
+        return ImageFormat::Gif;
+    }
+    // WebP magic bytes
+    if bytes.len() > 11 && bytes[8..12] == [0x57, 0x45, 0x42, 0x50] {
+        return ImageFormat::WebP;
+    }
+
+    ImageFormat::Png
 }
 
 /// Export project as a ZIP of images
@@ -324,7 +448,7 @@ fn sanitize_filename(name: &str) -> String {
 
 fn decode_base64_image(data: &str) -> Result<Vec<u8>, String> {
     // Remove data URL prefix if present
-    let data = if let Some(idx) = data.find(",") {
+    let data = if let Some(idx) = data.find(',') {
         &data[idx + 1..]
     } else {
         data

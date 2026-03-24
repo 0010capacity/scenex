@@ -17,7 +17,8 @@ export type SourceType = 'ai' | 'manual' | 'imported' | 'empty';
 export type ScriptLineType = 'slugline' | 'action' | 'character' | 'paren' | 'dialogue';
 
 // Import types needed for the file
-import type { GenerationMetadata, Scenario as ScenarioType } from './scenario';
+import type { GenerationMetadata } from './ai';
+import type { Scenario } from './scenario';
 
 // Flat scene type for project.scenes (storyboard-level scenes)
 export interface ScriptLine {
@@ -61,7 +62,7 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   scenes: Scene[];
-  scenarios: ScenarioType[];
+  scenarios: Scenario[];
   primaryScenarioId?: string;
 }
 

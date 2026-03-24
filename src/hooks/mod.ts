@@ -1,4 +1,4 @@
 export { useClaude } from './useClaude';
-export { useProject } from './useProject';
 export { useExport } from './useExport';
+export { useWorkspace } from './useWorkspace';
 export { useKeyboardShortcuts } from './useKeyboardShortcuts';

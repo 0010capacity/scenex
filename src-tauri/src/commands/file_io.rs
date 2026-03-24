@@ -51,18 +51,3 @@ pub async fn load_project(path: String) -> Result<ProjectData, String> {
     Ok(project)
 }
 
-/// Get default projects directory
-#[command]
-pub async fn get_default_projects_dir() -> Result<String, String> {
-    let home = std::env::var("HOME")
-        .or_else(|_| std::env::var("USERPROFILE"))
-        .map_err(|_| "Could not find home directory")?;
-    let projects_dir = PathBuf::from(home)
-        .join("Documents")
-        .join("SceneX Projects");
-
-    // Create directory if it doesn't exist
-    fs::create_dir_all(&projects_dir).map_err(|e| e.to_string())?;
-
-    Ok(projects_dir.to_string_lossy().to_string())
-}
