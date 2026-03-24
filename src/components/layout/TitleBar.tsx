@@ -1,8 +1,9 @@
 import { Box, Group, Popover, Text } from '@mantine/core';
-import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo, IconChevronDown } from '@tabler/icons-react';
+import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo, IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { useState, useEffect, useRef } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { useWorkspace } from '@/hooks/useWorkspace';
 import { useClaude } from '@/hooks/useClaude';
 import { useExport } from '@/hooks/useExport';
 
@@ -57,8 +58,9 @@ const MODEL_OPTIONS = [
 ];
 
 export function TitleBar() {
-  const { toggleLeftSidebar, claudeStatus, claudeModel, setClaudeModel } = useUIStore();
-  const { project, isDirty } = useProjectStore();
+  const { toggleLeftSidebar, claudeStatus, claudeModel, setClaudeModel, openProjectBrowser } = useUIStore();
+  const { isDirty } = useProjectStore();
+  const { currentWorkspaceName, currentProjectName } = useWorkspace();
   const { checkAvailability } = useClaude();
   const { exportPDF, exportImages, exportFCPXML, exportPremiereXML } = useExport();
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
@@ -123,7 +125,7 @@ export function TitleBar() {
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
       {/* Traffic lights */}
-      <Group gap={5} style={{ WebkitAppRegion: 'no-drag' }}>
+      <Group gap={5} style={{ WebkitAppRegion: 'no-drag', alignSelf: 'flex-start', paddingTop: 12 }}>
         <Box
           component="span"
           className="t-close"
@@ -144,7 +146,7 @@ export function TitleBar() {
         />
       </Group>
 
-      {/* App wordmark */}
+      {/* App wordmark / Project breadcrumb */}
       <Box
         className="app-wordmark"
         style={{
@@ -154,15 +156,52 @@ export function TitleBar() {
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          pointerEvents: 'none',
         }}
       >
-        Scene<b>Forge</b>
-        {project && (
-          <span style={{ color: 'var(--text2)', fontWeight: 400, marginLeft: 8 }}>
-            — {project.name}{isDirty ? ' •' : ''}
-          </span>
-        )}
+        <button
+          onClick={openProjectBrowser}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 8px',
+            borderRadius: 6,
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+        >
+          <Text
+            style={{
+              fontSize: 13,
+              color: 'var(--text)',
+              fontWeight: 500,
+            }}
+          >
+            {currentWorkspaceName && currentProjectName ? (
+              <>
+                {currentWorkspaceName}
+                <IconChevronRight size={10} stroke={2} style={{ margin: '0 2px', verticalAlign: 'middle' }} />
+                {currentProjectName}
+                {isDirty && <span style={{ color: 'var(--accent)', marginLeft: 4 }}>•</span>}
+              </>
+            ) : currentWorkspaceName ? (
+              <>
+                {currentWorkspaceName}
+                <IconChevronRight size={10} stroke={2} style={{ margin: '0 2px', verticalAlign: 'middle' }} />
+                <span style={{ color: 'var(--text3)', fontWeight: 400 }}>Select project</span>
+              </>
+            ) : (
+              <>
+                <span style={{ color: 'var(--text3)' }}>Select workspace</span>
+              </>
+            )}
+          </Text>
+          <IconChevronDown size={10} stroke={2} style={{ color: 'var(--text3)' }} />
+        </button>
       </Box>
 
       {/* Right controls */}
