@@ -1,5 +1,5 @@
 import { Box, Modal, TextInput, Button } from '@mantine/core';
-import { IconPlus, IconMinus } from '@tabler/icons-react';
+import { IconPlus, IconMinus, IconLayoutBoard, IconFileText } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -7,6 +7,8 @@ import { useUIStore } from '@/stores/uiStore';
 export function Toolbar() {
   const { project, addScene, selectedSceneId, selectScene } = useProjectStore();
   const {
+    editorMode,
+    setEditorMode,
     zoomLevel,
     setZoomLevel,
     viewMode,
@@ -31,6 +33,28 @@ export function Toolbar() {
 
   return (
     <Box className="toolbar">
+      {/* Editor mode toggle */}
+      <Box className="tool-group">
+        <Box className="view-toggle">
+          <button
+            className={`vt-btn ${editorMode === 'storyboard' ? 'active' : ''}`}
+            onClick={() => setEditorMode('storyboard')}
+            title="스토리보드"
+          >
+            <IconLayoutBoard size={14} stroke={1.5} />
+          </button>
+          <button
+            className={`vt-btn ${editorMode === 'scenario' ? 'active' : ''}`}
+            onClick={() => setEditorMode('scenario')}
+            title="시나리오"
+          >
+            <IconFileText size={14} stroke={1.5} />
+          </button>
+        </Box>
+      </Box>
+
+      <Box className="tool-sep" />
+
       {/* Scene selector */}
       <Box className="tool-group">
         <select

@@ -3,9 +3,21 @@ import { useUIStore } from '@/stores/uiStore';
 import { ScenarioSidebar } from './ScenarioSidebar';
 import { PanelCanvas } from './PanelCanvas';
 import { InspectorPanel } from '@/components/inspector/InspectorPanel';
+import { ScenarioEditor } from '@/components/scenario/ScenarioEditor';
 
 export function Workspace() {
-  const { leftSidebarOpen, rightSidebarOpen } = useUIStore();
+  const { leftSidebarOpen, rightSidebarOpen, editorMode } = useUIStore();
+
+  if (editorMode === 'scenario') {
+    return (
+      <Box className="workspace">
+        {/* Scenario editor takes full width */}
+        <Box className="canvas-area" style={{ flex: 1 }}>
+          <ScenarioEditor />
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box className="workspace">

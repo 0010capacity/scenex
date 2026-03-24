@@ -15,6 +15,7 @@ interface UIState {
   rightSidebarWidth: number;
 
   // View states
+  editorMode: 'storyboard' | 'scenario';
   zoomLevel: number;
   viewMode: 'grid' | 'list' | 'strip' | 'slide';
 
@@ -22,6 +23,7 @@ interface UIState {
   addPanelModalOpen: boolean;
   addPanelSceneId: string | null;
   aiGenModalOpen: boolean;
+  projectBrowserOpen: boolean;
 
   // AI status
   claudeStatus: 'checking' | 'available' | 'unavailable';
@@ -37,10 +39,13 @@ interface UIState {
   setRightSidebarWidth: (width: number) => void;
   setZoomLevel: (level: number) => void;
   setViewMode: (mode: 'grid' | 'list' | 'strip' | 'slide') => void;
+  setEditorMode: (mode: 'storyboard' | 'scenario') => void;
   openAddPanelModal: (sceneId: string) => void;
   closeAddPanelModal: () => void;
   openAiGenModal: () => void;
   closeAiGenModal: () => void;
+  openProjectBrowser: () => void;
+  closeProjectBrowser: () => void;
   setClaudeStatus: (status: 'checking' | 'available' | 'unavailable') => void;
   setClaudeModel: (model: 'haiku' | 'sonnet' | 'opus') => void;
   addNotification: (type: Notification['type'], message: string) => void;
@@ -54,11 +59,13 @@ export const useUIStore = create<UIState>()(
       rightSidebarOpen: true,
       leftSidebarWidth: 280,
       rightSidebarWidth: 320,
+      editorMode: 'storyboard',
       zoomLevel: 100,
       viewMode: 'grid',
       addPanelModalOpen: false,
       addPanelSceneId: null,
       aiGenModalOpen: false,
+      projectBrowserOpen: false,
       claudeStatus: 'checking',
       claudeModel: 'sonnet',
       notifications: [],
@@ -69,10 +76,13 @@ export const useUIStore = create<UIState>()(
       setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),
       setZoomLevel: (level) => set({ zoomLevel: Math.max(50, Math.min(200, level)) }),
       setViewMode: (mode) => set({ viewMode: mode }),
+      setEditorMode: (mode) => set({ editorMode: mode }),
       openAddPanelModal: (sceneId) => set({ addPanelModalOpen: true, addPanelSceneId: sceneId }),
       closeAddPanelModal: () => set({ addPanelModalOpen: false, addPanelSceneId: null }),
       openAiGenModal: () => set({ aiGenModalOpen: true }),
       closeAiGenModal: () => set({ aiGenModalOpen: false }),
+      openProjectBrowser: () => set({ projectBrowserOpen: true }),
+      closeProjectBrowser: () => set({ projectBrowserOpen: false }),
       setClaudeStatus: (status) => set({ claudeStatus: status }),
       setClaudeModel: (model) => set({ claudeModel: model }),
       addNotification: (type, message) =>
@@ -94,6 +104,7 @@ export const useUIStore = create<UIState>()(
         rightSidebarOpen: state.rightSidebarOpen,
         leftSidebarWidth: state.leftSidebarWidth,
         rightSidebarWidth: state.rightSidebarWidth,
+        editorMode: state.editorMode,
         zoomLevel: state.zoomLevel,
         viewMode: state.viewMode,
         claudeModel: state.claudeModel,
