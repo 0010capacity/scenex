@@ -20,6 +20,12 @@ async function getImageFromClipboard(): Promise<string | null> {
     }
     return null;
   } catch (error) {
+    // Return error info so caller can show appropriate message
+    if (error instanceof Error) {
+      if (error.name === 'NotAllowedError' || error.message.includes('permission')) {
+        return null; // Permission denied
+      }
+    }
     console.error('Failed to read clipboard:', error);
     return null;
   }
@@ -31,6 +37,7 @@ export function useKeyboardShortcuts() {
     setZoomLevel,
     zoomLevel,
     openAddPanelModal,
+    addNotification,
   } = useUIStore();
   const { saveProject } = useProject();
 
@@ -84,7 +91,11 @@ export function useKeyboardShortcuts() {
                 imageData,
                 sourceType: 'imported',
               });
+            } else {
+              addNotification('warning', '클립보드에서 이미지를 찾을 수 없습니다. 이미지를 복사한 후 다시 시도하세요.');
             }
+          }).catch(() => {
+            addNotification('error', '클립보드 접근이 거부되었습니다. 브라우저 권한을 확인하세요.');
           });
         }
         return;
@@ -152,6 +163,7 @@ export function useKeyboardShortcuts() {
       zoomLevel,
       addPanel,
       project,
+      addNotification,
     ]
   );
 

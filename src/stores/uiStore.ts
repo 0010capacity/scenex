@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+interface Notification {
+  id: string;
+  type: 'error' | 'warning' | 'info';
+  message: string;
+}
+
 interface UIState {
   // Sidebar states
   leftSidebarOpen: boolean;
@@ -21,6 +27,9 @@ interface UIState {
   claudeStatus: 'checking' | 'available' | 'unavailable';
   claudeModel: 'haiku' | 'sonnet' | 'opus';
 
+  // Notifications
+  notifications: Notification[];
+
   // Actions
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
@@ -34,6 +43,8 @@ interface UIState {
   closeAiGenModal: () => void;
   setClaudeStatus: (status: 'checking' | 'available' | 'unavailable') => void;
   setClaudeModel: (model: 'haiku' | 'sonnet' | 'opus') => void;
+  addNotification: (type: Notification['type'], message: string) => void;
+  removeNotification: (id: string) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -50,6 +61,7 @@ export const useUIStore = create<UIState>()(
       aiGenModalOpen: false,
       claudeStatus: 'checking',
       claudeModel: 'sonnet',
+      notifications: [],
 
       toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
@@ -63,6 +75,17 @@ export const useUIStore = create<UIState>()(
       closeAiGenModal: () => set({ aiGenModalOpen: false }),
       setClaudeStatus: (status) => set({ claudeStatus: status }),
       setClaudeModel: (model) => set({ claudeModel: model }),
+      addNotification: (type, message) =>
+        set((state) => ({
+          notifications: [
+            ...state.notifications,
+            { id: crypto.randomUUID(), type, message },
+          ],
+        })),
+      removeNotification: (id) =>
+        set((state) => ({
+          notifications: state.notifications.filter((n) => n.id !== id),
+        })),
     }),
     {
       name: 'scenex-ui',
