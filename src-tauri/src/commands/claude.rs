@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::process::Command;
 use tauri::command;
 
+use super::prompts;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClaudeStatus {
     available: bool,
@@ -88,26 +90,11 @@ pub async fn check_claude_available() -> ClaudeStatus {
 /// Generate a panel using Claude CLI
 #[command]
 pub async fn generate_panel(request: GeneratePanelRequest) -> GeneratePanelResponse {
-    // Build the prompt for Claude
-    let mood_str = if request.mood_tags.is_empty() {
-        "neutral".to_string()
-    } else {
-        request.mood_tags.join(", ")
-    };
-
-    let shot_str = request.shot_type.unwrap_or_else(|| "medium shot".to_string());
-
-    let prompt = format!(
-        r#"Generate a simple SVG storyboard sketch for the following scene:
-
-Description: {}
-Shot type: {}
-Mood: {}
-
-Create a minimalist, sketch-style SVG (16:9 aspect ratio, viewBox="0 0 640 360") that captures the essence of this shot.
-Use simple shapes and minimal detail. Style should be like a rough pencil sketch with dark strokes on light background.
-Output only the SVG code, no explanation."#,
-        request.description, shot_str, mood_str
+    // Build prompt using template
+    let prompt = prompts::svg_panel::build(
+        &request.description,
+        request.shot_type.as_deref(),
+        &request.mood_tags,
     );
 
     // Try to run Claude CLI
@@ -174,21 +161,8 @@ fn extract_svg(text: &str) -> Option<String> {
 /// Generate script lines based on a slugline using Claude CLI
 #[command]
 pub async fn generate_script_lines(request: GenerateScriptLinesRequest) -> GenerateScriptLinesResponse {
-    let prompt = format!(
-        r#"Based on the following scene slugline, generate a short script with 5-8 script lines.
-Slugline: {}
-
-Output a JSON array with objects containing:
-- line_type: "action" or "character" or "paren" or "dialogue"
-- text: the content
-- character: only for "dialogue" lines (character name), null otherwise
-
-Example format:
-[{{"line_type":"action","text":"-scene description-","character":null}},{{"line_type":"character","text":" CHARACTER","character":"CHAR_NAME"}},...]
-
-Output ONLY the JSON, no markdown formatting or explanation."#,
-        request.slugline
-    );
+    // Build prompt using template
+    let prompt = prompts::script_lines::build(&request.slugline);
 
     match which::which("claude") {
         Ok(claude_path) => {
@@ -271,16 +245,8 @@ fn extract_json_array(text: &str) -> Option<String> {
 pub async fn generate_description_suggestion(
     request: GenerateDescriptionSuggestionRequest,
 ) -> GenerateDescriptionSuggestionResponse {
-    let prompt = format!(
-        r#"Improve this storyboard panel description to be more vivid and detailed.
-Keep the same length or make it slightly more descriptive.
-
-Original description:
-"{}"
-
-Output ONLY the improved description, no markdown formatting or explanation."#,
-        request.current_description
-    );
+    // Build prompt using template
+    let prompt = prompts::description_enhance::build(&request.current_description);
 
     match which::which("claude") {
         Ok(claude_path) => {
@@ -364,37 +330,13 @@ pub struct BatchGenerateResponse {
 #[command]
 pub async fn batch_generate_panels(request: BatchGenerateRequest) -> BatchGenerateResponse {
     let panel_count = request.panel_count.clamp(2, 8);
-    let mood_str = if request.mood_tags.is_empty() {
-        "neutral".to_string()
-    } else {
-        request.mood_tags.join(", ")
-    };
-    let shot_hint = request
-        .shot_type_hint
-        .unwrap_or_else(|| "varied".to_string());
 
-    let prompt = format!(
-        r#"Generate a storyboard with {} panels for the following scene.
-Scene description: {}
-
-Shot type style: {} shots
-Mood: {}
-
-For each panel, provide:
-1. A brief description of what happens in that shot
-2. The shot type (EWS, WS, MS, CU, ECU, OTS, or POV)
-3. A duration estimate in seconds (like "3s")
-
-Output a JSON object with a "panels" array. Each panel should have:
-- description: what happens in this shot
-- shot_type: the camera shot type
-- duration: estimated duration like "3s"
-
-Output ONLY the JSON, no markdown formatting or explanation."#,
+    // Build prompt using template
+    let prompt = prompts::batch_panels::build(
+        &request.scene_description,
+        request.shot_type_hint.as_deref(),
+        &request.mood_tags,
         panel_count,
-        request.scene_description,
-        shot_hint,
-        mood_str
     );
 
     match which::which("claude") {
