@@ -87,7 +87,7 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
               fontSize: 11,
               cursor: 'pointer',
             }}
-            onClick={() => openAddPanelModal(sceneId)}
+            onClick={() => useUIStore.getState().openAiGenModal()}
           >
             ✦ AI로 자동 생성
           </button>

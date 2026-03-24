@@ -19,6 +19,7 @@ interface UIState {
 
   // AI status
   claudeStatus: 'checking' | 'available' | 'unavailable';
+  claudeModel: 'haiku' | 'sonnet' | 'opus';
 
   // Actions
   toggleLeftSidebar: () => void;
@@ -32,6 +33,7 @@ interface UIState {
   openAiGenModal: () => void;
   closeAiGenModal: () => void;
   setClaudeStatus: (status: 'checking' | 'available' | 'unavailable') => void;
+  setClaudeModel: (model: 'haiku' | 'sonnet' | 'opus') => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -47,6 +49,7 @@ export const useUIStore = create<UIState>()(
       addPanelSceneId: null,
       aiGenModalOpen: false,
       claudeStatus: 'checking',
+      claudeModel: 'sonnet',
 
       toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
@@ -59,6 +62,7 @@ export const useUIStore = create<UIState>()(
       openAiGenModal: () => set({ aiGenModalOpen: true }),
       closeAiGenModal: () => set({ aiGenModalOpen: false }),
       setClaudeStatus: (status) => set({ claudeStatus: status }),
+      setClaudeModel: (model) => set({ claudeModel: model }),
     }),
     {
       name: 'scenex-ui',
@@ -69,6 +73,7 @@ export const useUIStore = create<UIState>()(
         rightSidebarWidth: state.rightSidebarWidth,
         zoomLevel: state.zoomLevel,
         viewMode: state.viewMode,
+        claudeModel: state.claudeModel,
       }),
     }
   )

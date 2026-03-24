@@ -38,6 +38,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
   // AI form
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiShotHint, setAiShotHint] = useState<string | null>(null);
+  const [aiDuration, setAiDuration] = useState('');
 
   // Import form
   const [importedImage, setImportedImage] = useState<string | null>(null);
@@ -56,6 +57,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
       setMoodTags([]);
       setAiPrompt('');
       setAiShotHint(null);
+      setAiDuration('');
       setImportedImage(null);
       setImportShotType(null);
       setImportDuration('');
@@ -112,6 +114,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
       addPanel(sceneId, {
         number: panelNumber,
         shotType: aiShotHint as any,
+        duration: aiDuration || '3s',
         description: aiPrompt,
         sourceType: 'ai',
         moodTags,
@@ -463,7 +466,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                     <Box className="bo-field">
                       <label>지속 시간</label>
                       <input
-                        placeholder="AI 자동"
+                        value={aiDuration}
+                        onChange={(e) => setAiDuration(e.target.value)}
+                        placeholder="예: 3s"
                         style={{
                           width: '100%',
                           background: 'var(--bg2)',

@@ -264,6 +264,13 @@ select option {
   letter-spacing: 0.04em;
 }
 
+/* Popover dropdown styling */
+.mantine-Popover-dropdown {
+  background: var(--bg1) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
 /* ════════════════ Toolbar ════════════════ */
 .toolbar {
   height: 42px;
@@ -1537,4 +1544,14 @@ select option {
 
 .mantine-Progress-section {
   background: var(--accent) !important;
+}
+
+/* ════════════════ Animations ════════════════ */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

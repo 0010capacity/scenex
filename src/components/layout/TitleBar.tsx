@@ -1,32 +1,47 @@
-import { Box, Group, Popover, Text } from '@mantine/core';
-import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo } from '@tabler/icons-react';
+import { Box, Group, Popover, Text, Select, Button, Stack, Divider } from '@mantine/core';
+import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo, IconRefresh, IconExternalLink, IconCheck, IconX, IconLoader2 } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useClaude } from '@/hooks/useClaude';
 import { useExport } from '@/hooks/useExport';
 
+const MODEL_OPTIONS = [
+  { value: 'haiku', label: 'Claude Haiku', description: '빠르고 효율적인 모델' },
+  { value: 'sonnet', label: 'Claude Sonnet', description: '균형 잡힌 성능' },
+  { value: 'opus', label: 'Claude Opus', labelEn: 'Opus', description: '가장 강력한 모델' },
+];
+
 export function TitleBar() {
-  const { toggleLeftSidebar, claudeStatus } = useUIStore();
+  const { toggleLeftSidebar, claudeStatus, claudeModel, setClaudeModel } = useUIStore();
   const { project, isDirty } = useProjectStore();
   const { checkAvailability } = useClaude();
   const { exportPDF, exportImages, exportFCPXML, exportPremiereXML } = useExport();
   const [exportPopoverOpened, setExportPopoverOpened] = useState(false);
-  const [claudeInfo, setClaudeInfo] = useState<{ version: string | null }>({ version: null });
+  const [claudePopoverOpened, setClaudePopoverOpened] = useState(false);
+  const [claudeInfo, setClaudeInfo] = useState<{ version: string | null; path: string | null }>({ version: null, path: null });
+  const [isChecking, setIsChecking] = useState(false);
 
   useEffect(() => {
     checkAvailability().then((status) => {
-      setClaudeInfo({ version: status.version });
+      setClaudeInfo({ version: status.version, path: status.path });
     });
   }, [checkAvailability]);
+
+  const handleRefreshStatus = async () => {
+    setIsChecking(true);
+    const status = await checkAvailability();
+    setClaudeInfo({ version: status.version, path: status.path });
+    setIsChecking(false);
+  };
 
   const statusColor =
     claudeStatus === 'available' ? '#22c55e' :
     claudeStatus === 'unavailable' ? '#ef4444' : '#f59e0b';
 
   const statusLabel =
-    claudeStatus === 'available' ? 'Connected' :
-    claudeStatus === 'unavailable' ? 'Unavailable' : 'Checking...';
+    claudeStatus === 'available' ? '연결됨' :
+    claudeStatus === 'unavailable' ? '연결 실패' : '확인 중...';
 
   const handleExport = async (type: 'pdf' | 'images' | 'fcp' | 'premiere') => {
     setExportPopoverOpened(false);
@@ -101,8 +116,8 @@ export function TitleBar() {
       {/* Right controls */}
       <Box className="tb-right" style={{ marginLeft: 'auto', WebkitAppRegion: 'no-drag' }}>
         <Popover
-          opened={exportPopoverOpened}
-          onChange={setExportPopoverOpened}
+          opened={claudePopoverOpened}
+          onChange={setClaudePopoverOpened}
           position="bottom-end"
           withArrow
           shadow="md"
@@ -110,22 +125,131 @@ export function TitleBar() {
           <Popover.Target>
             <Box
               className="ai-status"
-              style={{ cursor: 'pointer' }}
-              onClick={() => {
-                if (claudeStatus === 'available') {
-                  alert(`Claude Code 연결 상태: 정상${claudeInfo.version ? `\n버전: ${claudeInfo.version}` : ''}`);
-                } else {
-                  alert(`Claude Code 연결 상태: ${statusLabel}`);
-                }
+              style={{
+                cursor: 'pointer',
+                background: claudeStatus === 'available'
+                  ? 'rgba(78, 203, 165, 0.12)'
+                  : claudeStatus === 'unavailable'
+                    ? 'rgba(224, 82, 82, 0.12)'
+                    : 'rgba(245, 158, 11, 0.12)',
+                borderColor: claudeStatus === 'available'
+                  ? 'rgba(78, 203, 165, 0.2)'
+                  : claudeStatus === 'unavailable'
+                    ? 'rgba(224, 82, 82, 0.2)'
+                    : 'rgba(245, 158, 11, 0.2)',
               }}
+              onClick={() => setClaudePopoverOpened((o) => !o)}
             >
               <Box
                 className="ai-dot"
                 style={{ backgroundColor: statusColor }}
               />
-              <span className="ai-label">Claude Code</span>
+              <span className="ai-label" style={{ color: statusColor }}>Claude Code</span>
             </Box>
           </Popover.Target>
+          <Popover.Dropdown style={{ padding: 12, minWidth: 240 }}>
+            <Stack gap={10}>
+              {/* Connection Status */}
+              <Group justify="space-between" align="center">
+                <Text size="xs" fw={600} c="dimmed">Claude Code 연결</Text>
+                <Box
+                  component="button"
+                  onClick={handleRefreshStatus}
+                  disabled={isChecking}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: isChecking ? 'wait' : 'pointer',
+                    padding: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    opacity: isChecking ? 0.5 : 1,
+                  }}
+                >
+                  <IconRefresh
+                    size={14}
+                    stroke={1.5}
+                    style={{
+                      animation: isChecking ? 'spin 1s linear infinite' : 'none',
+                    }}
+                  />
+                </Box>
+              </Group>
+
+              <Group gap={8} align="center">
+                {claudeStatus === 'checking' || isChecking ? (
+                  <>
+                    <IconLoader2 size={16} stroke={1.5} style={{ animation: 'spin 1s linear infinite' }} />
+                    <Text size="sm">확인 중...</Text>
+                  </>
+                ) : claudeStatus === 'available' ? (
+                  <>
+                    <IconCheck size={16} stroke={1.5} color="#22c55e" />
+                    <Box>
+                      <Text size="sm" fw={500}>{statusLabel}</Text>
+                      {claudeInfo.version && (
+                        <Text size="xs" c="dimmed">{claudeInfo.version}</Text>
+                      )}
+                    </Box>
+                  </>
+                ) : (
+                  <>
+                    <IconX size={16} stroke={1.5} color="#ef4444" />
+                    <Box>
+                      <Text size="sm" fw={500}>연결 실패</Text>
+                      <Text size="xs" c="dimmed">Claude Code를 찾을 수 없음</Text>
+                    </Box>
+                  </>
+                )}
+              </Group>
+
+              {/* Model Selection - only show if connected */}
+              {claudeStatus === 'available' && (
+                <>
+                  <Divider my={4} />
+                  <Box>
+                    <Text size="xs" fw={600} c="dimmed" mb={6}>모델 선택</Text>
+                    <Select
+                      value={claudeModel}
+                      onChange={(value) => setClaudeModel(value as 'haiku' | 'sonnet' | 'opus')}
+                      data={MODEL_OPTIONS.map(opt => ({
+                        value: opt.value,
+                        label: opt.label,
+                      }))}
+                      size="xs"
+                      styles={{
+                        input: {
+                          fontSize: 12,
+                        },
+                      }}
+                    />
+                    <Text size="xs" c="dimmed" mt={4}>
+                      {MODEL_OPTIONS.find(opt => opt.value === claudeModel)?.description}
+                    </Text>
+                  </Box>
+                </>
+              )}
+
+              {/* Install Link - only show if unavailable */}
+              {claudeStatus === 'unavailable' && (
+                <>
+                  <Divider my={4} />
+                  <Button
+                    component="a"
+                    href="https://docs.anthropic.com/en/docs/claude-code"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    size="xs"
+                    variant="light"
+                    fullWidth
+                    rightSection={<IconExternalLink size={12} />}
+                  >
+                    Claude Code 설치하기
+                  </Button>
+                </>
+              )}
+            </Stack>
+          </Popover.Dropdown>
         </Popover>
 
         <Box className="tb-divider" />
