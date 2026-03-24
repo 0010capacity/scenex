@@ -1,5 +1,5 @@
-import { Box, Group, Popover, Text, Select, Button, Stack, Divider } from '@mantine/core';
-import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo, IconRefresh, IconExternalLink, IconCheck, IconX, IconChevronDown } from '@tabler/icons-react';
+import { Box, Group, Popover, Text, Stack } from '@mantine/core';
+import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo, IconRefresh, IconExternalLink, IconChevronDown } from '@tabler/icons-react';
 import { useState, useEffect, useRef } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -50,10 +50,6 @@ export function TitleBar() {
   const statusColor =
     claudeStatus === 'available' ? '#22c55e' :
     claudeStatus === 'unavailable' ? '#ef4444' : '#f59e0b';
-
-  const statusLabel =
-    claudeStatus === 'available' ? '연결됨' :
-    claudeStatus === 'unavailable' ? '연결 실패' : '확인 중...';
 
   const handleExport = async (type: 'pdf' | 'images' | 'fcp' | 'premiere') => {
     setExportDropdownOpen(false);
@@ -163,121 +159,209 @@ export function TitleBar() {
             <Box
               style={{
                 position: 'absolute',
-                top: 'calc(100% + 4px)',
+                top: 'calc(100% + 8px)',
                 right: 0,
                 background: 'var(--bg1)',
                 border: '1px solid var(--border)',
-                borderRadius: 8,
-                padding: 12,
-                minWidth: 220,
+                borderRadius: 12,
+                padding: 16,
+                width: 280,
                 zIndex: 9999,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset',
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              <Stack gap={10}>
-                {/* Connection Status */}
-                <Group justify="space-between" align="center">
-                  <Text size="xs" fw={600} c="dimmed">Claude Code 연결</Text>
+              {/* Header */}
+              <Group justify="space-between" align="center" mb={14}>
+                <Group gap={8}>
                   <Box
-                    component="button"
-                    onClick={(e: React.MouseEvent) => {
-                      e.stopPropagation();
-                      handleRefreshStatus();
-                    }}
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      cursor: isChecking ? 'wait' : 'pointer',
-                      padding: 4,
+                      width: 28,
+                      height: 28,
+                      borderRadius: 6,
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ffa500 50%, #ffff00 100%)',
                       display: 'flex',
                       alignItems: 'center',
-                      opacity: isChecking ? 0.5 : 1,
+                      justifyContent: 'center',
                     }}
                   >
-                    <IconRefresh
-                      size={14}
-                      stroke={1.5}
-                      style={{
-                        animation: isChecking ? 'spin 1s linear infinite' : 'none',
-                      }}
-                    />
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#000' }}>C</Text>
+                  </Box>
+                  <Box>
+                    <Text size="sm" fw={600}>Claude Code</Text>
+                    <Text size="xs" c="dimmed" style={{ fontFamily: 'var(--mono)' }}>
+                      {claudeStatus === 'available' ? (claudeInfo.version || '연결됨') : claudeStatus === 'checking' ? '확인 중...' : '미설치'}
+                    </Text>
                   </Box>
                 </Group>
+                <Box
+                  component="button"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    handleRefreshStatus();
+                  }}
+                  style={{
+                    background: 'var(--bg3)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    cursor: isChecking ? 'wait' : 'pointer',
+                    padding: '6px 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    color: 'var(--text2)',
+                    fontSize: 11,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <IconRefresh
+                    size={12}
+                    stroke={2}
+                    style={{
+                      animation: isChecking ? 'spin 1s linear infinite' : 'none',
+                    }}
+                  />
+                  {isChecking ? '확인 중' : '새로고침'}
+                </Box>
+              </Group>
 
+              {/* Status Indicator */}
+              <Box
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 8,
+                  background: claudeStatus === 'available'
+                    ? 'rgba(34, 197, 94, 0.08)'
+                    : claudeStatus === 'unavailable'
+                      ? 'rgba(239, 68, 68, 0.08)'
+                      : 'rgba(245, 158, 11, 0.08)',
+                  border: `1px solid ${
+                    claudeStatus === 'available'
+                      ? 'rgba(34, 197, 94, 0.2)'
+                      : claudeStatus === 'unavailable'
+                        ? 'rgba(239, 68, 68, 0.2)'
+                        : 'rgba(245, 158, 11, 0.2)'
+                  }`,
+                  marginBottom: 14,
+                }}
+              >
                 <Group gap={8} align="center">
-                  {claudeStatus === 'checking' || isChecking ? (
-                    <>
-                      <Box style={{ width: 16, height: 16, border: '2px solid var(--border)', borderTopColor: 'var(--gold)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                      <Text size="sm">확인 중...</Text>
-                    </>
-                  ) : claudeStatus === 'available' ? (
-                    <>
-                      <IconCheck size={16} stroke={1.5} color="#22c55e" />
-                      <Box>
-                        <Text size="sm" fw={500}>{statusLabel}</Text>
-                        {claudeInfo.version && (
-                          <Text size="xs" c="dimmed">{claudeInfo.version}</Text>
+                  <Box
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: claudeStatus === 'available' ? '#22c55e' : claudeStatus === 'unavailable' ? '#ef4444' : '#f59e0b',
+                      boxShadow: `0 0 8px ${claudeStatus === 'available' ? '#22c55e' : claudeStatus === 'unavailable' ? '#ef4444' : '#f59e0b'}`,
+                    }}
+                  />
+                  <Text size="xs" fw={500}>
+                    {claudeStatus === 'available' ? '연결됨 — AI 기능 사용 가능' : claudeStatus === 'unavailable' ? '연결 실패 — 설치를 확인하세요' : '연결 확인 중...'}
+                  </Text>
+                </Group>
+              </Box>
+
+              {/* Model Selection - only show if connected */}
+              {claudeStatus === 'available' && (
+                <Box>
+                  <Text size="xs" fw={600} c="dimmed" mb={8} style={{ letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 10 }}>모델 선택</Text>
+                  <Stack gap={6}>
+                    {MODEL_OPTIONS.map((model) => (
+                      <Box
+                        key={model.value}
+                        component="button"
+                        onClick={() => setClaudeModel(model.value as 'haiku' | 'sonnet' | 'opus')}
+                        style={{
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          border: '1px solid',
+                          borderColor: claudeModel === model.value ? 'var(--gold)' : 'var(--border)',
+                          background: claudeModel === model.value ? 'var(--gold-dim)' : 'var(--bg2)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          transition: 'all 0.15s',
+                          textAlign: 'left',
+                          width: '100%',
+                        }}
+                      >
+                        <Box
+                          style={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: '50%',
+                            border: '2px solid',
+                            borderColor: claudeModel === model.value ? 'var(--gold)' : 'var(--border2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {claudeModel === model.value && (
+                            <Box style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)' }} />
+                          )}
+                        </Box>
+                        <Box style={{ flex: 1 }}>
+                          <Text size="sm" fw={500}>{model.label}</Text>
+                          <Text size="xs" c="dimmed">{model.description}</Text>
+                        </Box>
+                        {claudeModel === model.value && (
+                          <Text size="xs" style={{ color: 'var(--gold)', fontWeight: 600 }}>사용 중</Text>
                         )}
                       </Box>
-                    </>
-                  ) : (
-                    <>
-                      <IconX size={16} stroke={1.5} color="#ef4444" />
-                      <Box>
-                        <Text size="sm" fw={500}>연결 실패</Text>
-                        <Text size="xs" c="dimmed">Claude Code를 찾을 수 없음</Text>
-                      </Box>
-                    </>
-                  )}
-                </Group>
+                    ))}
+                  </Stack>
+                </Box>
+              )}
 
-                {/* Model Selection - only show if connected */}
-                {claudeStatus === 'available' && (
-                  <>
-                    <Divider my={4} />
-                    <Box>
-                      <Text size="xs" fw={600} c="dimmed" mb={6}>모델 선택</Text>
-                      <Select
-                        value={claudeModel}
-                        onChange={(value) => setClaudeModel(value as 'haiku' | 'sonnet' | 'opus')}
-                        data={MODEL_OPTIONS.map(opt => ({
-                          value: opt.value,
-                          label: opt.label,
-                        }))}
-                        size="xs"
-                        styles={{
-                          input: {
-                            fontSize: 12,
-                          },
-                        }}
-                      />
-                      <Text size="xs" c="dimmed" mt={4}>
-                        {MODEL_OPTIONS.find(opt => opt.value === claudeModel)?.description}
-                      </Text>
-                    </Box>
-                  </>
-                )}
-
-                {/* Install Link - only show if unavailable */}
-                {claudeStatus === 'unavailable' && (
-                  <>
-                    <Divider my={4} />
-                    <Button
-                      component="a"
-                      href="https://docs.anthropic.com/en/docs/claude-code"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      size="xs"
-                      variant="light"
-                      fullWidth
-                      rightSection={<IconExternalLink size={12} />}
-                    >
-                      Claude Code 설치하기
-                    </Button>
-                  </>
-                )}
-              </Stack>
+              {/* Install Link - only show if unavailable */}
+              {claudeStatus === 'unavailable' && (
+                <Box>
+                  <Box
+                    style={{
+                      padding: 16,
+                      borderRadius: 8,
+                      background: 'var(--bg2)',
+                      border: '1px solid var(--border)',
+                      marginBottom: 10,
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Text size="xs" c="dimmed" mb={6}>
+                      Claude Code가 시스템에서 감지되지 않았습니다.
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      설치하면 AI 기반 스토리보드 생성 기능을 사용할 수 있습니다.
+                    </Text>
+                  </Box>
+                  <Box
+                    component="a"
+                    href="https://docs.anthropic.com/en/docs/claude-code"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      background: 'var(--gold-dim)',
+                      border: '1px solid rgba(232, 168, 56, 0.3)',
+                      color: 'var(--gold)',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      textDecoration: 'none',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    Claude Code 설치하기
+                    <IconExternalLink size={12} stroke={2} />
+                  </Box>
+                </Box>
+              )}
             </Box>
           )}
         </Box>

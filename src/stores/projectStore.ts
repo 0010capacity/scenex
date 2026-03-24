@@ -35,6 +35,11 @@ interface ProjectState {
   movePanel: (panelId: string, toSceneId: string) => void;
   reorderPanels: (sceneId: string, fromIndex: number, toIndex: number) => void;
 
+  // Script line actions
+  updateScriptLine: (sceneId: string, lineId: string, updates: Partial<ScriptLine>) => void;
+  deleteScriptLine: (sceneId: string, lineId: string) => void;
+  reorderScriptLines: (sceneId: string, fromIndex: number, toIndex: number) => void;
+
   // Selection
   selectScene: (sceneId: string | null) => void;
   selectPanel: (panelId: string | null) => void;
@@ -323,6 +328,70 @@ export const useProjectStore = create<ProjectState>()(
             const renumberedPanels = panels.map((p, i) => ({ ...p, number: i + 1 }));
 
             return { ...s, panels: renumberedPanels };
+          });
+
+          return {
+            project: {
+              ...state.project,
+              scenes: newScenes,
+              updatedAt: new Date().toISOString(),
+            },
+            isDirty: true,
+          };
+        });
+      },
+
+      updateScriptLine: (sceneId, lineId, updates) => {
+        set((state) => ({
+          project: state.project
+            ? {
+                ...state.project,
+                scenes: state.project.scenes.map((s) =>
+                  s.id === sceneId
+                    ? {
+                        ...s,
+                        scriptLines: s.scriptLines.map((l) =>
+                          l.id === lineId ? { ...l, ...updates } : l
+                        ),
+                      }
+                    : s
+                ),
+                updatedAt: new Date().toISOString(),
+              }
+            : null,
+          isDirty: true,
+        }));
+      },
+
+      deleteScriptLine: (sceneId, lineId) => {
+        set((state) => ({
+          project: state.project
+            ? {
+                ...state.project,
+                scenes: state.project.scenes.map((s) =>
+                  s.id === sceneId
+                    ? { ...s, scriptLines: s.scriptLines.filter((l) => l.id !== lineId) }
+                    : s
+                ),
+                updatedAt: new Date().toISOString(),
+              }
+            : null,
+          isDirty: true,
+        }));
+      },
+
+      reorderScriptLines: (sceneId, fromIndex, toIndex) => {
+        set((state) => {
+          if (!state.project) return state;
+
+          const newScenes = state.project.scenes.map((s) => {
+            if (s.id !== sceneId) return s;
+
+            const lines = [...s.scriptLines];
+            const [removed] = lines.splice(fromIndex, 1);
+            lines.splice(toIndex, 0, removed);
+
+            return { ...s, scriptLines: lines };
           });
 
           return {

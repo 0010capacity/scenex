@@ -1,5 +1,5 @@
 import { Box, Text, ActionIcon, Loader } from '@mantine/core';
-import { IconPlus, IconX, IconSparkles, IconFileText } from '@tabler/icons-react';
+import { IconPlus, IconX, IconSparkles, IconFileText, IconPencil, IconTrash, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -7,11 +7,14 @@ import { useClaude } from '@/hooks/useClaude';
 import { ScriptLine } from '@/types';
 
 export function ScenarioSidebar() {
-  const { project, selectedSceneId, selectScene, addScene, updateScene } = useProjectStore();
+  const { project, selectedSceneId, selectScene, addScene, updateScene, updateScriptLine, deleteScriptLine, reorderScriptLines } = useProjectStore();
   const { toggleLeftSidebar } = useUIStore();
   const { generateScriptLines } = useClaude();
   const [aiInput, setAiInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
 
   if (!project) return null;
 
@@ -43,41 +46,153 @@ export function ScenarioSidebar() {
     }
   };
 
-  const renderScriptLine = (line: ScriptLine) => {
-    switch (line.type) {
-      case 'slugline':
-        return (
-          <Box key={line.id} className="script-slug">
-            {line.text}
-          </Box>
-        );
-      case 'action':
-        return (
-          <Box key={line.id} className="script-action" style={{ padding: '0 4px' }}>
-            {line.text}
-          </Box>
-        );
-      case 'character':
-        return (
-          <Box key={line.id} className="script-char">
-            {line.text}
-          </Box>
-        );
-      case 'paren':
-        return (
-          <Box key={line.id} className="script-paren">
-            ({line.text})
-          </Box>
-        );
-      case 'dialogue':
-        return (
-          <Box key={line.id} className="script-dialog">
-            "{line.text}"
-          </Box>
-        );
-      default:
-        return null;
+  const handleStartEdit = (line: ScriptLine) => {
+    setEditingLineId(line.id);
+    setEditingText(line.text);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingLineId && selectedSceneId && editingText.trim()) {
+      updateScriptLine(selectedSceneId, editingLineId, { text: editingText.trim() });
     }
+    setEditingLineId(null);
+    setEditingText('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLineId(null);
+    setEditingText('');
+  };
+
+  const handleDeleteLine = (lineId: string) => {
+    if (selectedSceneId) {
+      deleteScriptLine(selectedSceneId, lineId);
+    }
+  };
+
+  const handleMoveLine = (index: number, direction: 'up' | 'down') => {
+    if (!selectedScene) return;
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= selectedScene.scriptLines.length) return;
+    reorderScriptLines(selectedSceneId!, index, newIndex);
+  };
+
+  const renderScriptLine = (line: ScriptLine, index: number) => {
+    const isEditing = editingLineId === line.id;
+    const isHovered = hoveredLineId === line.id;
+    const lineIndex = selectedScene?.scriptLines.findIndex(l => l.id === line.id) ?? index;
+
+    const lineStyle = {
+      position: 'relative' as const,
+      padding: '2px 28px 2px 4px',
+      borderRadius: 4,
+      cursor: 'default',
+      transition: 'background 0.1s',
+    };
+
+    const buttonStyle = {
+      position: 'absolute' as const,
+      right: 4,
+      top: '50%',
+      transform: 'translateY(-50%)',
+      display: 'flex',
+      gap: 2,
+      opacity: isHovered || isEditing ? 1 : 0,
+      transition: 'opacity 0.1s',
+    };
+
+    if (isEditing) {
+      return (
+        <Box key={line.id} style={lineStyle}>
+          <input
+            value={editingText}
+            onChange={(e) => setEditingText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSaveEdit();
+              if (e.key === 'Escape') handleCancelEdit();
+            }}
+            onBlur={handleSaveEdit}
+            autoFocus
+            style={{
+              width: '100%',
+              background: 'var(--bg2)',
+              border: '1px solid var(--accent)',
+              borderRadius: 4,
+              padding: '2px 6px',
+              fontSize: 11,
+              color: 'var(--text)',
+              fontFamily: 'inherit',
+              outline: 'none',
+            }}
+          />
+        </Box>
+      );
+    }
+
+    const content = (() => {
+      switch (line.type) {
+        case 'slugline':
+          return <Box className="script-slug">{line.text}</Box>;
+        case 'action':
+          return <Box className="script-action">{line.text}</Box>;
+        case 'character':
+          return <Box className="script-char">{line.text}</Box>;
+        case 'paren':
+          return <Box className="script-paren">({line.text})</Box>;
+        case 'dialogue':
+          return <Box className="script-dialog">"{line.text}"</Box>;
+        default:
+          return null;
+      }
+    })();
+
+    return (
+      <Box
+        key={line.id}
+        style={lineStyle}
+        onMouseEnter={() => setHoveredLineId(line.id)}
+        onMouseLeave={() => setHoveredLineId(null)}
+        onDoubleClick={() => handleStartEdit(line)}
+      >
+        {content}
+        <Box style={buttonStyle}>
+          <ActionIcon
+            size="xs"
+            variant="subtle"
+            onClick={() => handleMoveLine(lineIndex, 'up')}
+            style={{ color: 'var(--text3)' }}
+            disabled={lineIndex === 0}
+          >
+            <IconArrowUp size={10} />
+          </ActionIcon>
+          <ActionIcon
+            size="xs"
+            variant="subtle"
+            onClick={() => handleMoveLine(lineIndex, 'down')}
+            style={{ color: 'var(--text3)' }}
+            disabled={selectedScene && lineIndex === selectedScene.scriptLines.length - 1}
+          >
+            <IconArrowDown size={10} />
+          </ActionIcon>
+          <ActionIcon
+            size="xs"
+            variant="subtle"
+            onClick={() => handleStartEdit(line)}
+            style={{ color: 'var(--text3)' }}
+          >
+            <IconPencil size={10} />
+          </ActionIcon>
+          <ActionIcon
+            size="xs"
+            variant="subtle"
+            onClick={() => handleDeleteLine(line.id)}
+            style={{ color: 'var(--accent)' }}
+          >
+            <IconTrash size={10} />
+          </ActionIcon>
+        </Box>
+      </Box>
+    );
   };
 
   return (
@@ -181,7 +296,7 @@ export function ScenarioSidebar() {
       {/* Script content */}
       <Box style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
         {selectedScene?.scriptLines && selectedScene.scriptLines.length > 0 ? (
-          selectedScene.scriptLines.map(renderScriptLine)
+          selectedScene.scriptLines.map((line, index) => renderScriptLine(line, index))
         ) : selectedScene ? (
           <Box style={{ padding: '16px 14px' }}>
             <Text style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>
