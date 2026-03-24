@@ -1,9 +1,12 @@
-import { Box, Text, Menu } from '@mantine/core';
-import { IconPlayerPlay, IconArrowMoveRight } from '@tabler/icons-react';
+import { Box, Text, Menu, Badge } from '@mantine/core';
+import { IconPlayerPlay, IconArrowMoveRight, IconSparkles, IconHistory } from '@tabler/icons-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useDisclosure } from '@mantine/hooks';
 import { Panel } from '@/types';
 import { useProjectStore } from '@/stores/projectStore';
+import { useAIStore } from '@/stores/aiStore';
+import { PanelHistoryDrawer } from './PanelHistoryDrawer';
 
 interface PanelCardProps {
   panel: Panel;
@@ -47,13 +50,18 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
 
   const shotDesc = panel.shotType ? SHOT_LABELS[panel.shotType] ?? '' : '';
   const sourceLabel = SOURCE_LABELS[panel.sourceType] ?? '';
-  const sourceClass = panel.sourceType === 'ai' ? 'badge-ai' : panel.sourceType === 'imported' ? 'badge-imported' : 'badge-manual';
 
   const otherScenes = project?.scenes.filter((s) => s.id !== sceneId) ?? [];
 
   const handleMoveToScene = (toSceneId: string) => {
     movePanel(panel.id, toSceneId);
   };
+
+  // Version history
+  const [historyOpened, { open: openHistory, close: closeHistory }] = useDisclosure(false);
+  const { getVersions } = useAIStore();
+  const panelVersions = getVersions(panel.id);
+  const hasVersions = panelVersions.length > 1;
 
   // List variant - horizontal layout with prominent drag handle
   if (variant === 'list') {
@@ -145,6 +153,7 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
   }
 
   return (
+    <>
     <Menu position="bottom-start" withinPortal>
       <Menu.Target>
         <Box
@@ -268,22 +277,43 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
         )}
 
         {/* Source badge (top-right) */}
-        <Box
-          className={`panel-type-badge ${sourceClass}`}
-          style={{
-            position: 'absolute',
-            top: 5,
-            right: 5,
-            fontSize: 8,
-            padding: '1px 5px',
-            borderRadius: 2,
-            fontFamily: 'var(--mono)',
-            border: '1px solid currentColor',
-            background: panel.sourceType === 'ai' ? 'var(--accent-dim)' : panel.sourceType === 'imported' ? 'var(--purple-dim)' : undefined,
-            color: panel.sourceType === 'ai' ? 'var(--accent)' : panel.sourceType === 'imported' ? 'var(--purple)' : 'var(--text3)',
-          }}
-        >
-          {sourceLabel}
+        <Box style={{ position: 'absolute', top: 5, right: 5, display: 'flex', gap: 4 }}>
+          {panel.sourceType === 'ai' && (
+            <>
+              <Badge
+                size="xs"
+                variant="light"
+                color="grape"
+                leftSection={<IconSparkles size={10} />}
+              >
+                AI
+              </Badge>
+              {hasVersions && (
+                <Badge
+                  size="xs"
+                  variant="outline"
+                  color="gray"
+                  style={{ cursor: 'pointer' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openHistory();
+                  }}
+                  leftSection={<IconHistory size={10} />}
+                >
+                  v{panel.version}
+                </Badge>
+              )}
+            </>
+          )}
+          {panel.sourceType !== 'ai' && (
+            <Badge
+              size="xs"
+              variant="light"
+              color={panel.sourceType === 'imported' ? 'violet' : 'gray'}
+            >
+              {sourceLabel}
+            </Badge>
+          )}
         </Box>
 
         {/* Hover overlay */}
@@ -403,7 +433,38 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
         ) : (
           <Menu.Item disabled>이동할 장면이 없습니다</Menu.Item>
         )}
+        {panel.sourceType === 'ai' && (
+          <>
+            <Menu.Divider />
+            <Menu.Item
+              leftSection={<IconSparkles size={14} />}
+              onClick={() => {
+                // TODO: Open regenerate modal
+                console.log('Regenerate panel', panel.id);
+              }}
+            >
+              AI로 재생성
+            </Menu.Item>
+            {hasVersions && (
+              <Menu.Item
+                leftSection={<IconHistory size={14} />}
+                onClick={openHistory}
+              >
+                버전 기록
+              </Menu.Item>
+            )}
+          </>
+        )}
       </Menu.Dropdown>
     </Menu>
+
+    <PanelHistoryDrawer
+      opened={historyOpened}
+      onClose={closeHistory}
+      panelId={panel.id}
+      versions={panelVersions}
+      currentVersion={panel.version ?? 1}
+    />
+    </>
   );
 }

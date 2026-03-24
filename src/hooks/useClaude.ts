@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useUIStore } from '@/stores/uiStore';
+import { useAIStore } from '@/stores/aiStore';
 import { invokeWrapper } from '@/utils/invokeWrapper';
 
 interface ClaudeStatus {
@@ -51,8 +52,21 @@ interface BatchGenerateResponse {
   error: string | null;
 }
 
+interface GenerateScenarioResponse {
+  success: boolean;
+  scenario?: any;
+  error?: string | null;
+}
+
+interface RegeneratePanelResponse {
+  success: boolean;
+  svg_data?: string | null;
+  error?: string | null;
+}
+
 export function useClaude() {
   const { setClaudeStatus } = useUIStore();
+  const { addTask, updateTask } = useAIStore();
 
   const checkAvailability = async (): Promise<ClaudeStatus> => {
     try {
@@ -156,11 +170,97 @@ export function useClaude() {
     }
   };
 
+  const generateScenario = async (
+    concept: string,
+    genre?: string,
+    mood?: string
+  ): Promise<GenerateScenarioResponse> => {
+    const taskId = addTask({
+      type: 'generate_scenario',
+      status: 'running',
+      progress: 0,
+      message: 'Generating scenario...',
+    });
+
+    try {
+      const response = await invoke<GenerateScenarioResponse>('generate_scenario', {
+        request: { concept, genre, mood },
+      });
+
+      if (response.success) {
+        updateTask(taskId, { status: 'completed', progress: 100 });
+      } else {
+        updateTask(taskId, {
+          status: 'failed',
+          message: response.error || 'Generation failed',
+        });
+      }
+
+      return response;
+    } catch (error) {
+      updateTask(taskId, {
+        status: 'failed',
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  };
+
+  const regeneratePanel = async (
+    previousSvg: string,
+    previousDescription: string,
+    userFeedback: string,
+    sceneContext?: string
+  ): Promise<RegeneratePanelResponse> => {
+    const taskId = addTask({
+      type: 'regenerate_panel',
+      status: 'running',
+      progress: 0,
+      message: 'Regenerating panel...',
+    });
+
+    try {
+      const response = await invoke<RegeneratePanelResponse>('regenerate_panel', {
+        request: {
+          previous_svg: previousSvg,
+          previous_description: previousDescription,
+          user_feedback: userFeedback,
+          scene_context: sceneContext,
+        },
+      });
+
+      if (response.success) {
+        updateTask(taskId, { status: 'completed', progress: 100 });
+      } else {
+        updateTask(taskId, {
+          status: 'failed',
+          message: response.error || 'Regeneration failed',
+        });
+      }
+
+      return response;
+    } catch (error) {
+      updateTask(taskId, {
+        status: 'failed',
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  };
+
   return {
     checkAvailability,
     generatePanel,
     generateScriptLines,
     generateDescriptionSuggestion,
     batchGeneratePanels,
+    generateScenario,
+    regeneratePanel,
   };
 }
