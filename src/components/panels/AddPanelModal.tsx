@@ -1,9 +1,10 @@
-import { Box, Text, Select, Button } from '@mantine/core';
+import { Box, Text, Select, Button, Loader } from '@mantine/core';
 import { IconSquare, IconDownload, IconSparkles, IconX, IconArrowLeft } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { useProjectStore } from '@/stores/projectStore';
+import { useClaude } from '@/hooks/useClaude';
 import { SHOT_TYPE_OPTIONS, MoodTag } from '@/types';
 
 type AddMethod = 'blank' | 'import' | 'ai' | null;
@@ -25,7 +26,9 @@ const MOOD_OPTIONS: { value: MoodTag; label: string }[] = [
 
 export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) {
   const { addPanel, project } = useProjectStore();
+  const { generatePanel } = useClaude();
   const [selectedMethod, setSelectedMethod] = useState<AddMethod>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Blank form
   const [shotType, setShotType] = useState<string | null>(null);
@@ -93,7 +96,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!sceneId || !selectedMethod) return;
 
     const scene = project?.scenes.find((s) => s.id === sceneId);
@@ -110,15 +113,39 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
         moodTags,
         sourceType: 'empty',
       });
+      onClose();
     } else if (selectedMethod === 'ai') {
-      addPanel(sceneId, {
-        number: panelNumber,
-        shotType: aiShotHint as any,
-        duration: aiDuration || '3s',
-        description: aiPrompt,
-        sourceType: 'ai',
-        moodTags,
-      });
+      // AI generation - first add a temporary panel, then generate SVG
+      setIsGenerating(true);
+      try {
+        // Create panel first with basic info
+        addPanel(sceneId, {
+          number: panelNumber,
+          shotType: aiShotHint as any,
+          duration: aiDuration || '3s',
+          description: aiPrompt,
+          sourceType: 'ai',
+          moodTags,
+          svgData: null, // Will be filled after AI generation
+        });
+
+        // Call AI to generate SVG
+        const result = await generatePanel(aiPrompt, aiShotHint ?? undefined, moodTags);
+        if (result.success && result.svg_data) {
+          // Update panel with generated SVG
+          // The panel was just added, we need to find it and update it
+          const updatedScene = project?.scenes.find((s) => s.id === sceneId);
+          const createdPanel = updatedScene?.panels.find((p) => p.description === aiPrompt && !p.svgData);
+          if (createdPanel) {
+            useProjectStore.getState().updatePanel(createdPanel.id, { svgData: result.svg_data });
+          }
+        }
+      } catch (error) {
+        console.error('AI panel generation failed:', error);
+      } finally {
+        setIsGenerating(false);
+        onClose();
+      }
     } else if (selectedMethod === 'import') {
       addPanel(sceneId, {
         number: panelNumber,
@@ -128,16 +155,15 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
         imageData: importedImage,
         sourceType: 'imported',
       });
+      onClose();
     }
-
-    onClose();
   };
 
   const getConfirmLabel = () => {
     if (!selectedMethod) return '방식을 선택하세요';
     if (selectedMethod === 'blank') return '빈 패널 추가';
     if (selectedMethod === 'import') return importedImage ? '가져오기 완료' : '파일 선택 후 추가';
-    if (selectedMethod === 'ai') return '✦ AI 생성 후 추가';
+    if (selectedMethod === 'ai') return isGenerating ? '생성 중...' : '✦ AI 생성 후 추가';
     return '패널 추가';
   };
 
@@ -491,20 +517,24 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
 
         {/* Footer */}
         <Box className="ap-footer">
-          <button className="btn-cancel" onClick={onClose}>
+          <button className="btn-cancel" onClick={onClose} disabled={isGenerating}>
             취소
           </button>
           <button
             className="btn-confirm"
             onClick={handleConfirm}
-            disabled={!selectedMethod || (selectedMethod === 'import' && !importedImage)}
+            disabled={!selectedMethod || isGenerating || (selectedMethod === 'import' && !importedImage)}
             style={
-              !selectedMethod || (selectedMethod === 'import' && !importedImage)
+              !selectedMethod || isGenerating || (selectedMethod === 'import' && !importedImage)
                 ? { background: 'var(--bg4)', color: 'var(--text3)', cursor: 'not-allowed' }
                 : {}
             }
           >
-            {getConfirmLabel()}
+            {isGenerating ? (
+              <Loader size={12} color="var(--accent)" />
+            ) : (
+              getConfirmLabel()
+            )}
           </button>
         </Box>
       </Box>
