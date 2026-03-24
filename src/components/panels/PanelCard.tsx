@@ -1,5 +1,5 @@
-import { Box, Text } from '@mantine/core';
-import { IconPlayerPlay } from '@tabler/icons-react';
+import { Box, Text, Menu } from '@mantine/core';
+import { IconPlayerPlay, IconArrowMoveRight } from '@tabler/icons-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Panel } from '@/types';
@@ -29,8 +29,8 @@ const SOURCE_LABELS: Record<string, string> = {
   empty: '빈 패널',
 };
 
-export function PanelCard({ panel, sceneId: _sceneId, width, showDetails = false }: PanelCardProps) {
-  const { selectedPanelId, selectPanel } = useProjectStore();
+export function PanelCard({ panel, sceneId, width, showDetails = false }: PanelCardProps) {
+  const { selectedPanelId, selectPanel, project, movePanel } = useProjectStore();
 
   const {
     attributes,
@@ -48,8 +48,16 @@ export function PanelCard({ panel, sceneId: _sceneId, width, showDetails = false
   const sourceLabel = SOURCE_LABELS[panel.sourceType] ?? '';
   const sourceClass = panel.sourceType === 'ai' ? 'badge-ai' : panel.sourceType === 'imported' ? 'badge-imported' : 'badge-manual';
 
+  const otherScenes = project?.scenes.filter((s) => s.id !== sceneId) ?? [];
+
+  const handleMoveToScene = (toSceneId: string) => {
+    movePanel(panel.id, toSceneId);
+  };
+
   return (
-    <Box
+    <Menu position="bottom-start" withinPortal>
+      <Menu.Target>
+        <Box
       ref={setNodeRef}
       style={{
         cursor: 'pointer',
@@ -288,6 +296,24 @@ export function PanelCard({ panel, sceneId: _sceneId, width, showDetails = false
           )}
         </Box>
       </Box>
-    </Box>
+      </Box>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label>장면 이동</Menu.Label>
+        {otherScenes.length > 0 ? (
+          otherScenes.map((scene) => (
+            <Menu.Item
+              key={scene.id}
+              onClick={() => handleMoveToScene(scene.id)}
+              leftSection={<IconArrowMoveRight size={14} />}
+            >
+              S{project!.scenes.findIndex(s => s.id === scene.id) + 1} — {scene.name}
+            </Menu.Item>
+          ))
+        ) : (
+          <Menu.Item disabled>이동할 장면이 없습니다</Menu.Item>
+        )}
+      </Menu.Dropdown>
+    </Menu>
   );
 }
