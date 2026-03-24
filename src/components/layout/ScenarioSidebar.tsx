@@ -1,13 +1,82 @@
 import { Box, Text, ActionIcon, Loader } from '@mantine/core';
 import { IconPlus, IconX, IconSparkles, IconFileText, IconPencil, IconTrash, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
 import { useState } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useClaude } from '@/hooks/useClaude';
 import { ScriptLine } from '@/types';
 
+interface SortableSceneTabProps {
+  sceneId: string;
+  index: number;
+  isSelected: boolean;
+  onSelect: () => void;
+}
+
+function SortableSceneTab({ sceneId, index, isSelected, onSelect }: SortableSceneTabProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: sceneId });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 0,
+  };
+
+  return (
+    <Box
+      ref={setNodeRef}
+      style={{
+        ...style,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '4px 10px',
+        borderRadius: 'var(--r4)',
+        fontSize: 10,
+        fontFamily: 'var(--mono)',
+        fontWeight: 500,
+        cursor: 'grab',
+        background: isSelected ? 'var(--bg3)' : 'transparent',
+        color: isSelected ? 'var(--accent)' : 'var(--text3)',
+        border: '1px solid',
+        borderColor: isSelected ? 'var(--border2)' : 'transparent',
+        whiteSpace: 'nowrap',
+        transition: 'all 0.15s',
+      }}
+      onClick={onSelect}
+      {...attributes}
+      {...listeners}
+    >
+      S{index + 1}
+    </Box>
+  );
+}
+
 export function ScenarioSidebar() {
-  const { project, selectedSceneId, selectScene, addScene, updateScene, updateScriptLine, deleteScriptLine, reorderScriptLines } = useProjectStore();
+  const { project, selectedSceneId, selectScene, addScene, updateScene, updateScriptLine, deleteScriptLine, reorderScriptLines, reorderScenes } = useProjectStore();
   const { toggleLeftSidebar } = useUIStore();
   const { generateScriptLines } = useClaude();
   const [aiInput, setAiInput] = useState('');
@@ -15,6 +84,22 @@ export function ScenarioSidebar() {
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleSceneDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = project?.scenes.findIndex((s) => s.id === active.id) ?? -1;
+      const newIndex = project?.scenes.findIndex((s) => s.id === over.id) ?? -1;
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderScenes(oldIndex, newIndex);
+      }
+    }
+  };
 
   if (!project) return null;
 
@@ -248,50 +333,38 @@ export function ScenarioSidebar() {
       </Box>
 
       {/* Scene tabs */}
-      <Box
-        style={{
-          padding: '8px 12px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          gap: 4,
-          flexShrink: 0,
-          overflowX: 'auto',
-        }}
-      >
-        {project.scenes.map((scene, i) => (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSceneDragEnd}>
+        <SortableContext items={project.scenes.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
           <Box
-            key={scene.id}
-            onClick={() => selectScene(scene.id)}
             style={{
-              padding: '4px 10px',
-              borderRadius: 'var(--r4)',
-              fontSize: 10,
-              fontFamily: 'var(--mono)',
-              fontWeight: 500,
-              cursor: 'pointer',
-              background:
-                scene.id === selectedSceneId ? 'var(--bg3)' : 'transparent',
-              color:
-                scene.id === selectedSceneId ? 'var(--accent)' : 'var(--text3)',
-              border: '1px solid',
-              borderColor:
-                scene.id === selectedSceneId ? 'var(--border2)' : 'transparent',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.15s',
+              padding: '8px 12px',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              gap: 4,
+              flexShrink: 0,
+              overflowX: 'auto',
             }}
           >
-            S{i + 1}
-          </Box>
-        ))}
-        <ActionIcon
-          size="xs"
-          variant="subtle"
-          onClick={() => addScene()}
+            {project.scenes.map((scene, i) => (
+              <SortableSceneTab
+                key={scene.id}
+                sceneId={scene.id}
+                index={i}
+                isSelected={scene.id === selectedSceneId}
+                onSelect={() => selectScene(scene.id)}
+              />
+            ))}
+            <ActionIcon
+              size="xs"
+              variant="subtle"
+              onClick={() => addScene()}
           style={{ color: 'var(--text3)', flexShrink: 0 }}
         >
           <IconPlus size={14} />
         </ActionIcon>
-      </Box>
+          </Box>
+        </SortableContext>
+      </DndContext>
 
       {/* Script content */}
       <Box style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
