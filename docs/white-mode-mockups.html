@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SceneForge — White Mode Design Proposals</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;font-size:14px;background:#1a1a1a;color:#fff;min-height:100vh;padding:24px}
+
+h1{text-align:center;font-size:20px;font-weight:400;color:#888;margin-bottom:8px;letter-spacing:0.05em}
+h1 span{color:#fff}
+.sub{text-align:center;font-size:12px;color:#555;margin-bottom:32px}
+
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;max-width:1600px;margin:0 auto}
+@media(max-width:1400px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+
+.design-card{
+  background:#111;
+  border:1px solid #222;
+  border-radius:12px;
+  overflow:hidden;
+}
+.design-label{
+  padding:14px 16px 12px;
+  border-bottom:1px solid #222;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.design-name{font-size:13px;font-weight:500;color:#fff}
+.design-tag{font-size:10px;padding:2px 8px;border-radius:10px;background:#222;color:#888}
+.design-render{}
+
+/* ═══════════════════════════════════════════
+   DESIGN A: CLEAN STUDIO
+   ═══════════════════════════════════════════ */
+.design-a{--bg:#FAFAF9;--surface:#FFF;--border:#E5E5E3;--text:#1A1A1A;--text2:#6B6B6B;--text3:#A0A0A0;--accent:#D97706;--accent-dim:rgba(217,119,6,0.1);--shadow:0 1px 3px rgba(0,0,0,0.06);font-family:'DM Sans',sans-serif}
+.design-a body{background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+.design-a .titlebar{height:36px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px}
+.design-a .traffic{display:flex;gap:5px}
+.design-a .traffic span{width:11px;height:11px;border-radius:50%}
+.design-a .t-close{background:#EF4444}
+.design-a .t-min{background:#F59E0B}
+.design-a .t-max{background:#22C55E}
+.design-a .wordmark{font-family:'Playfair Display',serif;font-size:13px;color:var(--text2);flex:1;text-align:center}
+.design-a .wordmark b{color:var(--text);font-weight:500}
+.design-a .tb-right{display:flex;gap:6px}
+.design-a .tb-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.design-a .tb-btn:hover{border-color:var(--accent);color:var(--accent)}
+.design-a .tb-btn.accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.design-a .tb-btn.accent:hover{background:#B45309}
+.design-a .tb-divider{width:1px;height:14px;background:var(--border);margin:0 2px}
+.design-a .ai-dot{width:6px;height:6px;border-radius:50%;background:#22C55E;display:inline-block}
+.design-a .ai-label{font-size:10px;color:#22C55E;font-weight:500}
+.design-a .ai-status{display:flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:10px}
+
+.design-a .toolbar{height:40px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:6px}
+.design-a .tool-btn{background:none;border:1px solid transparent;color:var(--text3);padding:4px 9px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.design-a .tool-btn:hover{background:#F3F4F6;border-color:var(--border);color:var(--text2)}
+.design-a .tool-btn.active{background:#F3F4F6;border-color:var(--border);color:var(--text)}
+.design-a .scene-select{background:var(--surface);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:6px;font-size:12px;outline:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.design-a .view-toggle{display:flex;background:#F3F4F6;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.design-a .vt-btn{background:none;border:none;color:var(--text3);padding:4px 10px;font-size:11px;cursor:pointer}
+.design-a .vt-btn.active{background:#fff;color:var(--text)}
+.design-a .tool-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.design-a .zoom-val{font-size:11px;color:var(--text3);min-width:36px;text-align:center;font-family:'DM Mono',monospace}
+.design-a .zoom-btn{background:none;border:1px solid var(--border);color:var(--text3);width:24px;height:24px;border-radius:6px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.design-a .zoom-group{margin-left:auto;display:flex;align-items:center;gap:4px}
+
+.design-a .workspace{flex:1;display:flex;overflow:hidden}
+.design-a .sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.design-a .sidebar-header{height:38px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--border)}
+.design-a .sidebar-title{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.design-a .sidebar-close{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px}
+.design-a .script-area{flex:1;overflow-y:auto;padding:8px 0}
+.design-a .script-slug{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.04em;background:var(--accent-dim);padding:3px 10px;margin:10px 0 4px;display:block}
+.design-a .script-action{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);line-height:1.7;padding:0 10px}
+.design-a .script-char{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text);text-align:center;margin-top:8px}
+.design-a .script-dialog{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);text-align:center;max-width:200px;margin:0 auto;line-height:1.6}
+.design-a .script-paren{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:center;font-style:italic}
+.design-a .sidebar-ai-bar{border-top:1px solid var(--border);padding:8px 10px;display:flex;gap:6px;background:var(--bg)}
+.design-a .sidebar-ai-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--text);font-size:12px;outline:none;font-family:'DM Sans',sans-serif}
+.design-a .sidebar-ai-send{background:none;border:1px solid var(--border);color:var(--text3);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.design-a .sidebar-ai-send:hover{border-color:var(--accent);color:var(--accent)}
+
+.design-a .canvas{flex:1;overflow:auto;background:var(--bg);padding:24px}
+.design-a .scene-group{margin-bottom:28px}
+.design-a .scene-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.design-a .scene-chip{font-size:10px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;background:#F3F4F6;border:1px solid var(--border);color:var(--text2);padding:3px 8px;border-radius:10px;font-family:'DM Mono',monospace}
+.design-a .scene-name{font-size:12px;font-weight:500;color:var(--text2)}
+.design-a .scene-dur{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.design-a .scene-line{flex:1;height:1px;background:var(--border)}
+.design-a .scene-add-btn{background:none;border:1px solid var(--border);color:var(--text3);padding:2px 8px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.design-a .scene-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.design-a .panel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.design-a .panel-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+.design-a .panel-card:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.design-a .panel-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim)}
+.design-a .panel-frame{aspect-ratio:16/9;background:#F4F4F5;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.design-a .panel-num{position:absolute;top:4px;left:5px;font-family:'DM Mono',monospace;font-size:9px;color:#fff;background:rgba(0,0,0,0.5);padding:1px 5px;border-radius:2px}
+.design-a .panel-cam{position:absolute;bottom:4px;right:5px;font-size:9px;color:var(--accent);background:var(--accent-dim);padding:1px 5px;border-radius:2px;font-family:'DM Mono',monospace}
+.design-a .panel-badge{position:absolute;top:4px;right:5px;font-size:8px;padding:1px 5px;border-radius:2px;font-family:'DM Mono',monospace}
+.design-a .badge-ai{color:var(--accent);background:var(--accent-dim)}
+.design-a .badge-manual{color:var(--text3);background:#F3F4F6}
+.design-a .panel-meta{padding:7px 9px 9px}
+.design-a .panel-shot{font-size:11px;font-weight:500;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.design-a .panel-desc{font-size:10px;color:var(--text3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px}
+.design-a .panel-footer{display:flex;gap:4px;margin-top:5px}
+.design-a .panel-tag{font-size:9px;padding:1px 5px;border-radius:3px;background:#F3F4F6;color:var(--text3);font-family:'DM Mono',monospace}
+.design-a .add-panel-card{background:transparent;border:1px dashed var(--border);border-radius:8px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px}
+.design-a .add-panel-card:hover{border-color:var(--accent);background:var(--accent-dim)}
+.design-a .add-panel-icon{font-size:18px;color:var(--text3)}
+.design-a .add-panel-label{font-size:11px;color:var(--text3)}
+
+.design-a .right-panel{width:250px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.design-a .inspector-header{height:38px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--border)}
+.design-a .inspector-title{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.design-a .inspector-body{flex:1;overflow-y:auto;padding:14px}
+.design-a .insp-section{margin-bottom:16px}
+.design-a .insp-label{font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.design-a .insp-field{margin-bottom:8px}
+.design-a .insp-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border .15s}
+.design-a .insp-input:focus{border-color:var(--accent)}
+.design-a .insp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.design-a .mood-tags{display:flex;flex-wrap:wrap;gap:4px}
+.design-a .mood-tag{font-size:10px;padding:2px 7px;border-radius:4px;background:#F3F4F6;border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .15s}
+.design-a .mood-tag.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.design-a .insp-ai-btn{width:100%;padding:7px;background:var(--accent-dim);border:1px solid rgba(217,119,6,0.2);color:var(--accent);border-radius:6px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:4px}
+.design-a .insp-ai-btn:hover{background:rgba(217,119,6,0.18)}
+.design-a .insp-ai-btn.secondary{background:#F3F4F6;border-color:var(--border);color:var(--text2);margin-top:6px}
+.design-a .insp-ai-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.design-a .insp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 12px;gap:8px;text-align:center;height:100%}
+.design-a .insp-empty-icon{font-size:20px;color:var(--text3);margin-bottom:4px}
+.design-a .insp-empty-text{font-size:11px;color:var(--text3);line-height:1.6}
+.design-a .close-btn{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px}
+
+/* ═══════════════════════════════════════════
+   DESIGN B: EDITORIAL WARM
+   ═══════════════════════════════════════════ */
+.design-b{--bg:#F7F4F0;--surface:#FFFEFA;--border:#E0DCD4;--text:#2C2416;--text2:#6B5E4A;--text3:#A0907A;--accent:#C4933F;--accent-dim:rgba(196,147,63,0.1);--shadow:0 2px 8px rgba(44,36,22,0.06);font-family:'DM Sans',sans-serif}
+.design-b body{background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+.design-b .titlebar{height:36px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px;box-shadow:0 1px 0 rgba(44,36,22,0.03)}
+.design-b .traffic{display:flex;gap:5px}
+.design-b .traffic span{width:11px;height:11px;border-radius:50%}
+.design-b .t-close{background:#D97706}
+.design-b .t-min{background:#C4933F}
+.design-b .t-max{background:#8B7355}
+.design-b .wordmark{font-family:'Playfair Display',serif;font-size:14px;color:var(--text2);flex:1;text-align:center;letter-spacing:.02em}
+.design-b .wordmark b{color:var(--text);font-weight:500}
+.design-b .tb-right{display:flex;gap:6px}
+.design-b .tb-btn{background:none;border:1px solid var(--border);color:var(--text2);padding:3px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.design-b .tb-btn:hover{border-color:var(--accent);color:var(--accent)}
+.design-b .tb-btn.accent{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 1px 3px rgba(196,147,63,0.3)}
+.design-b .tb-btn.accent:hover{background:#A67B32}
+.design-b .tb-divider{width:1px;height:14px;background:var(--border);margin:0 2px}
+.design-b .ai-dot{width:6px;height:6px;border-radius:50%;background:#8B7355}
+.design-b .ai-label{font-size:10px;color:#8B7355;font-weight:500}
+.design-b .ai-status{display:flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(139,115,85,0.1);border:1px solid rgba(139,115,85,0.2);border-radius:10px}
+
+.design-b .toolbar{height:40px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:6px}
+.design-b .tool-btn{background:none;border:1px solid transparent;color:var(--text3);padding:4px 9px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.design-b .tool-btn:hover{background:#EDE8E2;border-color:var(--border);color:var(--text2)}
+.design-b .tool-btn.active{background:#EDE8E2;border-color:var(--border);color:var(--text)}
+.design-b .scene-select{background:var(--surface);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:6px;font-size:12px;outline:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.design-b .view-toggle{display:flex;background:#EDE8E2;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.design-b .vt-btn{background:none;border:none;color:var(--text3);padding:4px 10px;font-size:11px;cursor:pointer}
+.design-b .vt-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+.design-b .tool-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.design-b .zoom-val{font-size:11px;color:var(--text3);min-width:36px;text-align:center;font-family:'DM Mono',monospace}
+.design-b .zoom-btn{background:none;border:1px solid var(--border);color:var(--text3);width:24px;height:24px;border-radius:6px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.design-b .zoom-group{margin-left:auto;display:flex;align-items:center;gap:4px}
+
+.design-b .workspace{flex:1;display:flex;overflow:hidden}
+.design-b .sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.design-b .sidebar-header{height:38px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--border)}
+.design-b .sidebar-title{font-family:'Playfair Display',serif;font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
+.design-b .sidebar-close{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px}
+.design-b .script-area{flex:1;overflow-y:auto;padding:8px 0}
+.design-b .script-slug{font-family:'Playfair Display',serif;font-size:11px;color:var(--accent);letter-spacing:.02em;padding:3px 14px;margin:10px 0 4px;display:block;font-weight:500}
+.design-b .script-action{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);line-height:1.7;padding:0 14px}
+.design-b .script-char{font-family:'Playfair Display',serif;font-size:12px;font-weight:500;color:var(--text);text-align:center;margin-top:10px;font-style:italic}
+.design-b .script-dialog{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);text-align:center;max-width:200px;margin:0 auto;line-height:1.7}
+.design-b .script-paren{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:center;font-style:italic}
+.design-b .sidebar-ai-bar{border-top:1px solid var(--border);padding:8px 10px;display:flex;gap:6px;background:var(--bg)}
+.design-b .sidebar-ai-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--text);font-size:12px;outline:none;font-family:'DM Sans',sans-serif}
+.design-b .sidebar-ai-send{background:none;border:1px solid var(--border);color:var(--text3);width:28px;height:28px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.design-b .sidebar-ai-send:hover{border-color:var(--accent);color:var(--accent)}
+
+.design-b .canvas{flex:1;overflow:auto;background:var(--bg);padding:24px}
+.design-b .scene-group{margin-bottom:28px}
+.design-b .scene-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.design-b .scene-chip{font-size:10px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;background:var(--accent-dim);border:1px solid rgba(196,147,63,0.2);color:var(--accent);padding:3px 8px;border-radius:10px;font-family:'DM Mono',monospace}
+.design-b .scene-name{font-family:'Playfair Display',serif;font-size:13px;font-weight:500;color:var(--text)}
+.design-b .scene-dur{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.design-b .scene-line{flex:1;height:1px;background:var(--border)}
+.design-b .scene-add-btn{background:none;border:1px solid var(--border);color:var(--text3);padding:2px 8px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+.design-b .scene-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.design-b .panel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.design-b .panel-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+.design-b .panel-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(44,36,22,0.1)}
+.design-b .panel-card.selected{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-dim),0 4px 12px rgba(44,36,22,0.08)}
+.design-b .panel-frame{aspect-ratio:16/9;background:linear-gradient(135deg,#EDE8E2 0%,#E5DED4 100%);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.design-b .panel-num{position:absolute;top:4px;left:5px;font-family:'DM Mono',monospace;font-size:9px;color:#fff;background:rgba(44,36,22,0.6);padding:1px 5px;border-radius:2px}
+.design-b .panel-cam{position:absolute;bottom:4px;right:5px;font-size:9px;color:var(--accent);background:var(--accent-dim);padding:1px 5px;border-radius:2px;font-family:'DM Mono',monospace}
+.design-b .panel-badge{position:absolute;top:4px;right:5px;font-size:8px;padding:1px 5px;border-radius:2px;font-family:'DM Mono',monospace}
+.design-b .badge-ai{color:var(--accent);background:var(--accent-dim)}
+.design-b .badge-manual{color:var(--text3);background:#EDE8E2}
+.design-b .panel-meta{padding:8px 10px 10px}
+.design-b .panel-shot{font-size:11px;font-weight:500;color:var(--text);margin-bottom:2px;font-family:'DM Sans',sans-serif}
+.design-b .panel-desc{font-size:10px;color:var(--text3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px}
+.design-b .panel-footer{display:flex;gap:4px;margin-top:5px}
+.design-b .panel-tag{font-size:9px;padding:1px 5px;border-radius:3px;background:#EDE8E2;color:var(--text3);font-family:'DM Mono',monospace}
+.design-b .add-panel-card{background:transparent;border:1px dashed var(--border);border-radius:10px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px}
+.design-b .add-panel-card:hover{border-color:var(--accent);background:var(--accent-dim)}
+.design-b .add-panel-icon{font-size:18px;color:var(--text3)}
+.design-b .add-panel-label{font-size:11px;color:var(--text3)}
+
+.design-b .right-panel{width:250px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.design-b .inspector-header{height:38px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--border)}
+.design-b .inspector-title{font-family:'Playfair Display',serif;font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.06em;text-transform:uppercase}
+.design-b .inspector-body{flex:1;overflow-y:auto;padding:14px}
+.design-b .insp-section{margin-bottom:16px}
+.design-b .insp-label{font-size:10px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;font-family:'DM Sans',sans-serif}
+.design-b .insp-field{margin-bottom:8px}
+.design-b .insp-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border .15s}
+.design-b .insp-input:focus{border-color:var(--accent)}
+.design-b .insp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.design-b .mood-tags{display:flex;flex-wrap:wrap;gap:4px}
+.design-b .mood-tag{font-size:10px;padding:2px 7px;border-radius:4px;background:#EDE8E2;border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .15s}
+.design-b .mood-tag.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.design-b .insp-ai-btn{width:100%;padding:7px;background:var(--accent-dim);border:1px solid rgba(196,147,63,0.2);color:var(--accent);border-radius:6px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:4px}
+.design-b .insp-ai-btn:hover{background:rgba(196,147,63,0.18)}
+.design-b .insp-ai-btn.secondary{background:#EDE8E2;border-color:var(--border);color:var(--text2);margin-top:6px}
+.design-b .insp-ai-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.design-b .insp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 12px;gap:8px;text-align:center;height:100%}
+.design-b .insp-empty-icon{font-size:20px;color:var(--text3);margin-bottom:4px}
+.design-b .insp-empty-text{font-size:11px;color:var(--text3);line-height:1.6}
+.design-b .close-btn{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px}
+
+/* ═══════════════════════════════════════════
+   DESIGN C: MODERN MONOCHROME
+   ═══════════════════════════════════════════ */
+.design-c{--bg:#FFFFFF;--surface:#F5F5F5;--border:#D4D4D4;--text:#000;--text2:#525252;--text3:#A3A3A3;--accent:#F59E0B;--accent-dim:rgba(245,158,11,0.1);--shadow:0 2px 8px rgba(0,0,0,0.08);font-family:'DM Sans',sans-serif}
+.design-c body{background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+.design-c .titlebar{height:36px;background:#000;border-bottom:1px solid #222;display:flex;align-items:center;padding:0 12px;gap:8px}
+.design-c .traffic{display:flex;gap:5px}
+.design-c .traffic span{width:11px;height:11px;border-radius:50%}
+.design-c .t-close{background:#EF4444}
+.design-c .t-min{background:#F59E0B}
+.design-c .t-max{background:#22C55E}
+.design-c .wordmark{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:#666;flex:1;text-align:center;letter-spacing:.02em;text-transform:uppercase}
+.design-c .wordmark b{color:#fff;font-weight:600}
+.design-c .tb-right{display:flex;gap:6px}
+.design-c .tb-btn{background:none;border:1px solid #333;color:#888;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:500}
+.design-c .tb-btn:hover{border-color:#fff;color:#fff}
+.design-c .tb-btn.accent{background:var(--accent);color:#000;border-color:var(--accent)}
+.design-c .tb-btn.accent:hover{background:#D97706}
+.design-c .tb-divider{width:1px;height:14px;background:#333;margin:0 2px}
+.design-c .ai-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.design-c .ai-label{font-size:10px;color:var(--accent);font-weight:500}
+.design-c .ai-status{display:flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid #333}
+
+.design-c .toolbar{height:40px;background:#0A0A0A;border-bottom:1px solid #222;display:flex;align-items:center;padding:0 14px;gap:6px}
+.design-c .tool-btn{background:none;border:1px solid transparent;color:#666;padding:4px 9px;border-radius:4px;font-size:12px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:500}
+.design-c .tool-btn:hover{background:#1a1a1a;border-color:#333;color:#fff}
+.design-c .tool-btn.active{background:#1a1a1a;border-color:#444;color:#fff}
+.design-c .scene-select{background:#0A0A0A;border:1px solid #333;color:#888;padding:4px 8px;border-radius:4px;font-size:12px;outline:none;cursor:pointer;font-family:'DM Sans',sans-serif}
+.design-c .view-toggle{display:flex;background:#0A0A0A;border:1px solid #333;border-radius:4px;overflow:hidden}
+.design-c .vt-btn{background:none;border:none;color:#666;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:500}
+.design-c .vt-btn.active{background:#222;color:#fff}
+.design-c .tool-sep{width:1px;height:18px;background:#222;margin:0 4px}
+.design-c .zoom-val{font-size:11px;color:#666;min-width:36px;text-align:center;font-family:'DM Mono',monospace}
+.design-c .zoom-btn{background:none;border:1px solid #333;color:#666;width:24px;height:24px;border-radius:4px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.design-c .zoom-group{margin-left:auto;display:flex;align-items:center;gap:4px}
+
+.design-c .workspace{flex:1;display:flex;overflow:hidden}
+.design-c .sidebar{width:280px;background:#0A0A0A;border-right:1px solid #222;display:flex;flex-direction:column;flex-shrink:0}
+.design-c .sidebar-header{height:38px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #222}
+.design-c .sidebar-title{font-size:10px;font-weight:600;color:#555;letter-spacing:.1em;text-transform:uppercase}
+.design-c .sidebar-close{margin-left:auto;background:none;border:none;color:#444;cursor:pointer;font-size:13px;padding:2px}
+.design-c .script-area{flex:1;overflow-y:auto;padding:8px 0}
+.design-c .script-slug{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:.04em;background:rgba(245,158,11,0.08);padding:3px 10px;margin:10px 0 4px;display:block;font-weight:500;border-left:2px solid var(--accent)}
+.design-c .script-action{font-family:'DM Mono',monospace;font-size:11px;color:#666;line-height:1.7;padding:0 10px 0 12px}
+.design-c .script-char{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:#fff;text-align:center;margin-top:10px;text-transform:uppercase;letter-spacing:.05em}
+.design-c .script-dialog{font-family:'DM Mono',monospace;font-size:11px;color:#fff;text-align:center;max-width:200px;margin:0 auto;line-height:1.6;border-left:1px solid #333;padding-left:8px}
+.design-c .script-paren{font-family:'DM Mono',monospace;font-size:10px;color:#444;text-align:center;font-style:italic}
+.design-c .sidebar-ai-bar{border-top:1px solid #222;padding:8px 10px;display:flex;gap:6px;background:#050505}
+.design-c .sidebar-ai-input{flex:1;background:#0A0A0A;border:1px solid #333;border-radius:4px;padding:6px 9px;color:#fff;font-size:12px;outline:none;font-family:'DM Sans',sans-serif}
+.design-c .sidebar-ai-send{background:none;border:1px solid #333;color:#555;width:28px;height:28px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.design-c .sidebar-ai-send:hover{border-color:var(--accent);color:var(--accent)}
+
+.design-c .canvas{flex:1;overflow:auto;background:var(--bg);padding:24px}
+.design-c .scene-group{margin-bottom:28px}
+.design-c .scene-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.design-c .scene-chip{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;background:#000;color:#fff;padding:3px 8px;border-radius:3px;font-family:'DM Mono',monospace}
+.design-c .scene-name{font-size:12px;font-weight:600;color:var(--text);text-transform:uppercase;letter-spacing:.03em}
+.design-c .scene-dur{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.design-c .scene-line{flex:1;height:2px;background:#000}
+.design-c .scene-add-btn{background:none;border:1px solid var(--border);color:var(--text3);padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:500}
+.design-c .scene-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.design-c .panel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.design-c .panel-card{background:#000;border:1px solid #222;border-radius:0;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:4px 4px 0 #E5E5E3}
+.design-c .panel-card:hover{border-color:var(--accent);transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--accent-dim)}
+.design-c .panel-card.selected{border-color:var(--accent);box-shadow:6px 6px 0 var(--accent)}
+.design-c .panel-frame{aspect-ratio:16/9;background:#1a1a1a;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.design-c .panel-num{position:absolute;top:4px;left:5px;font-family:'DM Mono',monospace;font-size:9px;color:#000;background:#fff;padding:1px 5px;border-radius:0}
+.design-c .panel-cam{position:absolute;bottom:4px;right:5px;font-size:9px;color:var(--accent);background:rgba(245,158,11,0.15);padding:1px 5px;border-radius:0;font-family:'DM Mono',monospace}
+.design-c .panel-badge{position:absolute;top:4px;right:5px;font-size:8px;padding:1px 5px;border-radius:0;font-family:'DM Mono',monospace}
+.design-c .badge-ai{color:var(--accent);background:rgba(245,158,11,0.15)}
+.design-c .badge-manual{color:#666;background:#222}
+.design-c .panel-meta{padding:7px 9px 9px;background:#000}
+.design-c .panel-shot{font-size:11px;font-weight:600;color:#fff;margin-bottom:2px;text-transform:uppercase;letter-spacing:.03em}
+.design-c .panel-desc{font-size:10px;color:#555;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:26px}
+.design-c .panel-footer{display:flex;gap:4px;margin-top:5px}
+.design-c .panel-tag{font-size:9px;padding:1px 5px;border-radius:0;background:#111;color:#555;font-family:'DM Mono',monospace}
+.design-c .add-panel-card{background:transparent;border:1px solid var(--border);border-radius:0;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:120px}
+.design-c .add-panel-card:hover{border-color:var(--accent);background:var(--accent-dim)}
+.design-c .add-panel-icon{font-size:18px;color:var(--text3)}
+.design-c .add-panel-label{font-size:11px;color:var(--text3)}
+
+.design-c .right-panel{width:250px;background:#0A0A0A;border-left:1px solid #222;display:flex;flex-direction:column;flex-shrink:0}
+.design-c .inspector-header{height:38px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid #222}
+.design-c .inspector-title{font-size:10px;font-weight:600;color:#555;letter-spacing:.1em;text-transform:uppercase}
+.design-c .inspector-body{flex:1;overflow-y:auto;padding:14px}
+.design-c .insp-section{margin-bottom:16px}
+.design-c .insp-label{font-size:10px;color:#555;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:600}
+.design-c .insp-field{margin-bottom:8px}
+.design-c .insp-input{width:100%;background:#0A0A0A;border:1px solid #333;color:#fff;padding:5px 8px;border-radius:4px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:border .15s}
+.design-c .insp-input:focus{border-color:var(--accent)}
+.design-c .insp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.design-c .mood-tags{display:flex;flex-wrap:wrap;gap:4px}
+.design-c .mood-tag{font-size:10px;padding:2px 7px;border-radius:0;background:#111;border:1px solid #333;color:#666;cursor:pointer;transition:all .15s;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.design-c .mood-tag.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.design-c .insp-ai-btn{width:100%;padding:7px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--accent);border-radius:0;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.05em;transition:all .15s;margin-top:4px}
+.design-c .insp-ai-btn:hover{background:rgba(245,158,11,0.2)}
+.design-c .insp-ai-btn.secondary{background:#111;border-color:#333;color:#666;margin-top:6px}
+.design-c .insp-ai-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.design-c .insp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 12px;gap:8px;text-align:center;height:100%}
+.design-c .insp-empty-icon{font-size:20px;color:#333;margin-bottom:4px}
+.design-c .insp-empty-text{font-size:11px;color:#444;line-height:1.6}
+.design-c .close-btn{margin-left:auto;background:none;border:none;color:#444;cursor:pointer;font-size:13px;padding:2px}
+
+/* ═══════════════════════════════════════════
+   DESIGN D: SOFT PAPER
+   ═══════════════════════════════════════════ */
+.design-d{--bg:#F9F7F4;--surface:#FFFFFF;--border:#EAE7E1;--text:#3D3A36;--text2:#7A756E;--text3:#B0AA9F;--accent:#D4A853;--accent-dim:rgba(212,168,83,0.1);--shadow:0 1px 4px rgba(61,58,54,0.04);font-family:'DM Sans',sans-serif}
+.design-d body{background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex;flex-direction:column}
+.design-d .titlebar{height:36px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px}
+.design-d .traffic{display:flex;gap:5px}
+.design-d .traffic span{width:11px;height:11px;border-radius:50%}
+.design-d .t-close{background:#D97706;opacity:0.7}
+.design-d .t-min{background:#D4A853;opacity:0.7}
+.design-d .t-max{background:#8B7355;opacity:0.7}
+.design-d .wordmark{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:300;color:var(--text2);flex:1;text-align:center;letter-spacing:.08em}
+.design-d .wordmark b{color:var(--text);font-weight:300}
+.design-d .tb-right{display:flex;gap:6px}
+.design-d .tb-btn{background:none;border:1px solid transparent;color:var(--text3);padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:300}
+.design-d .tb-btn:hover{border-color:var(--border);color:var(--text2)}
+.design-d .tb-btn.accent{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:400}
+.design-d .tb-btn.accent:hover{background:#C4973F}
+.design-d .tb-divider{width:1px;height:14px;background:var(--border);margin:0 2px}
+.design-d .ai-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.design-d .ai-label{font-size:10px;color:var(--accent);font-weight:400}
+.design-d .ai-status{display:flex;align-items:center;gap:4px;padding:2px 10px;background:var(--accent-dim);border:1px solid rgba(212,168,83,0.15);border-radius:20px}
+
+.design-d .toolbar{height:40px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:6px}
+.design-d .tool-btn{background:none;border:1px solid transparent;color:var(--text3);padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:300}
+.design-d .tool-btn:hover{background:var(--bg);border-color:var(--border);color:var(--text2)}
+.design-d .tool-btn.active{background:var(--bg);border-color:var(--border);color:var(--text)}
+.design-d .scene-select{background:var(--surface);border:1px solid var(--border);color:var(--text2);padding:4px 8px;border-radius:20px;font-size:12px;outline:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:300}
+.design-d .view-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+.design-d .vt-btn{background:none;border:none;color:var(--text3);padding:4px 12px;font-size:11px;cursor:pointer;font-weight:300;border-radius:20px}
+.design-d .vt-btn.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.design-d .tool-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
+.design-d .zoom-val{font-size:11px;color:var(--text3);min-width:36px;text-align:center;font-family:'DM Mono',monospace;font-weight:300}
+.design-d .zoom-btn{background:none;border:1px solid var(--border);color:var(--text3);width:24px;height:24px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:300}
+.design-d .zoom-group{margin-left:auto;display:flex;align-items:center;gap:4px}
+
+.design-d .workspace{flex:1;display:flex;overflow:hidden}
+.design-d .sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.design-d .sidebar-header{height:38px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border)}
+.design-d .sidebar-title{font-size:10px;font-weight:400;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.design-d .sidebar-close{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px}
+.design-d .script-area{flex:1;overflow-y:auto;padding:8px 0}
+.design-d .script-slug{font-family:'DM Sans',sans-serif;font-size:10px;color:var(--accent);letter-spacing:.04em;padding:3px 16px;margin:12px 0 6px;display:block;font-weight:400}
+.design-d .script-action{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);line-height:1.9;padding:0 16px;font-weight:300}
+.design-d .script-char{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:400;color:var(--text);text-align:center;margin-top:12px;letter-spacing:.08em}
+.design-d .script-dialog{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);text-align:center;max-width:200px;margin:0 auto;line-height:1.9;font-weight:300}
+.design-d .script-paren{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text3);text-align:center;font-style:italic;font-weight:300}
+.design-d .sidebar-ai-bar{border-top:1px solid var(--border);padding:10px 12px;display:flex;gap:8px;background:var(--bg)}
+.design-d .sidebar-ai-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:7px 12px;color:var(--text);font-size:12px;outline:none;font-family:'DM Sans',sans-serif;font-weight:300}
+.design-d .sidebar-ai-send{background:none;border:1px solid var(--border);color:var(--text3);width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s}
+.design-d .sidebar-ai-send:hover{border-color:var(--accent);color:var(--accent)}
+
+.design-d .canvas{flex:1;overflow:auto;background:var(--bg);padding:28px}
+.design-d .scene-group{margin-bottom:32px}
+.design-d .scene-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.design-d .scene-chip{font-size:10px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;background:var(--bg);border:1px solid var(--border);color:var(--text3);padding:3px 10px;border-radius:20px;font-family:'DM Mono',monospace}
+.design-d .scene-name{font-size:13px;font-weight:300;color:var(--text);letter-spacing:.02em}
+.design-d .scene-dur{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;font-weight:300}
+.design-d .scene-line{flex:1;height:1px;background:var(--border)}
+.design-d .scene-add-btn{background:none;border:1px solid var(--border);color:var(--text3);padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:300}
+.design-d .scene-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.design-d .panel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.design-d .panel-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+.design-d .panel-card:hover{border-color:rgba(212,168,83,0.3);transform:translateY(-2px);box-shadow:0 4px 16px rgba(61,58,54,0.08)}
+.design-d .panel-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.design-d .panel-frame{aspect-ratio:16/9;background:linear-gradient(135deg,#F4F1EC 0%,#EDE9E3 100%);position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.design-d .panel-num{position:absolute;top:5px;left:6px;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);background:rgba(255,255,255,0.8);padding:1px 5px;border-radius:10px}
+.design-d .panel-cam{position:absolute;bottom:5px;right:5px;font-size:9px;color:var(--accent);background:rgba(255,255,255,0.9);padding:1px 6px;border-radius:10px;font-family:'DM Mono',monospace}
+.design-d .panel-badge{position:absolute;top:5px;right:5px;font-size:8px;padding:1px 5px;border-radius:10px;font-family:'DM Mono',monospace}
+.design-d .badge-ai{color:var(--accent);background:rgba(255,255,255,0.9)}
+.design-d .badge-manual{color:var(--text3);background:rgba(255,255,255,0.9)}
+.design-d .panel-meta{padding:10px 12px 12px}
+.design-d .panel-shot{font-size:12px;font-weight:400;color:var(--text);margin-bottom:3px;letter-spacing:.01em}
+.design-d .panel-desc{font-size:11px;color:var(--text3);line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:30px;font-weight:300}
+.design-d .panel-footer{display:flex;gap:5px;margin-top:6px}
+.design-d .panel-tag{font-size:9px;padding:2px 6px;border-radius:10px;background:var(--bg);color:var(--text3);font-family:'DM Mono',monospace;font-weight:300}
+.design-d .add-panel-card{background:transparent;border:1px dashed var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:130px}
+.design-d .add-panel-card:hover{border-color:var(--accent);background:var(--accent-dim)}
+.design-d .add-panel-icon{font-size:18px;color:var(--text3)}
+.design-d .add-panel-label{font-size:11px;color:var(--text3)}
+
+.design-d .right-panel{width:250px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.design-d .inspector-header{height:38px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border)}
+.design-d .inspector-title{font-size:10px;font-weight:400;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.design-d .inspector-body{flex:1;overflow-y:auto;padding:14px}
+.design-d .insp-section{margin-bottom:18px}
+.design-d .insp-label{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:400}
+.design-d .insp-field{margin-bottom:10px}
+.design-d .insp-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:20px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;font-weight:300}
+.design-d .insp-input:focus{border-color:var(--accent)}
+.design-d .insp-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.design-d .mood-tags{display:flex;flex-wrap:wrap;gap:5px}
+.design-d .mood-tag{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .15s;font-weight:300}
+.design-d .mood-tag.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.design-d .insp-ai-btn{width:100%;padding:8px;background:var(--accent-dim);border:1px solid rgba(212,168,83,0.2);color:var(--accent);border-radius:20px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:400;transition:all .15s;margin-top:4px}
+.design-d .insp-ai-btn:hover{background:rgba(212,168,83,0.18)}
+.design-d .insp-ai-btn.secondary{background:var(--bg);border-color:var(--border);color:var(--text2);margin-top:6px}
+.design-d .insp-ai-btn.secondary:hover{border-color:var(--accent);color:var(--accent)}
+.design-d .insp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 12px;gap:8px;text-align:center;height:100%}
+.design-d .insp-empty-icon{font-size:20px;color:var(--text3);margin-bottom:4px}
+.design-d .insp-empty-text{font-size:11px;color:var(--text3);line-height:1.7;font-weight:300}
+.design-d .close-btn{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px}
+
+/* Shared placeholder frame content */
+.frame-placeholder{width:80%;height:60%;border:2px dashed #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.frame-placeholder-text{font-size:10px;color:#aaa;font-family:'DM Mono',monospace}
+</style>
+</head>
+<body>
+<h1>SceneForge <span>White Mode — 4 Design Directions</span></h1>
+<p class="sub">전체 UI 레이아웃 Mockup. 클릭하여 확대.</p>
+
+<div class="grid">
+
+<!-- ═══ DESIGN A: CLEAN STUDIO ═══ -->
+<div class="design-card">
+<div class="design-label">
+<span class="design-name">A. Clean Studio</span>
+<span class="design-tag">Minimal / Warm</span>
+</div>
+<div class="design-render">
+<div class="design-a">
+<div class="titlebar">
+<div class="traffic"><span class="t-close"></span><span class="t-min"></span><span class="t-max"></span></div>
+<div class="wordmark">Scene<b>Forge</b></div>
+<div class="tb-right">
+<div class="ai-status"><span class="ai-dot"></span><span class="ai-label">Claude Code</span></div>
+<div class="tb-divider"></div>
+<button class="tb-btn">시나리오</button>
+<button class="tb-btn">내보내기</button>
+<button class="tb-btn accent">AI 생성</button>
+</div>
+</div>
+
+<div class="toolbar">
+<select class="scene-select"><option>전체 장면</option><option>S1 — 옥상</option></select>
+<div class="tool-sep"></div>
+<button class="tool-btn">+ 장면 추가</button>
+<button class="tool-btn active">+ 패널 추가</button>
+<div class="tool-sep"></div>
+<div class="view-toggle">
+<button class="vt-btn active">그리드</button>
+<button class="vt-btn">스트립</button>
+<button class="vt-btn">슬라이드</button>
+</div>
+<div class="tool-sep"></div>
+<button class="tool-btn">속성 패널</button>
+<div class="zoom-group">
+<button class="zoom-btn">−</button>
+<span class="zoom-val">100%</span>
+<button class="zoom-btn">+</button>
+</div>
+</div>
+
+<div class="workspace">
+<div class="sidebar">
+<div class="sidebar-header">
+<span class="sidebar-title">시나리오</span>
+<button class="sidebar-close">✕</button>
+</div>
+<div class="script-area">
+<div class="script-slug">INT. 고등학교 옥상 — 저녁</div>
+<div class="script-action">노을이 지는 하늘. 준혁이 올라온다.</div>
+<div class="script-char">준혁</div>
+<div class="script-dialog">야, 여기서 또 숨어 있었어?</div>
+<div class="script-action">미소도 올라온다. 이어폰을 꽂은 채.</div>
+<div class="script-slug">INT. 교실 — 낮</div>
+<div class="script-action">수업 중. 미소는 창밖을 멍하니 바라본다.</div>
+</div>
+<div class="sidebar-ai-bar">
+<input class="sidebar-ai-input" placeholder="시나리오 수정 요청...">
+<button class="sidebar-ai-send">✦</button>
+</div>
+</div>
+
+<div class="canvas">
+<div class="scene-group">
+<div class="scene-row">
+<span class="scene-chip">S1</span>
+<span class="scene-name">옥상 (저녁)</span>
+<span class="scene-dur">19s</span>
+<div class="scene-line"></div>
+<button class="scene-add-btn">+ 패널</button>
+</div>
+<div class="panel-grid">
+<div class="panel-card selected">
+<div class="panel-frame">
+<span class="panel-num">01</span>
+<span class="panel-cam">EWS</span>
+<span class="panel-badge badge-ai">AI</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">EWS — 익스트림 와이드</div>
+<div class="panel-desc">노을진 서울 전경. 미소의 실루엣.</div>
+<div class="panel-footer"><span class="panel-tag">S1-01</span><span class="panel-tag">4s</span></div>
+</div>
+</div>
+<div class="panel-card">
+<div class="panel-frame">
+<span class="panel-num">02</span>
+<span class="panel-cam">CU</span>
+<span class="panel-badge badge-ai">AI</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">CU — 클로즈업</div>
+<div class="panel-desc">눈 감은 미소. 노을빛이 뺨에 반사된다.</div>
+<div class="panel-footer"><span class="panel-tag">S1-02</span><span class="panel-tag">3s</span></div>
+</div>
+</div>
+<div class="panel-card">
+<div class="panel-frame">
+<span class="panel-num">03</span>
+<span class="panel-cam">MS</span>
+<span class="panel-badge badge-manual">수동</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">MS — 미디엄</div>
+<div class="panel-desc">삐걱이는 문. 준혁이 올라온다.</div>
+<div class="panel-footer"><span class="panel-tag">S1-03</span><span class="panel-tag">2s</span></div>
+</div>
+</div>
+<div class="add-panel-card">
+<div class="add-panel-icon">+</div>
+<div class="add-panel-label">패널 추가</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="right-panel">
+<div class="inspector-header">
+<span class="inspector-title">속성</span>
+<button class="close-btn">✕</button>
+</div>
+<div class="inspector-body">
+<div class="insp-section">
+<div class="insp-label">프레임</div>
+<div class="insp-row">
+<div class="insp-field"><input class="insp-input" value="CU" placeholder="샷"></div>
+<div class="insp-field"><input class="insp-input" value="3s" placeholder="시간"></div>
+</div>
+<div class="insp-field"><input class="insp-input" placeholder="카메라 무브먼트"></div>
+</div>
+<div class="insp-section">
+<div class="insp-label">내용</div>
+<div class="insp-field"><input class="insp-input" value="눈 감은 미소. 노을빛이 뺨에 반사된다." placeholder="장면 설명"></div>
+<div class="insp-field"><input class="insp-input" value="아이스크림 사왔지?" placeholder="대사"></div>
+<div class="insp-field"><input class="insp-input" value="도심 소음" placeholder="사운드"></div>
+</div>
+<div class="insp-section">
+<div class="insp-label">분위기</div>
+<div class="mood-tags">
+<span class="mood-tag on">감성적</span>
+<span class="mood-tag on">황금빛</span>
+<span class="mood-tag">긴장감</span>
+<span class="mood-tag">유머</span>
+<span class="mood-tag">설렘</span>
+<span class="mood-tag">슬픔</span>
+</div>
+</div>
+<div class="insp-section">
+<div class="insp-ai-btn">✦ 이 패널 AI 재생성</div>
+<button class="insp-ai-btn secondary">✦ 설명 자동 완성</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ═══ DESIGN B: EDITORIAL WARM ═══ -->
+<div class="design-card">
+<div class="design-label">
+<span class="design-name">B. Editorial Warm</span>
+<span class="design-tag">Literary / Sophisticated</span>
+</div>
+<div class="design-render">
+<div class="design-b">
+<div class="titlebar">
+<div class="traffic"><span class="t-close"></span><span class="t-min"></span><span class="t-max"></span></div>
+<div class="wordmark">Scene<b>Forge</b></div>
+<div class="tb-right">
+<div class="ai-status"><span class="ai-dot"></span><span class="ai-label">Claude Code</span></div>
+<div class="tb-divider"></div>
+<button class="tb-btn">시나리오</button>
+<button class="tb-btn">내보내기</button>
+<button class="tb-btn accent">AI 생성</button>
+</div>
+</div>
+
+<div class="toolbar">
+<select class="scene-select"><option>전체 장면</option><option>S1 — 옥상</option></select>
+<div class="tool-sep"></div>
+<button class="tool-btn">+ 장면 추가</button>
+<button class="tool-btn active">+ 패널 추가</button>
+<div class="tool-sep"></div>
+<div class="view-toggle">
+<button class="vt-btn active">그리드</button>
+<button class="vt-btn">스트립</button>
+<button class="vt-btn">슬라이드</button>
+</div>
+<div class="tool-sep"></div>
+<button class="tool-btn">속성 패널</button>
+<div class="zoom-group">
+<button class="zoom-btn">−</button>
+<span class="zoom-val">100%</span>
+<button class="zoom-btn">+</button>
+</div>
+</div>
+
+<div class="workspace">
+<div class="sidebar">
+<div class="sidebar-header">
+<span class="sidebar-title">시나리오</span>
+<button class="sidebar-close">✕</button>
+</div>
+<div class="script-area">
+<div class="script-slug">INT. 고등학교 옥상 — 저녁</div>
+<div class="script-action">노을이 지는 하늘. 준혁이 올라온다.</div>
+<div class="script-char">준혁</div>
+<div class="script-dialog">야, 여기서 또 숨어 있었어?</div>
+<div class="script-action">미소도 올라온다. 이어폰을 꽂은 채.</div>
+<div class="script-slug">INT. 교실 — 낮</div>
+<div class="script-action">수업 중. 미소는 창밖을 멍하니 바라본다.</div>
+</div>
+<div class="sidebar-ai-bar">
+<input class="sidebar-ai-input" placeholder="시나리오 수정 요청...">
+<button class="sidebar-ai-send">✦</button>
+</div>
+</div>
+
+<div class="canvas">
+<div class="scene-group">
+<div class="scene-row">
+<span class="scene-chip">S1</span>
+<span class="scene-name">옥상 (저녁)</span>
+<span class="scene-dur">19s</span>
+<div class="scene-line"></div>
+<button class="scene-add-btn">+ 패널</button>
+</div>
+<div class="panel-grid">
+<div class="panel-card selected">
+<div class="panel-frame">
+<span class="panel-num">01</span>
+<span class="panel-cam">EWS</span>
+<span class="panel-badge badge-ai">AI</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">EWS — 익스트림 와이드</div>
+<div class="panel-desc">노을진 서울 전경. 미소의 실루엣.</div>
+<div class="panel-footer"><span class="panel-tag">S1-01</span><span class="panel-tag">4s</span></div>
+</div>
+</div>
+<div class="panel-card">
+<div class="panel-frame">
+<span class="panel-num">02</span>
+<span class="panel-cam">CU</span>
+<span class="panel-badge badge-ai">AI</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">CU — 클로즈업</div>
+<div class="panel-desc">눈 감은 미소. 노을빛이 뺨에 반사된다.</div>
+<div class="panel-footer"><span class="panel-tag">S1-02</span><span class="panel-tag">3s</span></div>
+</div>
+</div>
+<div class="panel-card">
+<div class="panel-frame">
+<span class="panel-num">03</span>
+<span class="panel-cam">MS</span>
+<span class="panel-badge badge-manual">수동</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">MS — 미디엄</div>
+<div class="panel-desc">삐걱이는 문. 준혁이 올라온다.</div>
+<div class="panel-footer"><span class="panel-tag">S1-03</span><span class="panel-tag">2s</span></div>
+</div>
+</div>
+<div class="add-panel-card">
+<div class="add-panel-icon">+</div>
+<div class="add-panel-label">패널 추가</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="right-panel">
+<div class="inspector-header">
+<span class="inspector-title">속성</span>
+<button class="close-btn">✕</button>
+</div>
+<div class="inspector-body">
+<div class="insp-section">
+<div class="insp-label">프레임</div>
+<div class="insp-row">
+<div class="insp-field"><input class="insp-input" value="CU" placeholder="샷"></div>
+<div class="insp-field"><input class="insp-input" value="3s" placeholder="시간"></div>
+</div>
+<div class="insp-field"><input class="insp-input" placeholder="카메라 무브먼트"></div>
+</div>
+<div class="insp-section">
+<div class="insp-label">내용</div>
+<div class="insp-field"><input class="insp-input" value="눈 감은 미소. 노을빛이 뺨에 반사된다." placeholder="장면 설명"></div>
+<div class="insp-field"><input class="insp-input" value="아이스크림 사왔지?" placeholder="대사"></div>
+<div class="insp-field"><input class="insp-input" value="도심 소음" placeholder="사운드"></div>
+</div>
+<div class="insp-section">
+<div class="insp-label">분위기</div>
+<div class="mood-tags">
+<span class="mood-tag on">감성적</span>
+<span class="mood-tag on">황금빛</span>
+<span class="mood-tag">긴장감</span>
+<span class="mood-tag">유머</span>
+<span class="mood-tag">설렘</span>
+<span class="mood-tag">슬픔</span>
+</div>
+</div>
+<div class="insp-section">
+<div class="insp-ai-btn">✦ 이 패널 AI 재생성</div>
+<button class="insp-ai-btn secondary">✦ 설명 자동 완성</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ═══ DESIGN C: MODERN MONOCHROME ═══ -->
+<div class="design-card">
+<div class="design-label">
+<span class="design-name">C. Modern Monochrome</span>
+<span class="design-tag">Bold / Sharp</span>
+</div>
+<div class="design-render">
+<div class="design-c">
+<div class="titlebar">
+<div class="traffic"><span class="t-close"></span><span class="t-min"></span><span class="t-max"></span></div>
+<div class="wordmark">Scene<b>Forge</b></div>
+<div class="tb-right">
+<div class="ai-status"><span class="ai-dot"></span><span class="ai-label">Claude Code</span></div>
+<div class="tb-divider"></div>
+<button class="tb-btn">시나리오</button>
+<button class="tb-btn">내보내기</button>
+<button class="tb-btn accent">AI 생성</button>
+</div>
+</div>
+
+<div class="toolbar">
+<select class="scene-select"><option>전체 장면</option><option>S1 — 옥상</option></select>
+<div class="tool-sep"></div>
+<button class="tool-btn">+ 장면 추가</button>
+<button class="tool-btn active">+ 패널 추가</button>
+<div class="tool-sep"></div>
+<div class="view-toggle">
+<button class="vt-btn active">그리드</button>
+<button class="vt-btn">스트립</button>
+<button class="vt-btn">슬라이드</button>
+</div>
+<div class="tool-sep"></div>
+<button class="tool-btn">속성 패널</button>
+<div class="zoom-group">
+<button class="zoom-btn">−</button>
+<span class="zoom-val">100%</span>
+<button class="zoom-btn">+</button>
+</div>
+</div>
+
+<div class="workspace">
+<div class="sidebar">
+<div class="sidebar-header">
+<span class="sidebar-title">시나리오</span>
+<button class="sidebar-close">✕</button>
+</div>
+<div class="script-area">
+<div class="script-slug">INT. 고등학교 옥상 — 저녁</div>
+<div class="script-action">노을이 지는 하늘. 준혁이 올라온다.</div>
+<div class="script-char">준혁</div>
+<div class="script-dialog">야, 여기서 또 숨어 있었어?</div>
+<div class="script-action">미소도 올라온다. 이어폰을 꽂은 채.</div>
+<div class="script-slug">INT. 교실 — 낮</div>
+<div class="script-action">수업 중. 미소는 창밖을 멍하니 바라본다.</div>
+</div>
+<div class="sidebar-ai-bar">
+<input class="sidebar-ai-input" placeholder="시나리오 수정 요청...">
+<button class="sidebar-ai-send">✦</button>
+</div>
+</div>
+
+<div class="canvas">
+<div class="scene-group">
+<div class="scene-row">
+<span class="scene-chip">S1</span>
+<span class="scene-name">옥상 (저녁)</span>
+<span class="scene-dur">19s</span>
+<div class="scene-line"></div>
+<button class="scene-add-btn">+ 패널</button>
+</div>
+<div class="panel-grid">
+<div class="panel-card selected">
+<div class="panel-frame">
+<span class="panel-num">01</span>
+<span class="panel-cam">EWS</span>
+<span class="panel-badge badge-ai">AI</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">EWS — 익스트림 와이드</div>
+<div class="panel-desc">노을진 서울 전경. 미소의 실루엣.</div>
+<div class="panel-footer"><span class="panel-tag">S1-01</span><span class="panel-tag">4s</span></div>
+</div>
+</div>
+<div class="panel-card">
+<div class="panel-frame">
+<span class="panel-num">02</span>
+<span class="panel-cam">CU</span>
+<span class="panel-badge badge-ai">AI</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">CU — 클로즈업</div>
+<div class="panel-desc">눈 감은 미소. 노을빛이 뺨에 반사된다.</div>
+<div class="panel-footer"><span class="panel-tag">S1-02</span><span class="panel-tag">3s</span></div>
+</div>
+</div>
+<div class="panel-card">
+<div class="panel-frame">
+<span class="panel-num">03</span>
+<span class="panel-cam">MS</span>
+<span class="panel-badge badge-manual">수동</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">MS — 미디엄</div>
+<div class="panel-desc">삐걱이는 문. 준혁이 올라온다.</div>
+<div class="panel-footer"><span class="panel-tag">S1-03</span><span class="panel-tag">2s</span></div>
+</div>
+</div>
+<div class="add-panel-card">
+<div class="add-panel-icon">+</div>
+<div class="add-panel-label">패널 추가</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="right-panel">
+<div class="inspector-header">
+<span class="inspector-title">속성</span>
+<button class="close-btn">✕</button>
+</div>
+<div class="inspector-body">
+<div class="insp-section">
+<div class="insp-label">프레임</div>
+<div class="insp-row">
+<div class="insp-field"><input class="insp-input" value="CU" placeholder="샷"></div>
+<div class="insp-field"><input class="insp-input" value="3s" placeholder="시간"></div>
+</div>
+<div class="insp-field"><input class="insp-input" placeholder="카메라 무브먼트"></div>
+</div>
+<div class="insp-section">
+<div class="insp-label">내용</div>
+<div class="insp-field"><input class="insp-input" value="눈 감은 미소. 노을빛이 뺨에 반사된다." placeholder="장면 설명"></div>
+<div class="insp-field"><input class="insp-input" value="아이스크림 사왔지?" placeholder="대사"></div>
+<div class="insp-field"><input class="insp-input" value="도심 소음" placeholder="사운드"></div>
+</div>
+<div class="insp-section">
+<div class="insp-label">분위기</div>
+<div class="mood-tags">
+<span class="mood-tag on">감성적</span>
+<span class="mood-tag on">황금빛</span>
+<span class="mood-tag">긴장감</span>
+<span class="mood-tag">유머</span>
+<span class="mood-tag">설렘</span>
+<span class="mood-tag">슬픔</span>
+</div>
+</div>
+<div class="insp-section">
+<div class="insp-ai-btn">✦ AI 재생성</div>
+<button class="insp-ai-btn secondary">✦ 자동 완성</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ═══ DESIGN D: SOFT PAPER ═══ -->
+<div class="design-card">
+<div class="design-label">
+<span class="design-name">D. Soft Paper</span>
+<span class="design-tag">Calm / Focused</span>
+</div>
+<div class="design-render">
+<div class="design-d">
+<div class="titlebar">
+<div class="traffic"><span class="t-close"></span><span class="t-min"></span><span class="t-max"></span></div>
+<div class="wordmark">Scene<b>Forge</b></div>
+<div class="tb-right">
+<div class="ai-status"><span class="ai-dot"></span><span class="ai-label">Claude Code</span></div>
+<div class="tb-divider"></div>
+<button class="tb-btn">시나리오</button>
+<button class="tb-btn">내보내기</button>
+<button class="tb-btn accent">AI 생성</button>
+</div>
+</div>
+
+<div class="toolbar">
+<select class="scene-select"><option>전체 장면</option><option>S1 — 옥상</option></select>
+<div class="tool-sep"></div>
+<button class="tool-btn">+ 장면 추가</button>
+<button class="tool-btn active">+ 패널 추가</button>
+<div class="tool-sep"></div>
+<div class="view-toggle">
+<button class="vt-btn active">그리드</button>
+<button class="vt-btn">스트립</button>
+<button class="vt-btn">슬라이드</button>
+</div>
+<div class="tool-sep"></div>
+<button class="tool-btn">속성 패널</button>
+<div class="zoom-group">
+<button class="zoom-btn">−</button>
+<span class="zoom-val">100%</span>
+<button class="zoom-btn">+</button>
+</div>
+</div>
+
+<div class="workspace">
+<div class="sidebar">
+<div class="sidebar-header">
+<span class="sidebar-title">시나리오</span>
+<button class="sidebar-close">✕</button>
+</div>
+<div class="script-area">
+<div class="script-slug">INT. 고등학교 옥상 — 저녁</div>
+<div class="script-action">노을이 지는 하늘. 준혁이 올라온다.</div>
+<div class="script-char">준혁</div>
+<div class="script-dialog">야, 여기서 또 숨어 있었어?</div>
+<div class="script-action">미소도 올라온다. 이어폰을 꽂은 채.</div>
+<div class="script-slug">INT. 교실 — 낮</div>
+<div class="script-action">수업 중. 미소는 창밖을 멍하니 바라본다.</div>
+</div>
+<div class="sidebar-ai-bar">
+<input class="sidebar-ai-input" placeholder="시나리오 수정 요청...">
+<button class="sidebar-ai-send">✦</button>
+</div>
+</div>
+
+<div class="canvas">
+<div class="scene-group">
+<div class="scene-row">
+<span class="scene-chip">S1</span>
+<span class="scene-name">옥상 (저녁)</span>
+<span class="scene-dur">19s</span>
+<div class="scene-line"></div>
+<button class="scene-add-btn">+ 패널</button>
+</div>
+<div class="panel-grid">
+<div class="panel-card selected">
+<div class="panel-frame">
+<span class="panel-num">01</span>
+<span class="panel-cam">EWS</span>
+<span class="panel-badge badge-ai">AI</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">EWS — 익스트림 와이드</div>
+<div class="panel-desc">노을진 서울 전경. 미소의 실루엣.</div>
+<div class="panel-footer"><span class="panel-tag">S1-01</span><span class="panel-tag">4s</span></div>
+</div>
+</div>
+<div class="panel-card">
+<div class="panel-frame">
+<span class="panel-num">02</span>
+<span class="panel-cam">CU</span>
+<span class="panel-badge badge-ai">AI</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">CU — 클로즈업</div>
+<div class="panel-desc">눈 감은 미소. 노을빛이 뺨에 반사된다.</div>
+<div class="panel-footer"><span class="panel-tag">S1-02</span><span class="panel-tag">3s</span></div>
+</div>
+</div>
+<div class="panel-card">
+<div class="panel-frame">
+<span class="panel-num">03</span>
+<span class="panel-cam">MS</span>
+<span class="panel-badge badge-manual">수동</span>
+</div>
+<div class="panel-meta">
+<div class="panel-shot">MS — 미디엄</div>
+<div class="panel-desc">삐걱이는 문. 준혁이 올라온다.</div>
+<div class="panel-footer"><span class="panel-tag">S1-03</span><span class="panel-tag">2s</span></div>
+</div>
+</div>
+<div class="add-panel-card">
+<div class="add-panel-icon">+</div>
+<div class="add-panel-label">패널 추가</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="right-panel">
+<div class="inspector-header">
+<span class="inspector-title">속성</span>
+<button class="close-btn">✕</button>
+</div>
+<div class="inspector-body">
+<div class="insp-section">
+<div class="insp-label">프레임</div>
+<div class="insp-row">
+<div class="insp-field"><input class="insp-input" value="CU" placeholder="샷"></div>
+<div class="insp-field"><input class="insp-input" value="3s" placeholder="시간"></div>
+</div>
+<div class="insp-field"><input class="insp-input" placeholder="카메라 무브먼트"></div>
+</div>
+<div class="insp-section">
+<div class="insp-label">내용</div>
+<div class="insp-field"><input class="insp-input" value="눈 감은 미소. 노을빛이 뺨에 반사된다." placeholder="장면 설명"></div>
+<div class="insp-field"><input class="insp-input" value="아이스크림 사왔지?" placeholder="대사"></div>
+<div class="insp-field"><input class="insp-input" value="도심 소음" placeholder="사운드"></div>
+</div>
+<div class="insp-section">
+<div class="insp-label">분위기</div>
+<div class="mood-tags">
+<span class="mood-tag on">감성적</span>
+<span class="mood-tag on">황금빛</span>
+<span class="mood-tag">긴장감</span>
+<span class="mood-tag">유머</span>
+<span class="mood-tag">설렘</span>
+<span class="mood-tag">슬픔</span>
+</div>
+</div>
+<div class="insp-section">
+<div class="insp-ai-btn">✦ 이 패널 AI 재생성</div>
+<button class="insp-ai-btn secondary">✦ 설명 자동 완성</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+</body>
+</html>
