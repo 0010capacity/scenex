@@ -1,5 +1,5 @@
-import { Box, Group, Popover, Text, Stack } from '@mantine/core';
-import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo, IconRefresh, IconExternalLink, IconChevronDown } from '@tabler/icons-react';
+import { Box, Group, Popover, Text } from '@mantine/core';
+import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo, IconChevronDown } from '@tabler/icons-react';
 import { useState, useEffect, useRef } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { useProjectStore } from '@/stores/projectStore';
@@ -7,9 +7,9 @@ import { useClaude } from '@/hooks/useClaude';
 import { useExport } from '@/hooks/useExport';
 
 const MODEL_OPTIONS = [
-  { value: 'haiku', label: 'Claude Haiku', description: '빠르고 효율적인 모델' },
-  { value: 'sonnet', label: 'Claude Sonnet', description: '균형 잡힌 성능' },
-  { value: 'opus', label: 'Claude Opus', description: '가장 강력한 모델' },
+  { value: 'haiku', label: 'Haiku' },
+  { value: 'sonnet', label: 'Sonnet' },
+  { value: 'opus', label: 'Opus' },
 ];
 
 export function TitleBar() {
@@ -48,8 +48,8 @@ export function TitleBar() {
   };
 
   const statusColor =
-    claudeStatus === 'available' ? '#22c55e' :
-    claudeStatus === 'unavailable' ? '#ef4444' : '#f59e0b';
+    claudeStatus === 'available' ? '#16A34A' :
+    claudeStatus === 'unavailable' ? '#DC2626' : '#A0A0A0';
 
   const handleExport = async (type: 'pdf' | 'images' | 'fcp' | 'premiere') => {
     setExportDropdownOpen(false);
@@ -133,16 +133,10 @@ export function TitleBar() {
             className="ai-status"
             style={{
               cursor: 'pointer',
-              background: claudeStatus === 'available'
-                ? 'rgba(78, 203, 165, 0.12)'
-                : claudeStatus === 'unavailable'
-                  ? 'rgba(224, 82, 82, 0.12)'
-                  : 'rgba(245, 158, 11, 0.12)',
-              borderColor: claudeStatus === 'available'
-                ? 'rgba(78, 203, 165, 0.2)'
-                : claudeStatus === 'unavailable'
-                  ? 'rgba(224, 82, 82, 0.2)'
-                  : 'rgba(245, 158, 11, 0.2)',
+              background: 'var(--bg2)',
+              borderColor: 'var(--border)',
+              border: '1px solid var(--border)',
+              borderRadius: 6,
             }}
             onClick={() => setClaudeDropdownOpen((o) => !o)}
           >
@@ -150,8 +144,8 @@ export function TitleBar() {
               className="ai-dot"
               style={{ backgroundColor: statusColor }}
             />
-            <span className="ai-label" style={{ color: statusColor }}>Claude Code</span>
-            <IconChevronDown size={10} stroke={2} style={{ color: statusColor, marginLeft: 2 }} />
+            <span className="ai-label" style={{ color: 'var(--text2)' }}>Claude Code</span>
+            <IconChevronDown size={10} stroke={2} style={{ color: 'var(--text3)', marginLeft: 2 }} />
           </Box>
 
           {/* Claude Dropdown Panel */}
@@ -163,202 +157,90 @@ export function TitleBar() {
                 right: 0,
                 background: 'var(--bg1)',
                 border: '1px solid var(--border)',
-                borderRadius: 12,
-                padding: 16,
-                width: 280,
+                borderRadius: 10,
+                padding: 12,
+                width: 260,
                 zIndex: 9999,
-                boxShadow: '0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <Group justify="space-between" align="center" mb={14}>
-                <Group gap={8}>
-                  <Box
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 6,
-                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ffa500 50%, #ffff00 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#000' }}>C</Text>
-                  </Box>
-                  <Box>
-                    <Text size="sm" fw={600}>Claude Code</Text>
-                    <Text size="xs" c="dimmed" style={{ fontFamily: 'var(--mono)' }}>
-                      {claudeStatus === 'available' ? (claudeInfo.version || '연결됨') : claudeStatus === 'checking' ? '확인 중...' : '미설치'}
-                    </Text>
-                  </Box>
-                </Group>
-                <Box
-                  component="button"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    handleRefreshStatus();
-                  }}
-                  style={{
-                    background: 'var(--bg3)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 6,
-                    cursor: isChecking ? 'wait' : 'pointer',
-                    padding: '6px 8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    color: 'var(--text2)',
-                    fontSize: 11,
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  <IconRefresh
-                    size={12}
-                    stroke={2}
-                    style={{
-                      animation: isChecking ? 'spin 1s linear infinite' : 'none',
-                    }}
-                  />
-                  {isChecking ? '확인 중' : '새로고침'}
-                </Box>
-              </Group>
-
-              {/* Status Indicator */}
-              <Box
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: 8,
-                  background: claudeStatus === 'available'
-                    ? 'rgba(34, 197, 94, 0.08)'
-                    : claudeStatus === 'unavailable'
-                      ? 'rgba(239, 68, 68, 0.08)'
-                      : 'rgba(245, 158, 11, 0.08)',
-                  border: `1px solid ${
-                    claudeStatus === 'available'
-                      ? 'rgba(34, 197, 94, 0.2)'
-                      : claudeStatus === 'unavailable'
-                        ? 'rgba(239, 68, 68, 0.2)'
-                        : 'rgba(245, 158, 11, 0.2)'
-                  }`,
-                  marginBottom: 14,
-                }}
-              >
-                <Group gap={8} align="center">
-                  <Box
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: claudeStatus === 'available' ? '#22c55e' : claudeStatus === 'unavailable' ? '#ef4444' : '#f59e0b',
-                      boxShadow: `0 0 8px ${claudeStatus === 'available' ? '#22c55e' : claudeStatus === 'unavailable' ? '#ef4444' : '#f59e0b'}`,
-                    }}
-                  />
-                  <Text size="xs" fw={500}>
-                    {claudeStatus === 'available' ? '연결됨 — AI 기능 사용 가능' : claudeStatus === 'unavailable' ? '연결 실패 — 설치를 확인하세요' : '연결 확인 중...'}
-                  </Text>
-                </Group>
+              {/* Header Row */}
+              <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <Text size="sm" fw={600} style={{ color: 'var(--text)' }}>Claude Code</Text>
+                <Text size="xs" style={{ color: statusColor, fontWeight: 500 }}>
+                  ● {claudeStatus === 'available' ? '연결됨' : claudeStatus === 'unavailable' ? '연결 실패' : '확인 중...'}
+                </Text>
               </Box>
 
-              {/* Model Selection - only show if connected */}
-              {claudeStatus === 'available' && (
-                <Box>
-                  <Text size="xs" fw={600} c="dimmed" mb={8} style={{ letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 10 }}>모델 선택</Text>
-                  <Stack gap={6}>
-                    {MODEL_OPTIONS.map((model) => (
-                      <Box
-                        key={model.value}
-                        component="button"
-                        onClick={() => setClaudeModel(model.value as 'haiku' | 'sonnet' | 'opus')}
-                        style={{
-                          padding: '10px 12px',
-                          borderRadius: 8,
-                          border: '1px solid',
-                          borderColor: claudeModel === model.value ? 'var(--gold)' : 'var(--border)',
-                          background: claudeModel === model.value ? 'var(--gold-dim)' : 'var(--bg2)',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          transition: 'all 0.15s',
-                          textAlign: 'left',
-                          width: '100%',
-                        }}
-                      >
-                        <Box
-                          style={{
-                            width: 16,
-                            height: 16,
-                            borderRadius: '50%',
-                            border: '2px solid',
-                            borderColor: claudeModel === model.value ? 'var(--gold)' : 'var(--border2)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          {claudeModel === model.value && (
-                            <Box style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--gold)' }} />
-                          )}
-                        </Box>
-                        <Box style={{ flex: 1 }}>
-                          <Text size="sm" fw={500}>{model.label}</Text>
-                          <Text size="xs" c="dimmed">{model.description}</Text>
-                        </Box>
-                        {claudeModel === model.value && (
-                          <Text size="xs" style={{ color: 'var(--gold)', fontWeight: 600 }}>사용 중</Text>
-                        )}
-                      </Box>
-                    ))}
-                  </Stack>
+              {/* Action Row - Model Select or Install */}
+              {claudeStatus === 'available' ? (
+                <select
+                  value={claudeModel}
+                  onChange={(e) => setClaudeModel(e.target.value as 'haiku' | 'sonnet' | 'opus')}
+                  style={{
+                    width: '100%',
+                    background: 'var(--bg2)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6,
+                    padding: '8px 10px',
+                    color: 'var(--text)',
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    marginBottom: 10,
+                    outline: 'none',
+                  }}
+                >
+                  {MODEL_OPTIONS.map((model) => (
+                    <option key={model.value} value={model.value}>{model.label}</option>
+                  ))}
+                </select>
+              ) : claudeStatus === 'unavailable' ? (
+                <Box
+                  component="a"
+                  href="https://docs.anthropic.com/en/docs/claude-code"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '8px',
+                    background: 'var(--accent)',
+                    borderRadius: 6,
+                    color: '#FFFFFF',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    marginBottom: 10,
+                  }}
+                >
+                  설치하기
                 </Box>
-              )}
+              ) : null}
 
-              {/* Install Link - only show if unavailable */}
-              {claudeStatus === 'unavailable' && (
-                <Box>
+              {/* Meta Row */}
+              {claudeStatus === 'available' && (
+                <Box style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text size="xs" style={{ color: 'var(--text3)' }}>
+                    {claudeInfo.version || 'v1.0'}
+                  </Text>
                   <Box
+                    component="button"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      handleRefreshStatus();
+                    }}
                     style={{
-                      padding: 16,
-                      borderRadius: 8,
-                      background: 'var(--bg2)',
-                      border: '1px solid var(--border)',
-                      marginBottom: 10,
-                      textAlign: 'center',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text3)',
+                      fontSize: 11,
+                      cursor: isChecking ? 'wait' : 'pointer',
+                      padding: 0,
                     }}
                   >
-                    <Text size="xs" c="dimmed" mb={6}>
-                      Claude Code가 시스템에서 감지되지 않았습니다.
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      설치하면 AI 기반 스토리보드 생성 기능을 사용할 수 있습니다.
-                    </Text>
-                  </Box>
-                  <Box
-                    component="a"
-                    href="https://docs.anthropic.com/en/docs/claude-code"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      background: 'var(--gold-dim)',
-                      border: '1px solid rgba(232, 168, 56, 0.3)',
-                      color: 'var(--gold)',
-                      fontSize: 12,
-                      fontWeight: 500,
-                      textDecoration: 'none',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    Claude Code 설치하기
-                    <IconExternalLink size={12} stroke={2} />
+                    ↻
                   </Box>
                 </Box>
               )}
