@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useUIStore } from '@/stores/uiStore';
+import { invokeWrapper } from '@/utils/invokeWrapper';
 
 interface ClaudeStatus {
   available: boolean;
@@ -55,9 +56,13 @@ export function useClaude() {
 
   const checkAvailability = async (): Promise<ClaudeStatus> => {
     try {
-      const status = await invoke<ClaudeStatus>('check_claude_available');
-      setClaudeStatus(status.available ? 'available' : 'unavailable');
-      return status;
+      const status = await invokeWrapper<ClaudeStatus>('check_claude_available');
+      if (status) {
+        setClaudeStatus(status.available ? 'available' : 'unavailable');
+        return status;
+      }
+      setClaudeStatus('unavailable');
+      return { available: false, version: null, path: null };
     } catch (error) {
       console.error('Failed to check Claude availability:', error);
       setClaudeStatus('unavailable');

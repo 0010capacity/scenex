@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { invoke } from '@tauri-apps/api/core';
 import {
   Project,
   Scene,
@@ -10,6 +9,7 @@ import {
   createEmptyScene,
   createEmptyPanel,
 } from '@/types';
+import { invokeWrapper } from '@/utils/invokeWrapper';
 
 interface ProjectState {
   project: Project | null;
@@ -95,7 +95,7 @@ export const useProjectStore = create<ProjectState>()(
 
         // Try to generate script lines with AI
         try {
-          const response = await invoke<{
+          const response = await invokeWrapper<{
             script_lines: Array<{
               line_type: string;
               text: string;
@@ -104,7 +104,7 @@ export const useProjectStore = create<ProjectState>()(
             success: boolean;
           }>('generate_script_lines', { request: { slugline: newScene.slugline } });
 
-          if (response.success && response.script_lines) {
+          if (response && response.success && response.script_lines) {
             newScene.scriptLines = response.script_lines.map((line) => ({
               id: crypto.randomUUID(),
               type: line.line_type as ScriptLine['type'],
