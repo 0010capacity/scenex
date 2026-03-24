@@ -8,21 +8,13 @@ import {
   SHOT_TYPE_OPTIONS,
   CAMERA_MOVEMENT_OPTIONS,
   TRANSITION_OPTIONS,
+  MOOD_LABELS,
   MoodTag,
 } from '@/types';
 
-const MOOD_LABELS: Record<MoodTag, string> = {
-  emotional: '감성적',
-  golden: '황금빛',
-  tension: '긴장감',
-  humor: '유머',
-  excitement: '설렘',
-  sadness: '슬픔',
-};
-
 export function InspectorPanel() {
   const { getSelectedPanel, updatePanel } = useProjectStore();
-  const { toggleRightSidebar } = useUIStore();
+  const { toggleRightSidebar, addNotification } = useUIStore();
   const { generatePanel, generateDescriptionSuggestion } = useClaude();
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -36,9 +28,14 @@ export function InspectorPanel() {
       const result = await generatePanel(panel.description, panel.shotType ?? undefined, panel.moodTags);
       if (result.success && result.svg_data) {
         updatePanel(panel.id, { svgData: result.svg_data });
+        addNotification('info', '패널이 AI로 재생성되었습니다');
       } else if (result.error) {
         console.error('AI regeneration failed:', result.error);
+        addNotification('error', `AI 재생성 실패: ${result.error}`);
       }
+    } catch (error) {
+      console.error('AI regeneration failed:', error);
+      addNotification('error', `AI 재생성 실패: ${error}`);
     } finally {
       setIsRegenerating(false);
     }
@@ -51,9 +48,14 @@ export function InspectorPanel() {
       const result = await generateDescriptionSuggestion(panel.description);
       if (result.success && result.suggestion) {
         updatePanel(panel.id, { description: result.suggestion });
+        addNotification('info', '설명이 자동 완성되었습니다');
       } else if (result.error) {
         console.error('Auto-enhance failed:', result.error);
+        addNotification('error', `설명 자동 완성 실패: ${result.error}`);
       }
+    } catch (error) {
+      console.error('Auto-enhance failed:', error);
+      addNotification('error', `설명 자동 완성 실패: ${error}`);
     } finally {
       setIsEnhancing(false);
     }

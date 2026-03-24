@@ -2,14 +2,19 @@ import { useEffect, useRef } from 'react';
 import { Box, Text } from '@mantine/core';
 import { useProjectStore } from './stores/projectStore';
 import { useUIStore } from './stores/uiStore';
+import { useWorkspaceStore } from './stores/workspaceStore';
 import { TitleBar } from './components/layout/TitleBar';
 import { Toolbar } from './components/layout/Toolbar';
 import { Workspace } from './components/layout/Workspace';
 import { AddPanelModal } from './components/panels/AddPanelModal';
 import { AiGenModal } from './components/panels/AiGenModal';
+import { ProjectBrowserModal } from './components/panels/ProjectBrowserModal';
+import { WorkspaceOnboarding } from './components/onboarding/WorkspaceOnboarding';
+import { FirstProjectOnboarding } from './components/onboarding/FirstProjectOnboarding';
+import { AITaskStatus } from './components/AITaskStatus';
 import { useClaude } from './hooks/useClaude';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { useProject } from './hooks/useProject';
+import { useWorkspace } from './hooks/useWorkspace';
 import './styles/global.css';
 
 function NotificationToast({ type, message, onDismiss }: { type: 'error' | 'warning' | 'info'; message: string; onDismiss: () => void }) {
@@ -58,36 +63,37 @@ function NotificationToast({ type, message, onDismiss }: { type: 'error' | 'warn
 }
 
 function App() {
-  const { project, newProject } = useProjectStore();
-  const { addPanelModalOpen, addPanelSceneId, closeAddPanelModal, aiGenModalOpen, closeAiGenModal, notifications, removeNotification } = useUIStore();
+  const { project } = useProjectStore();
+  const { addPanelModalOpen, addPanelSceneId, closeAddPanelModal, aiGenModalOpen, closeAiGenModal, projectBrowserOpen, notifications, removeNotification } = useUIStore();
+  const { currentWorkspacePath } = useWorkspaceStore();
   const { checkAvailability } = useClaude();
-  const { saveProject, isDirty } = useProject();
+  const { currentProjectPath, saveProjectWithAutoCommit } = useWorkspace();
   const autoSaveTimerRef = useRef<number | null>(null);
 
-  // Register keyboard shortcuts
+  const hasWorkspace = currentWorkspacePath !== null;
+  const hasProject = project !== null;
+
+  // Register keyboard shortcuts - always call
   useKeyboardShortcuts();
 
+  // Check Claude availability on mount - only when workspace exists
   useEffect(() => {
-    // Initialize a new project if none exists
-    if (!project) {
-      newProject('새 프로젝트');
+    if (hasWorkspace) {
+      checkAvailability();
     }
-  }, [project, newProject]);
+  }, [hasWorkspace, checkAvailability]);
 
-  // Check Claude availability on mount
+  // Auto-save every 30 seconds when dirty - only when project exists
   useEffect(() => {
-    checkAvailability();
-  }, [checkAvailability]);
+    if (!hasProject || !currentProjectPath) return;
 
-  // Auto-save every 30 seconds when dirty
-  useEffect(() => {
     if (autoSaveTimerRef.current) {
       clearInterval(autoSaveTimerRef.current);
     }
 
     autoSaveTimerRef.current = window.setInterval(() => {
-      if (isDirty && project) {
-        saveProject();
+      if (project && currentProjectPath) {
+        saveProjectWithAutoCommit();
       }
     }, 30000);
 
@@ -96,7 +102,25 @@ function App() {
         clearInterval(autoSaveTimerRef.current);
       }
     };
-  }, [isDirty, project, saveProject]);
+  }, [hasProject, currentProjectPath, project, saveProjectWithAutoCommit]);
+
+  // Show onboarding #1 if no workspace
+  if (!hasWorkspace) {
+    return (
+      <div className="light-mode" style={{ height: '100vh' }}>
+        <WorkspaceOnboarding />
+      </div>
+    );
+  }
+
+  // Show onboarding #2 if workspace exists but no project
+  if (!hasProject) {
+    return (
+      <div className="light-mode" style={{ height: '100vh' }}>
+        <FirstProjectOnboarding />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -121,6 +145,8 @@ function App() {
         opened={aiGenModalOpen}
         onClose={closeAiGenModal}
       />
+      {projectBrowserOpen && <ProjectBrowserModal />}
+      <AITaskStatus />
       {/* Notifications */}
       {notifications.length > 0 && (
         <Box

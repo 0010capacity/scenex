@@ -58,7 +58,7 @@ const MODEL_OPTIONS = [
 ];
 
 export function TitleBar() {
-  const { toggleLeftSidebar, claudeStatus, claudeModel, setClaudeModel, openProjectBrowser } = useUIStore();
+  const { toggleLeftSidebar, claudeStatus, claudeModel, setClaudeModel, openProjectBrowser, openAiGenModal } = useUIStore();
   const { isDirty } = useProjectStore();
   const { currentWorkspaceName, currentProjectName } = useWorkspace();
   const { checkAvailability } = useClaude();
@@ -443,7 +443,7 @@ export function TitleBar() {
           </Popover.Dropdown>
         </Popover>
 
-        <button className="tb-btn accent" onClick={() => useUIStore.getState().openAiGenModal()}>
+        <button className="tb-btn accent" onClick={openAiGenModal}>
           <IconSparkles size={14} stroke={1.5} />
           AI 생성
         </button>

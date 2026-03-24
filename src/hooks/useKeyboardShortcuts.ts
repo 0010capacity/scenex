@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
-import { useProject } from '@/hooks/useProject';
+import { useWorkspace } from '@/hooks/useWorkspace';
 
 async function getImageFromClipboard(): Promise<string | null> {
   try {
@@ -39,17 +39,19 @@ export function useKeyboardShortcuts() {
     openAddPanelModal,
     addNotification,
   } = useUIStore();
-  const { saveProject } = useProject();
+  const { saveProjectWithAutoCommit, currentProjectPath } = useWorkspace();
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const cmdKey = isMac ? e.metaKey : e.ctrlKey;
 
-      // Cmd/Ctrl+S: Save project
+      // Cmd/Ctrl+S: Save project with auto-commit
       if (cmdKey && e.key === 's') {
         e.preventDefault();
-        saveProject();
+        if (currentProjectPath) {
+          saveProjectWithAutoCommit();
+        }
         return;
       }
 
@@ -148,6 +150,14 @@ export function useKeyboardShortcuts() {
 
       // Cmd/Ctrl+0: Reset zoom
       if (cmdKey && e.key === '0') {
+        const target = e.target as HTMLElement;
+        if (
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable
+        ) {
+          return;
+        }
         e.preventDefault();
         setZoomLevel(100);
         return;
@@ -156,9 +166,10 @@ export function useKeyboardShortcuts() {
     [
       selectedPanelId,
       deletePanel,
-      saveProject,
-      openAddPanelModal,
       selectedSceneId,
+      saveProjectWithAutoCommit,
+      currentProjectPath,
+      openAddPanelModal,
       setZoomLevel,
       zoomLevel,
       addPanel,

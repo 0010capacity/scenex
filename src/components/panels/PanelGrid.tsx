@@ -28,7 +28,7 @@ interface PanelGridProps {
 
 export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
   const { reorderPanels } = useProjectStore();
-  const { openAddPanelModal } = useUIStore();
+  const { openAddPanelModal, openAiGenModal } = useUIStore();
   const [slideIndex, setSlideIndex] = useState(0);
 
   const sensors = useSensors(
@@ -87,7 +87,7 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
               fontSize: 11,
               cursor: 'pointer',
             }}
-            onClick={() => useUIStore.getState().openAiGenModal()}
+            onClick={openAiGenModal}
           >
             ✦ AI로 자동 생성
           </button>
@@ -149,7 +149,7 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
   }
 
   // Grid / Strip / List
-  const gridClass = viewMode === 'strip' ? 'panel-grid' : 'panel-grid';
+  const gridClass = viewMode === 'strip' ? 'panel-grid' : viewMode === 'list' ? 'panel-list' : 'panel-grid';
   const minSize = viewMode === 'strip' ? 140 : 200;
 
   return (
@@ -174,6 +174,7 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
               sceneId={sceneId}
               width={viewMode === 'list' ? 600 : minSize}
               showDetails={viewMode === 'list'}
+              variant={viewMode === 'list' ? 'list' : 'grid'}
             />
           ))}
 

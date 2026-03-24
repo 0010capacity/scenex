@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { save } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { useProjectStore } from '@/stores/projectStore';
+import { useUIStore } from '@/stores/uiStore';
 
 interface ExportPanel {
   number: number;
@@ -50,6 +51,7 @@ async function rasterizeSvgToPng(svgData: string): Promise<string> {
 
 export function useExport() {
   const { project } = useProjectStore();
+  const { addNotification } = useUIStore();
 
   const prepareExportData = useCallback(async (): Promise<ExportProject | null> => {
     if (!project) return null;
@@ -110,12 +112,14 @@ export function useExport() {
 
       if (filePath) {
         await invoke('export_pdf', { path: filePath, project: data });
+        addNotification('info', 'PDF 내보내기 완료');
       }
     } catch (error) {
       console.error('Failed to export PDF:', error);
+      addNotification('error', `PDF 내보내기 실패: ${error}`);
       throw error;
     }
-  }, [project, prepareExportData]);
+  }, [project, prepareExportData, addNotification]);
 
   const exportImages = useCallback(async () => {
     const data = await prepareExportData();
@@ -129,12 +133,14 @@ export function useExport() {
 
       if (filePath) {
         await invoke('export_images', { path: filePath, project: data });
+        addNotification('info', '이미지 내보내기 완료');
       }
     } catch (error) {
       console.error('Failed to export images:', error);
+      addNotification('error', `이미지 내보내기 실패: ${error}`);
       throw error;
     }
-  }, [project, prepareExportData]);
+  }, [project, prepareExportData, addNotification]);
 
   const exportFCPXML = useCallback(async () => {
     const data = await prepareExportData();
@@ -151,12 +157,14 @@ export function useExport() {
 
       if (filePath) {
         await invoke('export_fcp_xml', { path: filePath, project: data });
+        addNotification('info', 'Final Cut Pro XML 내보내기 완료');
       }
     } catch (error) {
       console.error('Failed to export FCP XML:', error);
+      addNotification('error', `FCP XML 내보내기 실패: ${error}`);
       throw error;
     }
-  }, [project, prepareExportData]);
+  }, [project, prepareExportData, addNotification]);
 
   const exportPremiereXML = useCallback(async () => {
     const data = await prepareExportData();
@@ -170,12 +178,14 @@ export function useExport() {
 
       if (filePath) {
         await invoke('export_premiere_xml', { path: filePath, project: data });
+        addNotification('info', 'Premiere Pro XML 내보내기 완료');
       }
     } catch (error) {
       console.error('Failed to export Premiere XML:', error);
+      addNotification('error', `Premiere XML 내보내기 실패: ${error}`);
       throw error;
     }
-  }, [project, prepareExportData]);
+  }, [project, prepareExportData, addNotification]);
 
   return {
     exportPDF,

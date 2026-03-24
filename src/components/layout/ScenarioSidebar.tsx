@@ -77,7 +77,7 @@ function SortableSceneTab({ sceneId, index, isSelected, onSelect }: SortableScen
 
 export function ScenarioSidebar() {
   const { project, selectedSceneId, selectScene, addScene, updateScene, updateScriptLine, deleteScriptLine, reorderScriptLines, reorderScenes } = useProjectStore();
-  const { toggleLeftSidebar } = useUIStore();
+  const { toggleLeftSidebar, addNotification } = useUIStore();
   const { generateScriptLines } = useClaude();
   const [aiInput, setAiInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -124,10 +124,19 @@ export function ScenarioSidebar() {
         updateScene(selectedSceneId, {
           scriptLines: [...currentLines, ...newLines],
         });
+        addNotification('info', `${newLines.length}개의 시나리오 라인이 추가되었습니다`);
+        setAiInput('');
+      } else if (result.error) {
+        console.error('AI script generation failed:', result.error);
+        addNotification('error', `시나리오 생성 실패: ${result.error}`);
+        setAiInput('');
       }
+    } catch (error) {
+      console.error('AI script generation failed:', error);
+      addNotification('error', `시나리오 생성 실패: ${error}`);
+      setAiInput('');
     } finally {
       setIsLoading(false);
-      setAiInput('');
     }
   };
 

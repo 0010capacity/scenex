@@ -2,8 +2,9 @@ import { Box, Text, Select, Loader, Progress } from '@mantine/core';
 import { IconSparkles, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useUIStore } from '@/stores/uiStore';
 import { useAIStore } from '@/stores/aiStore';
-import { MoodTag, SHOT_TYPE_OPTIONS } from '@/types';
+import { MoodTag, SHOT_TYPE_OPTIONS, MOOD_TAG_OPTIONS } from '@/types';
 
 interface AiGenModalProps {
   opened: boolean;
@@ -16,17 +17,9 @@ interface GeneratedPanelPreview {
   duration: string;
 }
 
-const MOOD_OPTIONS: { value: MoodTag; label: string }[] = [
-  { value: 'emotional', label: '감성적' },
-  { value: 'golden', label: '황금빛' },
-  { value: 'tension', label: '긴장감' },
-  { value: 'humor', label: '유머' },
-  { value: 'excitement', label: '설렘' },
-  { value: 'sadness', label: '슬픔' },
-];
-
 export function AiGenModal({ opened, onClose }: AiGenModalProps) {
   const { project, addPanel, addScene } = useProjectStore();
+  const { addNotification } = useUIStore();
   const { addTask, updateTask, removeTask } = useAIStore();
 
   const [sceneDescription, setSceneDescription] = useState('');
@@ -130,16 +123,20 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
         updateTask(taskId, { status: 'completed', progress: 100 });
         setTimeout(() => removeTask(taskId), 1000);
       } else {
+        const errorMsg = response.error || 'Generation failed';
         updateTask(taskId, {
           status: 'failed',
-          message: response.error || 'Generation failed',
+          message: errorMsg,
         });
+        addNotification('error', `AI 생성 실패: ${errorMsg}`);
       }
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       updateTask(taskId, {
         status: 'failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: errorMsg,
       });
+      addNotification('error', `AI 생성 실패: ${errorMsg}`);
     } finally {
       setIsGenerating(false);
     }
@@ -229,7 +226,7 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
               분위기
             </label>
             <Box className="mood-tags">
-              {MOOD_OPTIONS.map((tag) => (
+              {MOOD_TAG_OPTIONS.map((tag) => (
                 <Box
                   key={tag.value}
                   className={`mood-tag ${moodTags.includes(tag.value) ? 'on' : ''}`}
@@ -250,7 +247,7 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
                       : {}
                   }
                 >
-                  {tag.label}
+                  {tag.labelKo}
                 </Box>
               ))}
             </Box>

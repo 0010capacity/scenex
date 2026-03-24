@@ -10,6 +10,7 @@ interface PanelCardProps {
   sceneId: string;
   width: number;
   showDetails?: boolean;
+  variant?: 'grid' | 'list';
 }
 
 const SHOT_LABELS: Record<string, string> = {
@@ -29,7 +30,7 @@ const SOURCE_LABELS: Record<string, string> = {
   empty: '빈 패널',
 };
 
-export function PanelCard({ panel, sceneId, width, showDetails = false }: PanelCardProps) {
+export function PanelCard({ panel, sceneId, width, showDetails = false, variant = 'grid' }: PanelCardProps) {
   const { selectedPanelId, selectPanel, project, movePanel } = useProjectStore();
 
   const {
@@ -53,6 +54,95 @@ export function PanelCard({ panel, sceneId, width, showDetails = false }: PanelC
   const handleMoveToScene = (toSceneId: string) => {
     movePanel(panel.id, toSceneId);
   };
+
+  // List variant - horizontal layout with prominent drag handle
+  if (variant === 'list') {
+    return (
+      <Box
+        ref={setNodeRef}
+        style={{
+          display: 'flex',
+          gap: 12,
+          padding: '10px 12px',
+          backgroundColor: 'var(--bg2)',
+          borderRadius: 'var(--r8)',
+          border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
+          boxShadow: isSelected ? '0 0 0 1px var(--accent)' : undefined,
+          opacity: isDragging ? 0.5 : 1,
+          transform: CSS.Transform.toString(transform),
+          transition,
+          cursor: 'pointer',
+        }}
+        onClick={() => selectPanel(panel.id)}
+        {...attributes}
+        {...listeners}
+      >
+        {/* Drag handle */}
+        <Box
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 4px',
+            cursor: 'grab',
+            color: 'var(--text3)',
+          }}
+        >
+          ⋮⋮
+        </Box>
+
+        {/* Thumbnail */}
+        <Box
+          style={{
+            width: 80,
+            height: 45,
+            backgroundColor: 'var(--bg3)',
+            borderRadius: 'var(--r4)',
+            overflow: 'hidden',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {panel.imageData ? (
+            <img src={panel.imageData} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : panel.svgData ? (
+            <Box dangerouslySetInnerHTML={{ __html: panel.svgData }} style={{ width: '100%', height: '100%' }} />
+          ) : (
+            <IconPlayerPlay size={14} color="var(--text3)" />
+          )}
+        </Box>
+
+        {/* Content */}
+        <Box style={{ flex: 1, minWidth: 0 }}>
+          <Box style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <Text style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>
+              P{String(panel.number).padStart(2, '0')}
+            </Text>
+            {panel.shotType && (
+              <Text style={{ fontSize: 10, color: 'var(--blue)', fontFamily: 'var(--mono)' }}>
+                {panel.shotType}
+              </Text>
+            )}
+            <Text style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--mono)' }}>
+              {panel.duration || '3s'}
+            </Text>
+          </Box>
+          {panel.description && (
+            <Text style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.5 }} className="line-clamp-2">
+              {panel.description}
+            </Text>
+          )}
+          {panel.dialogue && (
+            <Text style={{ fontSize: 10, color: 'var(--accent)', fontStyle: 'italic', marginTop: 2 }}>
+              "{panel.dialogue}"
+            </Text>
+          )}
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Menu position="bottom-start" withinPortal>

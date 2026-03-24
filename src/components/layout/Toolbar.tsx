@@ -1,5 +1,6 @@
-import { Box } from '@mantine/core';
+import { Box, Modal, TextInput, Button } from '@mantine/core';
 import { IconPlus, IconMinus } from '@tabler/icons-react';
+import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 
@@ -14,6 +15,8 @@ export function Toolbar() {
     toggleRightSidebar,
     rightSidebarOpen,
   } = useUIStore();
+  const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
+  const [newSceneName, setNewSceneName] = useState('');
 
   const sceneOptions = [
     { value: 'all', label: '전체 장면' },
@@ -47,10 +50,7 @@ export function Toolbar() {
 
       {/* Add scene / add panel */}
       <Box className="tool-group">
-        <button className="tool-btn" onClick={() => {
-          const name = prompt('새 장면 이름:');
-          if (name) addScene(name);
-        }}>
+        <button className="tool-btn" onClick={() => setAddSceneModalOpen(true)}>
           <IconPlus size={14} stroke={1.5} />
           장면 추가
         </button>
@@ -108,6 +108,71 @@ export function Toolbar() {
           <IconPlus size={14} stroke={1.5} />
         </button>
       </Box>
+
+      {/* Add Scene Modal */}
+      <Modal
+        opened={addSceneModalOpen}
+        onClose={() => {
+          setAddSceneModalOpen(false);
+          setNewSceneName('');
+        }}
+        title="새 장면 추가"
+        size="sm"
+        styles={{
+          header: { background: 'var(--bg1)', borderBottom: '1px solid var(--border)' },
+          title: { fontSize: 15, fontWeight: 500, color: 'var(--text)' },
+          body: { background: 'var(--bg1)', padding: 16 },
+          content: { background: 'var(--bg1)' },
+        }}
+      >
+        <TextInput
+          placeholder="장면 이름"
+          value={newSceneName}
+          onChange={(e) => setNewSceneName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && newSceneName.trim()) {
+              addScene(newSceneName.trim());
+              setAddSceneModalOpen(false);
+              setNewSceneName('');
+            }
+          }}
+          autoFocus
+          styles={{
+            input: {
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text)',
+              fontSize: 13,
+            },
+          }}
+        />
+        <Box style={{ display: 'flex', gap: 8, marginTop: 12, justifyContent: 'flex-end' }}>
+          <Button
+            variant="subtle"
+            size="xs"
+            onClick={() => {
+              setAddSceneModalOpen(false);
+              setNewSceneName('');
+            }}
+            style={{ color: 'var(--text3)' }}
+          >
+            취소
+          </Button>
+          <Button
+            size="xs"
+            onClick={() => {
+              if (newSceneName.trim()) {
+                addScene(newSceneName.trim());
+                setAddSceneModalOpen(false);
+                setNewSceneName('');
+              }
+            }}
+            disabled={!newSceneName.trim()}
+          >
+            추가
+          </Button>
+        </Box>
+      </Modal>
     </Box>
   );
 }

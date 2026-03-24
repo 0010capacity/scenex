@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { useProjectStore } from '@/stores/projectStore';
+import { useUIStore } from '@/stores/uiStore';
 import { useClaude } from '@/hooks/useClaude';
-import { SHOT_TYPE_OPTIONS, MoodTag } from '@/types';
+import { SHOT_TYPE_OPTIONS, MOOD_TAG_OPTIONS, MoodTag } from '@/types';
 
 type AddMethod = 'blank' | 'import' | 'ai' | null;
 
@@ -15,17 +16,9 @@ interface AddPanelModalProps {
   sceneId: string | null;
 }
 
-const MOOD_OPTIONS: { value: MoodTag; label: string }[] = [
-  { value: 'emotional', label: '감성적' },
-  { value: 'golden', label: '황금빛' },
-  { value: 'tension', label: '긴장감' },
-  { value: 'humor', label: '유머' },
-  { value: 'excitement', label: '설렘' },
-  { value: 'sadness', label: '슬픔' },
-];
-
 export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) {
   const { addPanel, project } = useProjectStore();
+  const { addNotification } = useUIStore();
   const { generatePanel } = useClaude();
   const [selectedMethod, setSelectedMethod] = useState<AddMethod>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -93,6 +86,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
       }
     } catch (error) {
       console.error('Failed to read file:', error);
+      addNotification('error', `파일 읽기 실패: ${error}`);
     }
   };
 
@@ -139,9 +133,14 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
           if (createdPanel) {
             useProjectStore.getState().updatePanel(createdPanel.id, { svgData: result.svg_data });
           }
+          addNotification('info', 'AI 패널이 생성되었습니다');
+        } else if (result.error) {
+          console.error('AI panel generation failed:', result.error);
+          addNotification('error', `AI 패널 생성 실패: ${result.error}`);
         }
       } catch (error) {
         console.error('AI panel generation failed:', error);
+        addNotification('error', `AI 패널 생성 실패: ${error}`);
       } finally {
         setIsGenerating(false);
         onClose();
@@ -338,7 +337,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                       분위기
                     </label>
                     <Box className="mood-tags">
-                      {MOOD_OPTIONS.map((tag) => (
+                      {MOOD_TAG_OPTIONS.map((tag) => (
                         <Box
                           key={tag.value}
                           className={`mood-tag ${moodTags.includes(tag.value) ? 'on' : ''}`}
@@ -359,7 +358,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                               : {}
                           }
                         >
-                          {tag.label}
+                          {tag.labelKo}
                         </Box>
                       ))}
                     </Box>
