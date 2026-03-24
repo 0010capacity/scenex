@@ -94,13 +94,21 @@ pub async fn export_pdf(path: String, project: ExportProject) -> Result<(), Stri
                 y_pos -= 5.0;
             }
 
+            // Visual content indicator
+            if panel.image_data.is_some() {
+                current_layer.use_text("(Panel includes visual image)", 8.0, Mm(30.0), Mm(y_pos), &font);
+                y_pos -= 5.0;
+            } else if panel.svg_data.is_some() {
+                current_layer.use_text("(Panel includes SVG graphic)", 8.0, Mm(30.0), Mm(y_pos), &font);
+                y_pos -= 5.0;
+            }
+
             y_pos -= 5.0;
 
             // New page if needed
             if y_pos < 20.0 {
                 let (new_page, new_layer) = doc.add_page(Mm(297.0), Mm(210.0), "Layer 1");
-                let layer = doc.get_page(new_page).get_layer(new_layer);
-                let _ = layer; // Silence unused warning
+                let _layer = doc.get_page(new_page).get_layer(new_layer);
                 y_pos = 190.0;
             }
         }
