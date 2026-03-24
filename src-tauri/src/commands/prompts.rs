@@ -135,6 +135,166 @@ pub mod description_enhance {
     }
 }
 
+/// Scenario Generation Prompt
+pub mod scenario_generate {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/scenario_generate.md"),
+        }
+    }
+
+    pub fn build(concept: &str, genre: Option<&str>, mood: Option<&str>) -> String {
+        template()
+            .replace("{{concept}}", concept)
+            .replace("{{genre}}", genre.unwrap_or("unspecified"))
+            .replace("{{mood}}", mood.unwrap_or("neutral"))
+    }
+}
+
+/// Scenario Polish Prompt
+pub mod scenario_polish {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/scenario_polish.md"),
+        }
+    }
+
+    pub fn build(scenario_json: &str) -> String {
+        template().replace("{{scenario_json}}", scenario_json)
+    }
+}
+
+/// Scenario Expand Prompt
+pub mod scenario_expand {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/scenario_expand.md"),
+        }
+    }
+
+    pub fn build(scenario_json: &str, target_size: &str) -> String {
+        template()
+            .replace("{{scenario_json}}", scenario_json)
+            .replace("{{target_size}}", target_size)
+    }
+}
+
+/// Scenario Condense Prompt
+pub mod scenario_condense {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/scenario_condense.md"),
+        }
+    }
+
+    pub fn build(scenario_json: &str, target_length: &str) -> String {
+        template()
+            .replace("{{scenario_json}}", scenario_json)
+            .replace("{{target_length}}", target_length)
+    }
+}
+
+/// Scenario to Storyboard Prompt
+pub mod scenario_to_storyboard {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/scenario_to_storyboard.md"),
+        }
+    }
+
+    pub fn build(scenario_json: &str, panel_count: usize, distribution: &str) -> String {
+        template()
+            .replace("{{scenario_json}}", scenario_json)
+            .replace("{{panel_count}}", &panel_count.to_string())
+            .replace("{{distribution}}", distribution)
+    }
+}
+
+/// Scenario to Script Prompt
+pub mod scenario_to_script {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/scenario_to_script.md"),
+        }
+    }
+
+    pub fn build(scene_json: &str) -> String {
+        template().replace("{{scene_json}}", scene_json)
+    }
+}
+
+/// Panel Regeneration Prompt
+pub mod regenerate_panel {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/regenerate_panel.md"),
+        }
+    }
+
+    pub fn build(
+        previous_svg: &str,
+        previous_description: &str,
+        user_feedback: &str,
+        scene_context: Option<&str>,
+    ) -> String {
+        template()
+            .replace("{{previous_svg}}", previous_svg)
+            .replace("{{previous_description}}", previous_description)
+            .replace("{{user_feedback}}", user_feedback)
+            .replace("{{scene_context}}", scene_context.unwrap_or("No additional context"))
+    }
+}
+
+/// Panel Compare Prompt
+pub mod panel_compare {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/panel_compare.md"),
+        }
+    }
+
+    pub fn build(version_a: &str, desc_a: &str, version_b: &str, desc_b: &str) -> String {
+        template()
+            .replace("{{version_a}}", version_a)
+            .replace("{{desc_a}}", desc_a)
+            .replace("{{version_b}}", version_b)
+            .replace("{{desc_b}}", desc_b)
+    }
+}
+
+/// Scenario Compare Prompt
+pub mod scenario_compare {
+    use super::*;
+
+    pub fn template() -> &'static str {
+        match PromptVersion::default() {
+            PromptVersion::V1 => include_str!("../../prompts/scenario_compare.md"),
+        }
+    }
+
+    pub fn build(version_a: &str, version_b: &str) -> String {
+        template()
+            .replace("{{version_a}}", version_a)
+            .replace("{{version_b}}", version_b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
