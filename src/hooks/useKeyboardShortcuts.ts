@@ -3,8 +3,30 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useProject } from '@/hooks/useProject';
 
+async function getImageFromClipboard(): Promise<string | null> {
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const item of clipboardItems) {
+      const imageTypes = item.types.filter(type => type.startsWith('image/'));
+      if (imageTypes.length > 0) {
+        const blob = await item.getType(imageTypes[0]);
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to read clipboard:', error);
+    return null;
+  }
+}
+
 export function useKeyboardShortcuts() {
-  const { selectedPanelId, selectedSceneId, deletePanel } = useProjectStore();
+  const { selectedPanelId, selectedSceneId, deletePanel, addPanel, project } = useProjectStore();
   const {
     setZoomLevel,
     zoomLevel,
@@ -50,7 +72,21 @@ export function useKeyboardShortcuts() {
         ) {
           return;
         }
-        // Let the clipboard handler take over
+        // Handle clipboard paste
+        if (selectedSceneId) {
+          e.preventDefault();
+          getImageFromClipboard().then((imageData) => {
+            if (imageData) {
+              const scene = project?.scenes.find(s => s.id === selectedSceneId);
+              const panelNumber = scene ? scene.panels.length + 1 : 1;
+              addPanel(selectedSceneId, {
+                number: panelNumber,
+                imageData,
+                sourceType: 'imported',
+              });
+            }
+          });
+        }
         return;
       }
 
@@ -114,6 +150,8 @@ export function useKeyboardShortcuts() {
       selectedSceneId,
       setZoomLevel,
       zoomLevel,
+      addPanel,
+      project,
     ]
   );
 
