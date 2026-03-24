@@ -1,28 +1,44 @@
 import { create } from 'zustand';
+import type { AITaskType, AITaskVersion } from '@/types/ai';
 
-interface AITask {
+export type AITaskStatus = 'pending' | 'running' | 'completed' | 'failed';
+
+export interface AITask {
   id: string;
-  type: 'generate_panel' | 'batch_generate' | 'enhance';
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  type: AITaskType;
+  status: AITaskStatus;
   progress: number;
   message: string;
-  panelId?: string;
-  sceneId?: string;
+  parentTaskId?: string;
+  previousVersionId?: string;
+  promptVersion?: string;
+  metadata?: {
+    scenarioId?: string;
+    actId?: string;
+    sceneId?: string;
+    panelId?: string;
+    version?: number;
+  };
 }
 
 interface AIState {
   tasks: AITask[];
   isProcessing: boolean;
+  taskHistory: Map<string, AITaskVersion[]>;
 
   addTask: (task: Omit<AITask, 'id'>) => string;
   updateTask: (id: string, updates: Partial<AITask>) => void;
   removeTask: (id: string) => void;
   clearCompletedTasks: () => void;
+  addVersion: (taskId: string, version: AITaskVersion) => void;
+  getVersions: (taskId: string) => AITaskVersion[];
+  clearTaskHistory: (taskId: string) => void;
 }
 
-export const useAIStore = create<AIState>((set) => ({
+export const useAIStore = create<AIState>((set, get) => ({
   tasks: [],
   isProcessing: false,
+  taskHistory: new Map(),
 
   addTask: (task) => {
     const id = crypto.randomUUID();
@@ -64,6 +80,27 @@ export const useAIStore = create<AIState>((set) => ({
         (t) => t.status === 'pending' || t.status === 'running'
       );
       return { tasks, isProcessing };
+    });
+  },
+
+  addVersion: (taskId, version) => {
+    set((state) => {
+      const history = state.taskHistory.get(taskId) || [];
+      const newHistory = new Map(state.taskHistory);
+      newHistory.set(taskId, [...history, version]);
+      return { taskHistory: newHistory };
+    });
+  },
+
+  getVersions: (taskId) => {
+    return get().taskHistory.get(taskId) || [];
+  },
+
+  clearTaskHistory: (taskId) => {
+    set((state) => {
+      const newHistory = new Map(state.taskHistory);
+      newHistory.delete(taskId);
+      return { taskHistory: newHistory };
     });
   },
 }));

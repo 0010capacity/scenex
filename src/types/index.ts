@@ -1,5 +1,14 @@
 // SceneX Data Types
+// Note: Scenario/Act/Scene hierarchy types are in ./scenario.ts
+// Flat project types (Scene, Panel, ScriptLine) are defined here for project.scenes compatibility
 
+export type * from './ai';
+export type { Scenario, Act, ScenarioScene } from './scenario';
+
+// Also export the interface types from ai for implementation
+export type { GenerationMetadata, PanelVersion, AITaskVersion } from './ai';
+
+// Shot types for storyboard panels
 export type ShotType = 'EWS' | 'WS' | 'MS' | 'CU' | 'ECU' | 'OTS' | 'POV';
 export type CameraMovement = 'Static' | 'Pan' | 'Tilt' | 'Dolly' | 'Pullback';
 export type MoodTag = 'emotional' | 'golden' | 'tension' | 'humor' | 'excitement' | 'sadness';
@@ -7,6 +16,10 @@ export type Transition = 'cut' | 'fadein' | 'fadeout' | 'dissolve';
 export type SourceType = 'ai' | 'manual' | 'imported' | 'empty';
 export type ScriptLineType = 'slugline' | 'action' | 'character' | 'paren' | 'dialogue';
 
+// Import types needed for the file
+import type { GenerationMetadata, Scenario as ScenarioType } from './scenario';
+
+// Flat scene type for project.scenes (storyboard-level scenes)
 export interface ScriptLine {
   id: string;
   type: ScriptLineType;
@@ -28,12 +41,16 @@ export interface Panel {
   imageData: string | null;
   svgData: string | null;
   sourceType: SourceType;
+  version: number;
+  parentPanelId?: string;
+  generationMeta?: GenerationMetadata;
 }
 
 export interface Scene {
   id: string;
   name: string;
   slugline: string;
+  description: string;
   scriptLines: ScriptLine[];
   panels: Panel[];
 }
@@ -44,6 +61,8 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   scenes: Scene[];
+  scenarios: ScenarioType[];
+  primaryScenarioId?: string;
 }
 
 export const SHOT_TYPE_OPTIONS: { value: ShotType; label: string; description: string }[] = [
@@ -64,14 +83,20 @@ export const CAMERA_MOVEMENT_OPTIONS: { value: CameraMovement; label: string }[]
   { value: 'Pullback', label: 'Pullback' },
 ];
 
-export const MOOD_TAG_OPTIONS: { value: MoodTag; label: string; color: string }[] = [
-  { value: 'emotional', label: 'Emotional', color: '#E8A838' },
-  { value: 'golden', label: 'Golden', color: '#FFB347' },
-  { value: 'tension', label: 'Tension', color: '#FF6B6B' },
-  { value: 'humor', label: 'Humor', color: '#4ECDC4' },
-  { value: 'excitement', label: 'Excitement', color: '#45B7D1' },
-  { value: 'sadness', label: 'Sadness', color: '#6C7B95' },
+export const MOOD_TAG_OPTIONS: { value: MoodTag; label: string; labelKo: string; color: string }[] = [
+  { value: 'emotional', label: 'Emotional', labelKo: '감성적', color: '#E8A838' },
+  { value: 'golden', label: 'Golden', labelKo: '황금빛', color: '#FFB347' },
+  { value: 'tension', label: 'Tension', labelKo: '긴장감', color: '#FF6B6B' },
+  { value: 'humor', label: 'Humor', labelKo: '유머', color: '#4ECDC4' },
+  { value: 'excitement', label: 'Excitement', labelKo: '설렘', color: '#45B7D1' },
+  { value: 'sadness', label: 'Sadness', labelKo: '슬픔', color: '#6C7B95' },
 ];
+
+// Derived helper for Korean labels (for InspectorPanel)
+export const MOOD_LABELS: Record<MoodTag, string> = MOOD_TAG_OPTIONS.reduce(
+  (acc, opt) => ({ ...acc, [opt.value]: opt.labelKo }),
+  {} as Record<MoodTag, string>
+);
 
 export const TRANSITION_OPTIONS: { value: Transition; label: string }[] = [
   { value: 'cut', label: 'Cut' },
@@ -95,6 +120,7 @@ export function createEmptyPanel(number: number): Panel {
     imageData: null,
     svgData: null,
     sourceType: 'empty',
+    version: 1,
   };
 }
 
@@ -103,6 +129,7 @@ export function createEmptyScene(name: string = 'Scene 1'): Scene {
     id: crypto.randomUUID(),
     name,
     slugline: 'INT. LOCATION — DAY',
+    description: '',
     scriptLines: [],
     panels: [],
   };
@@ -116,5 +143,6 @@ export function createEmptyProject(name: string = 'Untitled Project'): Project {
     createdAt: now,
     updatedAt: now,
     scenes: [createEmptyScene()],
+    scenarios: [],
   };
 }

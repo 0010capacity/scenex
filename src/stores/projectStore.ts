@@ -9,7 +9,9 @@ import {
   createEmptyScene,
   createEmptyPanel,
 } from '@/types';
+import { Scenario, Act, ScenarioScene } from '@/types/scenario';
 import { invokeWrapper } from '@/utils/invokeWrapper';
+import type { PanelVersion } from '@/types/ai';
 
 interface ProjectState {
   project: Project | null;
@@ -34,11 +36,23 @@ interface ProjectState {
   deletePanel: (panelId: string) => void;
   movePanel: (panelId: string, toSceneId: string) => void;
   reorderPanels: (sceneId: string, fromIndex: number, toIndex: number) => void;
+  updatePanelVersion: (sceneId: string, panelId: string, updates: Partial<Panel>) => void;
+  restorePanelVersion: (sceneId: string, panelId: string, version: number, versions: PanelVersion[]) => void;
 
   // Script line actions
   updateScriptLine: (sceneId: string, lineId: string, updates: Partial<ScriptLine>) => void;
   deleteScriptLine: (sceneId: string, lineId: string) => void;
   reorderScriptLines: (sceneId: string, fromIndex: number, toIndex: number) => void;
+
+  // Scenario actions
+  addScenario: (name: string) => string;
+  updateScenario: (id: string, updates: Partial<Scenario>) => void;
+  deleteScenario: (id: string) => void;
+  addAct: (scenarioId: string, name: string) => string;
+  updateAct: (scenarioId: string, actId: string, updates: Partial<Act>) => void;
+  addSceneToAct: (scenarioId: string, actId: string, name: string) => void;
+  updateSceneInAct: (scenarioId: string, actId: string, sceneId: string, updates: Partial<Scene>) => void;
+  deleteSceneFromAct: (scenarioId: string, actId: string, sceneId: string) => void;
 
   // Selection
   selectScene: (sceneId: string | null) => void;
@@ -405,6 +419,234 @@ export const useProjectStore = create<ProjectState>()(
         });
       },
 
+      // Scenario actions
+      addScenario: (name) => {
+        const id = crypto.randomUUID();
+        const scenario: Scenario = {
+          id,
+          name,
+          description: '',
+          acts: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          project: state.project
+            ? { ...state.project, scenarios: [...state.project.scenarios, scenario] }
+            : null,
+          isDirty: true,
+        }));
+        return id;
+      },
+
+      updateScenario: (id, updates) => {
+        set((state) => {
+          if (!state.project) return state;
+          return {
+            project: {
+              ...state.project,
+              scenarios: state.project.scenarios.map((s) =>
+                s.id === id ? { ...s, ...updates, updatedAt: new Date().toISOString() } : s
+              ),
+            },
+            isDirty: true,
+          };
+        });
+      },
+
+      deleteScenario: (id) => {
+        set((state) => {
+          if (!state.project) return state;
+          return {
+            project: {
+              ...state.project,
+              scenarios: state.project.scenarios.filter((s) => s.id !== id),
+            },
+            isDirty: true,
+          };
+        });
+      },
+
+      addAct: (scenarioId, name) => {
+        const id = crypto.randomUUID();
+        const act: Act = {
+          id,
+          name,
+          synopsis: '',
+          scenes: [],
+          order: 0,
+        };
+        set((state) => {
+          if (!state.project) return state;
+          return {
+            project: {
+              ...state.project,
+              scenarios: state.project.scenarios.map((s) =>
+                s.id === scenarioId
+                  ? { ...s, acts: [...s.acts, act], updatedAt: new Date().toISOString() }
+                  : s
+              ),
+            },
+            isDirty: true,
+          };
+        });
+        return id;
+      },
+
+      updateAct: (scenarioId, actId, updates) => {
+        set((state) => {
+          if (!state.project) return state;
+          return {
+            project: {
+              ...state.project,
+              scenarios: state.project.scenarios.map((s: Scenario) =>
+                s.id === scenarioId
+                  ? {
+                      ...s,
+                      acts: s.acts.map((a: Act) =>
+                        a.id === actId ? { ...a, ...updates } : a
+                      ),
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : s
+              ),
+            },
+            isDirty: true,
+          };
+        });
+      },
+
+      addSceneToAct: (scenarioId, actId, name) => {
+        const newSceneId = crypto.randomUUID();
+        const scene: ScenarioScene = {
+          id: newSceneId,
+          name,
+          slugline: 'INT. LOCATION — DAY',
+          description: '',
+          scriptLines: [],
+          panels: [],
+          order: 0,
+        };
+        set((state) => {
+          if (!state.project) return state;
+          return {
+            project: {
+              ...state.project,
+              scenarios: state.project.scenarios.map((s: Scenario) =>
+                s.id === scenarioId
+                  ? {
+                      ...s,
+                      acts: s.acts.map((a: Act) =>
+                        a.id === actId
+                          ? { ...a, scenes: [...a.scenes, scene] }
+                          : a
+                      ),
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : s
+              ),
+            },
+            isDirty: true,
+          };
+        });
+      },
+
+      updateSceneInAct: (scenarioId, actId, sceneId, updates) => {
+        set((state) => {
+          if (!state.project) return state;
+          return {
+            project: {
+              ...state.project,
+              scenarios: state.project.scenarios.map((s: Scenario) =>
+                s.id === scenarioId
+                  ? {
+                      ...s,
+                      acts: s.acts.map((a: Act) =>
+                        a.id === actId
+                          ? {
+                              ...a,
+                              scenes: a.scenes.map((sc: ScenarioScene) =>
+                                sc.id === sceneId ? { ...sc, ...updates } : sc
+                              ),
+                            }
+                          : a
+                      ),
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : s
+              ),
+            },
+            isDirty: true,
+          };
+        });
+      },
+
+      deleteSceneFromAct: (scenarioId, actId, sceneId) => {
+        set((state) => {
+          if (!state.project) return state;
+          return {
+            project: {
+              ...state.project,
+              scenarios: state.project.scenarios.map((s: Scenario) =>
+                s.id === scenarioId
+                  ? {
+                      ...s,
+                      acts: s.acts.map((a: Act) =>
+                        a.id === actId
+                          ? { ...a, scenes: a.scenes.filter((sc: ScenarioScene) => sc.id !== sceneId) }
+                          : a
+                      ),
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : s
+              ),
+            },
+            isDirty: true,
+          };
+        });
+      },
+
+      updatePanelVersion: (sceneId, panelId, updates) => {
+        set((state) => {
+          if (!state.project) return state;
+          return {
+            project: {
+              ...state.project,
+              scenes: state.project.scenes.map((scene) =>
+                scene.id === sceneId
+                  ? {
+                      ...scene,
+                      panels: scene.panels.map((panel) =>
+                        panel.id === panelId
+                          ? {
+                              ...panel,
+                              ...updates,
+                              version: panel.version + 1,
+                              parentPanelId: panel.parentPanelId || panel.id,
+                            }
+                          : panel
+                      ),
+                    }
+                  : scene
+              ),
+            },
+            isDirty: true,
+          };
+        });
+      },
+
+      restorePanelVersion: (sceneId, panelId, version, versions) => {
+        const targetVersion = versions.find((v) => v.version === version);
+        if (targetVersion) {
+          get().updatePanelVersion(sceneId, panelId, {
+            svgData: targetVersion.svgData,
+            description: targetVersion.description,
+            shotType: targetVersion.shotType as Panel['shotType'],
+            duration: targetVersion.duration,
+          });
+        }
+      },
+
       selectScene: (sceneId) => {
         set({ selectedSceneId: sceneId, selectedPanelId: null });
       },
@@ -447,7 +689,6 @@ export const useProjectStore = create<ProjectState>()(
     {
       name: 'scenex-project',
       partialize: (state) => ({
-        project: state.project,
         selectedSceneId: state.selectedSceneId,
       }),
     }
