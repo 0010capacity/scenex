@@ -198,26 +198,114 @@ pub async fn export_fcp_xml(path: String, project: ExportProject) -> Result<(), 
     Ok(())
 }
 
-/// Export as Adobe Premiere XML
+/// Export as Adobe Premiere XML (xmeml 4.0 format)
 #[command]
 pub async fn export_premiere_xml(path: String, project: ExportProject) -> Result<(), String> {
     let path = PathBuf::from(&path);
 
-    // Basic Premiere XML structure (simplified)
-    let xml = format!(
-        r#"<?xml version="1.0" encoding="UTF-8"?>
-<PremiereData version="3.0">
-    <Project name="{}" imagePath="">
-{}
-    </Project>
-</PremiereData>"#,
-        project.name,
-        generate_premiere_sequences(&project)
-    );
+    // Generate xmeml 4.0 compatible XML
+    let xml = generate_xmeml(&project);
 
     fs::write(&path, xml).map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+fn generate_xmeml(project: &ExportProject) -> String {
+    let mut clips_xml = String::new();
+
+    for (scene_idx, scene) in project.scenes.iter().enumerate() {
+        let scene_index = scene_idx + 1;
+        clips_xml.push_str(&format!(
+            r#"        <sequence id="scene_{}" name="{}" duration="{}s" timebase="24">
+            <rate>
+                <timebase>24</timebase>
+                <ntsc>FALSE</ntsc>
+            </rate>
+            <media>
+                <video>
+                    <track>
+"#,
+            scene_index,
+            escape_xml(&scene.name),
+            calculate_total_duration_for_scenes(&project.scenes[..=scene_idx])
+        ));
+
+        let mut time_position = 0.0;
+        for panel in &scene.panels {
+            let duration = parse_duration(&panel.duration);
+            clips_xml.push_str(&format!(
+                r#"                        <clipitem id="clip_{}_{}">
+                            <name>Panel {}</name>
+                            <duration>{}</duration>
+                            <rate>
+                                <timebase>24</timebase>
+                                <ntsc>FALSE</ntsc>
+                            </rate>
+                            <start>{}</start>
+                            <end>{}</end>
+                            <in>{}</in>
+                            <out>{}</out>
+                            <file id="file_{}_{}">
+                                <name>{}</name>
+                                <pathurl>file://localhost/panels/panel_{}_{}.png</pathurl>
+                                <rate>
+                                    <timebase>24</timebase>
+                                    <ntsc>FALSE</ntsc>
+                                </rate>
+                            </file>
+                        </clipitem>
+"#,
+                scene_index,
+                panel.number,
+                panel.number,
+                duration,
+                time_position,
+                time_position + duration,
+                time_position,
+                time_position + duration,
+                scene_index,
+                panel.number,
+                escape_xml(&format!("Panel {} - {}", panel.number, panel.description.chars().take(30).collect::<String>())),
+                scene_index,
+                panel.number
+            ));
+            time_position += duration;
+        }
+
+        clips_xml.push_str(
+            r#"                    </track>
+                </video>
+            </media>
+        </sequence>
+"#,
+        );
+    }
+
+    format!(
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xmeml SYSTEM "http://www.adobe.com/premiere/projection.dtd">
+<xmeml version="4">
+    <project>
+        <name>{}</name>
+        <children>
+{}
+        </children>
+    </project>
+</xmeml>"#,
+        escape_xml(&project.name),
+        clips_xml
+    )
+}
+
+fn calculate_total_duration_for_scenes(scenes: &[ExportScene]) -> f64 {
+    let mut total = 0.0;
+    for scene in scenes {
+        for panel in &scene.panels {
+            total += parse_duration(&panel.duration);
+        }
+    }
+    total
 }
 
 // Helper functions
@@ -320,41 +408,6 @@ fn generate_fcp_clips(project: &ExportProject) -> String {
     }
 
     clips
-}
-
-fn generate_premiere_sequences(project: &ExportProject) -> String {
-    let mut sequences = String::new();
-
-    for (i, scene) in project.scenes.iter().enumerate() {
-        sequences.push_str(&format!(
-            r#"        <Sequence id="seq_{}" name="{}">
-            <Tracks>
-                <VideoTrack>
-"#,
-            i, scene.name
-        ));
-
-        for panel in &scene.panels {
-            sequences.push_str(&format!(
-                r#"                    <Clip name="Panel {}" duration="{}">
-                        <Comments>{}</Comments>
-                    </Clip>
-"#,
-                panel.number,
-                panel.duration,
-                escape_xml(&panel.description)
-            ));
-        }
-
-        sequences.push_str(
-            r#"                </VideoTrack>
-            </Tracks>
-        </Sequence>
-"#,
-        );
-    }
-
-    sequences
 }
 
 fn escape_xml(s: &str) -> String {
