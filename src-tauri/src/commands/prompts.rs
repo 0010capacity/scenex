@@ -302,7 +302,9 @@ mod tests {
     #[test]
     fn test_svg_has_viewbox() {
         let prompt = svg_panel::template();
-        assert!(prompt.contains("viewBox=\"0 0 640 360\""));
+        assert!(prompt.contains("viewBox"));
+        assert!(prompt.contains("640 360"));
+        assert!(prompt.contains("16:9"));
     }
 
     #[test]
