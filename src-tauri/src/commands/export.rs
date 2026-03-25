@@ -4,8 +4,18 @@ use std::io::Write;
 use std::path::PathBuf;
 use tauri::command;
 use base64::{Engine as _, engine::general_purpose};
-use pdf_writer::{Pdf, Rect, Ref, Content, Name, Str};
+use pdf_writer::{Pdf, Rect, Ref, Content, Name, Str, Filter, Finish};
 use image::ImageFormat;
+
+/// Compress raw RGB data using zlib/deflate for PDF FlateDecode filter
+fn compress_deflate(data: &[u8]) -> Vec<u8> {
+    use flate2::write::ZlibEncoder;
+    use flate2::Compression;
+
+    let mut encoder = ZlibEncoder::new(Vec::new(), Compression::default());
+    encoder.write_all(data).unwrap();
+    encoder.finish().unwrap()
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ExportPanel {
@@ -49,27 +59,6 @@ pub async fn export_pdf(path: String, project: ExportProject) -> Result<(), Stri
     let font_ref = Ref::new(3);
     let mut ref_counter = 4;
 
-    // Collect all panel images
-    let mut images_info: Vec<(Ref, Option<(u32, u32, Vec<u8>)>)> = Vec::new();
-
-    for scene in &project.scenes {
-        for panel in &scene.panels {
-            if let Some(ref image_data) = panel.image_data {
-                let image_ref = Ref::new(ref_counter);
-                ref_counter += 1;
-
-                match decode_and_process_image(image_data) {
-                    Ok((width, height, raw_data)) => {
-                        images_info.push((image_ref, Some((width, height, raw_data))));
-                    }
-                    Err(_) => {
-                        images_info.push((image_ref, None));
-                    }
-                }
-            }
-        }
-    }
-
     // Calculate number of pages needed
     let total_panels: usize = project.scenes.iter().map(|s| s.panels.len()).sum();
     let panels_per_page = 6;
@@ -85,17 +74,67 @@ pub async fn export_pdf(path: String, project: ExportProject) -> Result<(), Stri
     // Font name
     let font_name = Name(b"F1");
 
+    // Image scaling parameters
+    let max_image_w = PAGE_WIDTH - 2.0 * MARGIN - 40.0; // ~761 pts
+    let max_image_h = 80.0; // Max height for images
+
     // Process each page
-    let mut panel_index = 0;
-    let mut image_idx = 0;
+    for (page_idx, page_ref) in page_refs.iter().enumerate() {
+        // Collect panels for this page
+        let start_panel = page_idx * panels_per_page;
+        let end_panel = start_panel + panels_per_page;
 
-    for page_ref in &page_refs {
+        // First pass: create image XObjects for this page
+        // Store: (panel_idx, image_idx_on_page, ref, scaled_w, scaled_h)
+        let mut page_images: Vec<(usize, usize, Ref, f32, f32)> = Vec::new();
+        let mut panel_counter = 0;
+        let mut image_idx_on_page = 0;
+
+        for scene in &project.scenes {
+            for panel in &scene.panels {
+                if panel_counter >= start_panel && panel_counter < end_panel {
+                    if let Some(ref image_data) = panel.image_data {
+                        match decode_and_process_image(image_data) {
+                            Ok((width, height, rgb_data)) => {
+                                // Compress RGB data
+                                let compressed = compress_deflate(&rgb_data);
+
+                                // Create image XObject
+                                let image_ref = Ref::new(ref_counter);
+                                ref_counter += 1;
+
+                                let mut image = pdf.image_xobject(image_ref, &compressed);
+                                image.filter(Filter::FlateDecode);
+                                image.width(width as i32);
+                                image.height(height as i32);
+                                image.color_space().device_rgb();
+                                image.bits_per_component(8);
+                                image.finish();
+
+                                // Calculate scaled dimensions
+                                let scale = (max_image_w / width as f32).min(max_image_h / height as f32).min(1.0);
+                                let scaled_w = width as f32 * scale;
+                                let scaled_h = height as f32 * scale;
+
+                                page_images.push((panel_counter, image_idx_on_page, image_ref, scaled_w, scaled_h));
+                                image_idx_on_page += 1;
+                            }
+                            Err(_) => {
+                                // Decode failed, will show placeholder
+                            }
+                        }
+                    }
+                }
+                panel_counter += 1;
+            }
+        }
+
+        // Second pass: build content stream
         let mut content = Content::new();
-
-        // Set font
         content.set_font(font_name, 12.0);
 
         let mut y_pos = PAGE_HEIGHT - MARGIN - 20.0;
+        panel_counter = 0;
 
         for scene in &project.scenes {
             if y_pos < MARGIN + 100.0 {
@@ -108,56 +147,68 @@ pub async fn export_pdf(path: String, project: ExportProject) -> Result<(), Stri
             y_pos -= 25.0;
 
             for panel in &scene.panels {
-                if y_pos < MARGIN + 60.0 {
+                if y_pos < MARGIN + 100.0 {
                     break;
                 }
 
-                // Panel header
-                let shot_str = panel.shot_type.as_deref().unwrap_or("N/A");
-                content.move_to(MARGIN + 10.0, y_pos);
-                content.show(Str(format!("Panel {} [{}] ({})", panel.number, shot_str, panel.duration).as_bytes()));
-                y_pos -= 15.0;
+                if panel_counter >= start_panel && panel_counter < end_panel {
+                    // Panel header
+                    let shot_str = panel.shot_type.as_deref().unwrap_or("N/A");
+                    content.move_to(MARGIN + 10.0, y_pos);
+                    content.show(Str(format!("Panel {} [{}] ({})", panel.number, shot_str, panel.duration).as_bytes()));
+                    y_pos -= 15.0;
 
-                // Description
-                content.move_to(MARGIN + 20.0, y_pos);
-                let desc = if panel.description.len() > 100 {
-                    format!("{}...", &panel.description.chars().take(97).collect::<String>())
-                } else {
-                    panel.description.clone()
-                };
-                if !desc.is_empty() {
-                    content.show(Str(desc.as_bytes()));
-                }
-                y_pos -= 15.0;
-
-                // Dialogue
-                if !panel.dialogue.is_empty() {
+                    // Description
                     content.move_to(MARGIN + 20.0, y_pos);
-                    let dialogue = if panel.dialogue.len() > 80 {
-                        format!("\"{}...\"", &panel.dialogue.chars().take(77).collect::<String>())
+                    let desc = if panel.description.len() > 100 {
+                        format!("{}...", &panel.description.chars().take(97).collect::<String>())
                     } else {
-                        format!("\"{}\"", panel.dialogue)
+                        panel.description.clone()
                     };
-                    content.show(Str(dialogue.as_bytes()));
+                    if !desc.is_empty() {
+                        content.show(Str(desc.as_bytes()));
+                    }
+                    y_pos -= 15.0;
+
+                    // Dialogue
+                    if !panel.dialogue.is_empty() {
+                        content.move_to(MARGIN + 20.0, y_pos);
+                        let dialogue = if panel.dialogue.len() > 80 {
+                            format!("\"{}...\"", &panel.dialogue.chars().take(77).collect::<String>())
+                        } else {
+                            format!("\"{}\"", panel.dialogue)
+                        };
+                        content.show(Str(dialogue.as_bytes()));
+                        y_pos -= 15.0;
+                    }
+
+                    // Image - find the XObject for this panel
+                    if let Some((_, img_idx, _, scaled_w, scaled_h)) = page_images.iter().find(|(idx, _, _, _, _)| *idx == panel_counter) {
+                        let img_x = MARGIN + 20.0;
+                        let img_y = y_pos - scaled_h;
+                        let img_name = format!("Im{}", img_idx);
+
+                        content.save_state();
+                        content.transform([*scaled_w, 0.0, 0.0, *scaled_h, img_x, img_y]);
+                        content.x_object(Name(img_name.as_bytes()));
+                        content.restore_state();
+
+                        y_pos = img_y - 10.0;
+                    } else if panel.image_data.is_some() {
+                        // Fallback to placeholder if decode failed
+                        content.move_to(MARGIN + 20.0, y_pos);
+                        content.show(Str(b"[Image - decode failed]"));
+                        y_pos -= 10.0;
+                    } else if panel.svg_data.is_some() {
+                        content.move_to(MARGIN + 20.0, y_pos);
+                        content.show(Str(b"[SVG]"));
+                        y_pos -= 10.0;
+                    }
+
                     y_pos -= 15.0;
                 }
 
-                // Image indicator (actual image embedding would require XObject)
-                if panel.image_data.is_some() {
-                    content.move_to(MARGIN + 20.0, y_pos);
-                    content.show(Str(b"[Image]"));
-                    y_pos -= 10.0;
-                } else if panel.svg_data.is_some() {
-                    content.move_to(MARGIN + 20.0, y_pos);
-                    content.show(Str(b"[SVG]"));
-                    y_pos -= 10.0;
-                }
-
-                y_pos -= 15.0;
-                panel_index += 1;
-                if panel.image_data.is_some() {
-                    image_idx += 1;
-                }
+                panel_counter += 1;
             }
 
             y_pos -= 15.0;
@@ -169,18 +220,32 @@ pub async fn export_pdf(path: String, project: ExportProject) -> Result<(), Stri
         ref_counter += 1;
         pdf.stream(content_ref, &content_bytes);
 
-        // Create page
-        pdf.page(*page_ref)
-            .parent(pages_ref)
+        // Create page with resources
+        let mut page = pdf.page(*page_ref);
+        page.parent(pages_ref)
             .media_box(Rect::new(0.0, 0.0, PAGE_WIDTH, PAGE_HEIGHT))
             .contents(content_ref);
+
+        // Register resources (font + image XObjects)
+        {
+            let mut resources = page.resources();
+            // Font
+            resources.fonts().pair(font_name, font_ref);
+            // Image XObjects
+            if !page_images.is_empty() {
+                let mut xobjects = resources.x_objects();
+                for (_, img_idx, img_ref, _, _) in &page_images {
+                    let img_name = format!("Im{}", img_idx);
+                    xobjects.pair(Name(img_name.as_bytes()), *img_ref);
+                }
+            }
+        }
+
+        page.finish();
     }
 
-    // Create font dictionary (Helvetica is a standard PDF font)
-    pdf.type0_font(font_ref)
-        .base_font(Name(b"Helvetica"))
-        .encoding_predefined(Name(b"WinAnsiEncoding"))
-        .descendant_font(Ref::new(ref_counter));
+    // Create font dictionary (Helvetica is a standard Type1 PDF font)
+    pdf.type1_font(font_ref).base_font(Name(b"Helvetica"));
 
     // Write pages tree
     let kids: Vec<Ref> = page_refs.iter().copied().collect();
@@ -540,4 +605,152 @@ fn escape_xml(s: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
         .replace('\'', "&apos;")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    // A small 10x10 red PNG image (base64 encoded) - valid PNG created with Python
+    const RED_PNG_BASE64: &str = "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAEklEQVR42mP4z8CABzGMSmNDALfKY53W1e90AAAAAElFTkSuQmCC";
+
+    fn create_test_project() -> ExportProject {
+        ExportProject {
+            name: "Test Project".to_string(),
+            scenes: vec![
+                ExportScene {
+                    name: "Scene 1".to_string(),
+                    slugline: "INT. TEST - DAY".to_string(),
+                    panels: vec![
+                        ExportPanel {
+                            number: 1,
+                            description: "A test panel with an embedded image".to_string(),
+                            dialogue: "This is test dialogue".to_string(),
+                            shot_type: Some("Wide".to_string()),
+                            duration: "3s".to_string(),
+                            image_data: Some(format!("data:image/png;base64,{}", RED_PNG_BASE64)),
+                            svg_data: None,
+                        },
+                        ExportPanel {
+                            number: 2,
+                            description: "Another panel without image".to_string(),
+                            dialogue: "".to_string(),
+                            shot_type: Some("Close-up".to_string()),
+                            duration: "2s".to_string(),
+                            image_data: None,
+                            svg_data: None,
+                        },
+                    ],
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn test_decode_and_process_image() {
+        let result = decode_and_process_image(&format!("data:image/png;base64,{}", RED_PNG_BASE64));
+        assert!(result.is_ok(), "Failed to decode image: {:?}", result.err());
+
+        let (width, height, data) = result.unwrap();
+        assert_eq!(width, 10, "Image width should be 10");
+        assert_eq!(height, 10, "Image height should be 10");
+        assert_eq!(data.len(), 10 * 10 * 3, "RGB data should be width * height * 3");
+    }
+
+    #[test]
+    fn test_compress_deflate() {
+        let data = vec![0u8; 100]; // 100 zero bytes
+        let compressed = compress_deflate(&data);
+        assert!(!compressed.is_empty(), "Compressed data should not be empty");
+        assert!(compressed.len() < data.len(), "Compressed data should be smaller than original for zeros");
+    }
+
+    #[test]
+    fn test_export_pdf_with_images() {
+        let project = create_test_project();
+        let pdf_path = std::path::PathBuf::from("/tmp/test_export_images.pdf");
+
+        // Run the export synchronously (blocking)
+        let result = tokio_test::block_on(export_pdf(
+            pdf_path.to_string_lossy().to_string(),
+            project,
+        ));
+
+        assert!(result.is_ok(), "PDF export failed: {:?}", result.err());
+        assert!(pdf_path.exists(), "PDF file was not created");
+
+        // Read the PDF and verify it contains image data
+        let pdf_bytes = fs::read(&pdf_path).expect("Failed to read PDF");
+        let pdf_str = String::from_utf8_lossy(&pdf_bytes);
+
+        // Print PDF content for debugging
+        println!("\n--- PDF Structure Check ---");
+        println!("PDF size: {} bytes", pdf_bytes.len());
+        println!("Has PDF header: {}", pdf_str.contains("%PDF-"));
+        println!("Has EOF marker: {}", pdf_str.contains("%EOF"));
+        println!("Has FlateDecode: {}", pdf_str.contains("/FlateDecode"));
+        println!("Has DeviceRGB: {}", pdf_str.contains("/DeviceRGB"));
+        println!("Has Width: {}", pdf_str.contains("/Width"));
+        println!("Has Height: {}", pdf_str.contains("/Height"));
+        println!("Has XObject: {}", pdf_str.contains("/XObject"));
+        println!("Has Im0: {}", pdf_str.contains("/Im0"));
+
+        // Check for PDF structure
+        assert!(pdf_str.contains("%PDF-"), "File should be a valid PDF");
+        assert!(pdf_str.contains("%EOF"), "PDF should have EOF marker");
+
+        // Check for image XObject (FlateDecode filter)
+        assert!(pdf_str.contains("/FlateDecode"), "PDF should contain FlateDecode filter for images");
+
+        // Check for image dimensions
+        assert!(pdf_str.contains("/Width"), "PDF should contain image width");
+        assert!(pdf_str.contains("/Height"), "PDF should contain image height");
+        assert!(pdf_str.contains("/DeviceRGB"), "PDF should contain DeviceRGB colorspace");
+
+        // Keep the file for manual inspection
+        println!("\nPDF saved to: {} (MANUAL TEST TO VIEW)", pdf_path.display());
+        println!("Run: open {}", pdf_path.display());
+
+        // NOTE: Do NOT clean up - file is kept for manual verification
+    }
+
+    #[test]
+    fn test_export_pdf_with_invalid_image() {
+        let project = ExportProject {
+            name: "Test Invalid Image".to_string(),
+            scenes: vec![
+                ExportScene {
+                    name: "Scene 1".to_string(),
+                    slugline: "INT. TEST - DAY".to_string(),
+                    panels: vec![
+                        ExportPanel {
+                            number: 1,
+                            description: "Panel with invalid image".to_string(),
+                            dialogue: "".to_string(),
+                            shot_type: None,
+                            duration: "3s".to_string(),
+                            image_data: Some("data:image/png;base64,INVALID_BASE64!!!".to_string()),
+                            svg_data: None,
+                        },
+                    ],
+                },
+            ],
+        };
+
+        let temp_dir = std::env::temp_dir();
+        let pdf_path = temp_dir.join("test_invalid_image.pdf");
+
+        let result = tokio_test::block_on(export_pdf(
+            pdf_path.to_string_lossy().to_string(),
+            project,
+        ));
+
+        // Should still succeed but show placeholder
+        assert!(result.is_ok(), "PDF export should succeed even with invalid image: {:?}", result.err());
+        assert!(pdf_path.exists(), "PDF file was not created");
+
+        // Clean up
+        let _ = fs::remove_file(&pdf_path);
+    }
 }
