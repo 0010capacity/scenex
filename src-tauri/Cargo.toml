@@ -31,3 +31,7 @@ dirs = "6"
 git2 = "0.19"
 uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
+flate2 = "1.0"
+
+[dev-dependencies]
+tokio-test = "0.4"
