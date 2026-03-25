@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useAIStore } from '@/stores/aiStore';
+import { useClaude } from '@/hooks/useClaude';
 import { MoodTag, SHOT_TYPE_OPTIONS, MOOD_TAG_OPTIONS } from '@/types';
 import { ScenarioAIGenerator } from '../scenario/ScenarioAIGenerator';
 
@@ -22,6 +23,7 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
   const { project, addPanel, addScene } = useProjectStore();
   const { addNotification } = useUIStore();
   const { addTask, updateTask, removeTask } = useAIStore();
+  const { batchGeneratePanels } = useClaude();
 
   const [sceneDescription, setSceneDescription] = useState('');
   const [shotTypeHint, setShotTypeHint] = useState<string | null>(null);
@@ -67,25 +69,12 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
     });
 
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-
-      const request = {
-        scene_description: sceneDescription,
-        shot_type_hint: shotTypeHint ?? undefined,
-        mood_tags: moodTags,
-        panel_count: parseInt(panelCount) || 4,
-      };
-
-      const response = await invoke<{
-        panels: Array<{
-          description: string;
-          shot_type: string;
-          duration: string;
-          svg_data: string | null;
-        }>;
-        success: boolean;
-        error: string | null;
-      }>('batch_generate_panels', { request });
+      const response = await batchGeneratePanels(
+        sceneDescription,
+        parseInt(panelCount) || 4,
+        shotTypeHint ?? undefined,
+        moodTags,
+      );
 
       if (response.success && response.panels) {
         setProgress(50);
