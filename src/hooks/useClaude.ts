@@ -44,6 +44,7 @@ interface BatchGeneratePanel {
   description: string;
   shot_type: string;
   duration: string;
+  svg_data: string | null;
 }
 
 interface BatchGenerateResponse {
