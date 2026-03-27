@@ -301,22 +301,9 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
         </Box>
 
         {/* Hover overlay */}
-        <Box
-          className="frame-overlay"
-          style={{
-            inset: 0,
-          }}
-        >
+        <Box className="frame-overlay">
           <button
-            style={{
-              background: 'rgba(0,0,0,0.7)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: 'white',
-              padding: '4px 10px',
-              borderRadius: 'var(--r4)',
-              fontSize: 11,
-              cursor: 'pointer',
-            }}
+            className="frame-edit-btn"
             onClick={(e) => {
               e.stopPropagation();
               selectPanel(panel.id);
