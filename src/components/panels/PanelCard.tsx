@@ -117,7 +117,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
           ) : panel.svgData ? (
             <Box dangerouslySetInnerHTML={{ __html: panel.svgData }} style={{ width: '100%', height: '100%' }} />
           ) : (
-            <IconPlayerPlay size={14} color="var(--text3)" />
+            <IconPlayerPlay size={14} color="var(--text3)" stroke={1.5} />
           )}
         </Box>
 
@@ -268,7 +268,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
                 size="xs"
                 variant="light"
                 color="grape"
-                leftSection={<IconSparkles size={10} />}
+                leftSection={<IconSparkles size={10} stroke={1.5} />}
               >
                 AI
               </Badge>
@@ -282,7 +282,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
                     e.stopPropagation();
                     openHistory();
                   }}
-                  leftSection={<IconHistory size={10} />}
+                  leftSection={<IconHistory size={10} stroke={1.5} />}
                 >
                   v{panel.version}
                 </Badge>
@@ -361,7 +361,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
             <Menu.Item
               key={scene.id}
               onClick={() => handleMoveToScene(scene.id)}
-              leftSection={<IconArrowMoveRight size={14} />}
+              leftSection={<IconArrowMoveRight size={14} stroke={1.5} />}
             >
               S{project!.scenes.findIndex(s => s.id === scene.id) + 1} — {scene.name}
             </Menu.Item>
@@ -373,7 +373,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
           <>
             <Menu.Divider />
             <Menu.Item
-              leftSection={<IconSparkles size={14} />}
+              leftSection={<IconSparkles size={14} stroke={1.5} />}
               onClick={() => {
                 // TODO: Open regenerate modal
                 console.log('Regenerate panel', panel.id);
@@ -383,7 +383,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
             </Menu.Item>
             {hasVersions && (
               <Menu.Item
-                leftSection={<IconHistory size={14} />}
+                leftSection={<IconHistory size={14} stroke={1.5} />}
                 onClick={openHistory}
               >
                 버전 기록

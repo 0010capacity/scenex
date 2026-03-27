@@ -31,7 +31,7 @@ export function PanelHistoryDrawer({
       onClose={onClose}
       title={
         <Box style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <IconHistory size={20} />
+          <IconHistory size={20} stroke={1.5} />
           <Text fw={500}>Panel Version History</Text>
         </Box>
       }
@@ -84,7 +84,7 @@ export function PanelHistoryDrawer({
                 <Button
                   size="xs"
                   variant="subtle"
-                  leftSection={<IconRestore size={14} />}
+                  leftSection={<IconRestore size={14} stroke={1.5} />}
                   onClick={() => handleRestore(v.version)}
                 >
                   Restore this version

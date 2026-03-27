@@ -82,7 +82,7 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
         const sceneNumber = project.scenes.length + 1;
         const newSceneName = `Scene ${sceneNumber}`;
 
-        await addScene(newSceneName);
+        addScene(newSceneName);
 
         const newScene = useProjectStore.getState().project?.scenes.find(
           (s) => s.name === newSceneName
@@ -180,7 +180,7 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
               fullWidth
               size="md"
               variant="light"
-              leftSection={<IconSparkles size={16} />}
+              leftSection={<IconSparkles size={16} stroke={1.5} />}
               onClick={() => setScenarioModalOpened(true)}
               style={{ marginTop: 8 }}
             >

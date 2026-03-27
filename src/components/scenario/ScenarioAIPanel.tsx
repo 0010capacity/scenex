@@ -94,7 +94,7 @@ export function ScenarioAIPanel({ opened, onClose, scenario }: ScenarioAIPanelPr
       onClose={onClose}
       title={
         <Group gap={8}>
-          <IconSparkles size={20} color="var(--accent)" />
+          <IconSparkles size={20} color="var(--accent)" stroke={1.5} />
           <Text fw={500}>Scenario AI</Text>
         </Group>
       }
@@ -109,8 +109,7 @@ export function ScenarioAIPanel({ opened, onClose, scenario }: ScenarioAIPanelPr
                 {scenario.name}
               </Text>
               <Text size="xs" c="dimmed">
-                {scenario.acts.length} acts,{' '}
-                {scenario.acts.reduce((sum, a) => sum + a.scenes.length, 0)} scenes
+                {scenario.content.length} characters
               </Text>
             </Box>
 
@@ -137,7 +136,7 @@ export function ScenarioAIPanel({ opened, onClose, scenario }: ScenarioAIPanelPr
             )}
 
             <Button
-              leftSection={<IconSparkles size={16} />}
+              leftSection={<IconSparkles size={16} stroke={1.5} />}
               onClick={handleAIAction}
               disabled={!selectedAction || isProcessing}
               loading={isProcessing}

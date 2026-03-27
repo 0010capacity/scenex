@@ -82,7 +82,7 @@ export function ScenarioAIGenerator({ opened, onClose }: ScenarioAIGeneratorProp
       onClose={onClose}
       title={
         <Group gap={8}>
-          <IconSparkles size={20} color="var(--accent)" />
+          <IconSparkles size={20} color="var(--accent)" stroke={1.5} />
           <Text fw={500}>AI Scenario Generator</Text>
         </Group>
       }
@@ -144,7 +144,7 @@ export function ScenarioAIGenerator({ opened, onClose }: ScenarioAIGeneratorProp
             Cancel
           </Button>
           <Button
-            leftSection={<IconSparkles size={16} />}
+            leftSection={<IconSparkles size={16} stroke={1.5} />}
             onClick={handleGenerate}
             disabled={!concept.trim() || isGenerating}
             loading={isGenerating}

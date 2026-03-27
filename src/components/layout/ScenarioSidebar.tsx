@@ -1,6 +1,6 @@
 import { Box, Text, ActionIcon, Loader } from '@mantine/core';
-import { IconPlus, IconX, IconSparkles, IconFileText, IconPencil, IconTrash, IconArrowUp, IconArrowDown } from '@tabler/icons-react';
-import { useState } from 'react';
+import { IconPlus, IconX, IconSparkles, IconFileText } from '@tabler/icons-react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -17,10 +17,16 @@ import {
   horizontalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { EditorView, basicSetup } from 'codemirror';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { EditorState } from '@codemirror/state';
+import { keymap } from '@codemirror/view';
+import { indentWithTab } from '@codemirror/commands';
 import { useProjectStore } from '@/stores/projectStore';
+import { createScenarioBadgeExtension, BadgeClickInfo } from '@/components/scenario/scenarioDecorators';
+import { BadgeEditModal } from '@/components/scenario/BadgeEditModal';
 import { useUIStore } from '@/stores/uiStore';
 import { useClaude } from '@/hooks/useClaude';
-import { ScriptLine } from '@/types';
 
 interface SortableSceneTabProps {
   sceneId: string;
@@ -76,19 +82,138 @@ function SortableSceneTab({ sceneId, index, isSelected, onSelect }: SortableScen
 }
 
 export function ScenarioSidebar() {
-  const { project, selectedSceneId, selectScene, addScene, updateScene, updateScriptLine, deleteScriptLine, reorderScriptLines, reorderScenes } = useProjectStore();
+  const { project, selectedSceneId, selectScene, addScene, updateScene, reorderScenes } = useProjectStore();
   const { toggleLeftSidebar, addNotification } = useUIStore();
-  const { generateScriptLines } = useClaude();
+  const { generateDescriptionSuggestion } = useClaude();
   const [aiInput, setAiInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [editingLineId, setEditingLineId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState('');
-  const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  const [badgeModalOpened, setBadgeModalOpened] = useState(false);
+  const [badgeInfo, setBadgeInfo] = useState<BadgeClickInfo | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const selectedScene = project?.scenes.find((s) => s.id === selectedSceneId);
+
+  // Handle badge click
+  const handleBadgeClick = useCallback((info: BadgeClickInfo) => {
+    setBadgeInfo(info);
+    setBadgeModalOpened(true);
+  }, []);
+
+  // Handle badge edit save
+  const handleBadgeSave = useCallback(
+    (info: BadgeClickInfo, newContent: string) => {
+      if (!viewRef.current || !selectedSceneId) return;
+
+      // Reconstruct the full line with prefix
+      let fullLine: string;
+      if (info.badgeType === 'NOTE') {
+        fullLine = `> ${newContent}`;
+      } else if (info.badgeType === 'TITLE') {
+        fullLine = `# ${newContent}`;
+      } else if (info.badgeType === 'ACT') {
+        fullLine = `## ${newContent}`;
+      } else if (info.badgeType === 'SLUG' || info.badgeType === 'SCENE') {
+        fullLine = `### ${newContent}`;
+      } else {
+        fullLine = newContent;
+      }
+
+      // Update the document
+      viewRef.current.dispatch({
+        changes: {
+          from: info.lineFrom,
+          to: info.lineTo,
+          insert: fullLine,
+        },
+      });
+    },
+    [selectedSceneId]
+  );
+
+  // Initialize CM6 editor
+  useEffect(() => {
+    if (!editorRef.current || viewRef.current) return;
+
+    const updateListener = EditorView.updateListener.of((update) => {
+      if (update.docChanged && selectedSceneId) {
+        const content = update.state.doc.toString();
+        updateScene(selectedSceneId, { description: content });
+      }
+    });
+
+    // Create badge extension with click callback
+    const badgeExtension = createScenarioBadgeExtension(handleBadgeClick);
+
+    const state = EditorState.create({
+      doc: selectedScene?.description || '',
+      extensions: [
+        basicSetup,
+        markdown({ base: markdownLanguage }),
+        keymap.of([indentWithTab]),
+        updateListener,
+        badgeExtension,
+        EditorView.theme({
+          '&': {
+            height: '100%',
+            fontSize: '13px',
+            background: 'transparent',
+          },
+          '.cm-scroller': {
+            overflow: 'auto',
+            fontFamily: "'JetBrains Mono', 'SF Mono', monospace",
+          },
+          '.cm-content': {
+            padding: '12px',
+          },
+          '.cm-line': {
+            padding: '0 2px',
+          },
+          '.cm-gutters': {
+            display: 'none',
+          },
+          '.cm-focused': {
+            outline: 'none',
+          },
+        }),
+        EditorView.lineWrapping,
+      ],
+    });
+
+    const view = new EditorView({
+      state,
+      parent: editorRef.current,
+    });
+
+    viewRef.current = view;
+
+    return () => {
+      view.destroy();
+      viewRef.current = null;
+    };
+  }, [selectedSceneId]); // Re-create when scene changes
+
+  // Update content when scene changes externally
+  useEffect(() => {
+    if (viewRef.current && selectedScene) {
+      const currentContent = viewRef.current.state.doc.toString();
+      const newContent = selectedScene.description || '';
+      if (currentContent !== newContent) {
+        viewRef.current.dispatch({
+          changes: {
+            from: 0,
+            to: currentContent.length,
+            insert: newContent,
+          },
+        });
+      }
+    }
+  }, [selectedScene?.description]);
 
   const handleSceneDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -101,193 +226,29 @@ export function ScenarioSidebar() {
     }
   };
 
-  if (!project) return null;
-
-  const selectedScene = project.scenes.find((s) => s.id === selectedSceneId);
-
   const handleAiSubmit = async () => {
-    if (!aiInput.trim() || !selectedSceneId || isLoading) return;
+    if (!aiInput.trim() || !selectedSceneId || isLoading || !selectedScene) return;
 
     setIsLoading(true);
     try {
-      const result = await generateScriptLines(aiInput);
-      if (result.success && result.script_lines.length > 0) {
-        // Convert DTO to ScriptLine format and add to scene
-        const newLines: ScriptLine[] = result.script_lines.map((line) => ({
-          id: crypto.randomUUID(),
-          type: line.line_type as ScriptLine['type'],
-          text: line.text,
-          character: line.character ?? undefined,
-        }));
-
-        const currentLines = selectedScene?.scriptLines || [];
-        updateScene(selectedSceneId, {
-          scriptLines: [...currentLines, ...newLines],
-        });
-        addNotification('info', `${newLines.length}개의 시나리오 라인이 추가되었습니다`);
+      const currentDesc = selectedScene.description || '';
+      const prompt = `${currentDesc}\n\nUser request: ${aiInput}`;
+      const result = await generateDescriptionSuggestion(prompt);
+      if (result.success && result.suggestion) {
+        updateScene(selectedSceneId, { description: result.suggestion });
+        addNotification('info', '시나리오가 업데이트되었습니다');
         setAiInput('');
       } else if (result.error) {
-        console.error('AI script generation failed:', result.error);
-        addNotification('error', `시나리오 생성 실패: ${result.error}`);
-        setAiInput('');
+        addNotification('error', `실패: ${result.error}`);
       }
     } catch (error) {
-      console.error('AI script generation failed:', error);
-      addNotification('error', `시나리오 생성 실패: ${error}`);
-      setAiInput('');
+      addNotification('error', `실패: ${error}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleStartEdit = (line: ScriptLine) => {
-    setEditingLineId(line.id);
-    setEditingText(line.text);
-  };
-
-  const handleSaveEdit = () => {
-    if (editingLineId && selectedSceneId && editingText.trim()) {
-      updateScriptLine(selectedSceneId, editingLineId, { text: editingText.trim() });
-    }
-    setEditingLineId(null);
-    setEditingText('');
-  };
-
-  const handleCancelEdit = () => {
-    setEditingLineId(null);
-    setEditingText('');
-  };
-
-  const handleDeleteLine = (lineId: string) => {
-    if (selectedSceneId) {
-      deleteScriptLine(selectedSceneId, lineId);
-    }
-  };
-
-  const handleMoveLine = (index: number, direction: 'up' | 'down') => {
-    if (!selectedScene) return;
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= selectedScene.scriptLines.length) return;
-    reorderScriptLines(selectedSceneId!, index, newIndex);
-  };
-
-  const renderScriptLine = (line: ScriptLine, index: number) => {
-    const isEditing = editingLineId === line.id;
-    const isHovered = hoveredLineId === line.id;
-    const lineIndex = selectedScene?.scriptLines.findIndex(l => l.id === line.id) ?? index;
-
-    const lineStyle = {
-      position: 'relative' as const,
-      padding: '2px 28px 2px 4px',
-      borderRadius: 4,
-      cursor: 'default',
-      transition: 'background 0.1s',
-    };
-
-    const buttonStyle = {
-      position: 'absolute' as const,
-      right: 4,
-      top: '50%',
-      transform: 'translateY(-50%)',
-      display: 'flex',
-      gap: 2,
-      opacity: isHovered || isEditing ? 1 : 0,
-      transition: 'opacity 0.1s',
-    };
-
-    if (isEditing) {
-      return (
-        <Box key={line.id} style={lineStyle}>
-          <input
-            value={editingText}
-            onChange={(e) => setEditingText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSaveEdit();
-              if (e.key === 'Escape') handleCancelEdit();
-            }}
-            onBlur={handleSaveEdit}
-            autoFocus
-            style={{
-              width: '100%',
-              background: 'var(--bg2)',
-              border: '1px solid var(--accent)',
-              borderRadius: 4,
-              padding: '2px 6px',
-              fontSize: 11,
-              color: 'var(--text)',
-              fontFamily: 'inherit',
-              outline: 'none',
-            }}
-          />
-        </Box>
-      );
-    }
-
-    const content = (() => {
-      switch (line.type) {
-        case 'slugline':
-          return <Box className="script-slug">{line.text}</Box>;
-        case 'action':
-          return <Box className="script-action">{line.text}</Box>;
-        case 'character':
-          return <Box className="script-char">{line.text}</Box>;
-        case 'paren':
-          return <Box className="script-paren">({line.text})</Box>;
-        case 'dialogue':
-          return <Box className="script-dialog">"{line.text}"</Box>;
-        default:
-          return null;
-      }
-    })();
-
-    return (
-      <Box
-        key={line.id}
-        style={lineStyle}
-        onMouseEnter={() => setHoveredLineId(line.id)}
-        onMouseLeave={() => setHoveredLineId(null)}
-        onDoubleClick={() => handleStartEdit(line)}
-      >
-        {content}
-        <Box style={buttonStyle}>
-          <ActionIcon
-            size="xs"
-            variant="subtle"
-            onClick={() => handleMoveLine(lineIndex, 'up')}
-            style={{ color: 'var(--text3)' }}
-            disabled={lineIndex === 0}
-          >
-            <IconArrowUp size={10} />
-          </ActionIcon>
-          <ActionIcon
-            size="xs"
-            variant="subtle"
-            onClick={() => handleMoveLine(lineIndex, 'down')}
-            style={{ color: 'var(--text3)' }}
-            disabled={selectedScene && lineIndex === selectedScene.scriptLines.length - 1}
-          >
-            <IconArrowDown size={10} />
-          </ActionIcon>
-          <ActionIcon
-            size="xs"
-            variant="subtle"
-            onClick={() => handleStartEdit(line)}
-            style={{ color: 'var(--text3)' }}
-          >
-            <IconPencil size={10} />
-          </ActionIcon>
-          <ActionIcon
-            size="xs"
-            variant="subtle"
-            onClick={() => handleDeleteLine(line.id)}
-            style={{ color: 'var(--accent)' }}
-          >
-            <IconTrash size={10} />
-          </ActionIcon>
-        </Box>
-      </Box>
-    );
-  };
+  if (!project) return null;
 
   return (
     <Box
@@ -367,27 +328,24 @@ export function ScenarioSidebar() {
               size="xs"
               variant="subtle"
               onClick={() => addScene()}
-          style={{ color: 'var(--text3)', flexShrink: 0 }}
-        >
-          <IconPlus size={14} />
-        </ActionIcon>
+              style={{ color: 'var(--text3)', flexShrink: 0 }}
+            >
+              <IconPlus size={14} stroke={1.5} />
+            </ActionIcon>
           </Box>
         </SortableContext>
       </DndContext>
 
-      {/* Script content */}
-      <Box style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
-        {selectedScene?.scriptLines && selectedScene.scriptLines.length > 0 ? (
-          selectedScene.scriptLines.map((line, index) => renderScriptLine(line, index))
-        ) : selectedScene ? (
-          <Box style={{ padding: '16px 14px' }}>
-            <Text style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>
-              {selectedScene.slugline || 'INT. LOCATION — DAY'}
-            </Text>
-            <Text style={{ fontSize: 10, color: 'var(--text3)', lineHeight: 1.6 }}>
-              시나리오 내용이 없습니다. 아래에서 AI를 통해 생성하거나 직접 입력하세요.
-            </Text>
-          </Box>
+      {/* CM6 Markdown Editor */}
+      <Box style={{ flex: 1, overflow: 'hidden' }}>
+        {selectedScene ? (
+          <Box
+            ref={editorRef}
+            style={{
+              height: '100%',
+              overflow: 'hidden',
+            }}
+          />
         ) : (
           <Box
             style={{
@@ -435,6 +393,14 @@ export function ScenarioSidebar() {
           )}
         </button>
       </Box>
+
+      {/* Badge Edit Modal */}
+      <BadgeEditModal
+        opened={badgeModalOpened}
+        onClose={() => setBadgeModalOpened(false)}
+        badgeInfo={badgeInfo}
+        onSave={handleBadgeSave}
+      />
     </Box>
   );
 }
