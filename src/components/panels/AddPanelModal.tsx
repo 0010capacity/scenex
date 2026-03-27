@@ -1,5 +1,5 @@
 import { Box, Text, Select, Button, Loader } from '@mantine/core';
-import { IconSquare, IconDownload, IconSparkles, IconX, IconArrowLeft } from '@tabler/icons-react';
+import { IconPhoto, IconDownload, IconSparkles, IconX, IconArrowLeft } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { readFile } from '@tauri-apps/plugin-fs';
@@ -191,7 +191,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
             <>
               {/* Blank */}
               <Box className="method-card mc-blank" onClick={() => handleMethodSelect('blank')}>
-                <Box className="method-icon"><IconSquare size={16} stroke={1.5} /></Box>
+                <Box className="method-icon"><IconPhoto size={16} stroke={1.5} /></Box>
                 <Box className="method-text">
                   <Text style={{ fontSize: 13, fontWeight: 500, color: 'var(--text)', mb: 3 }}>
                     빈 패널

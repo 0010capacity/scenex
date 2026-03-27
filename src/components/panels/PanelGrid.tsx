@@ -50,43 +50,19 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
   // Empty state
   if (panels.length === 0) {
     return (
-      <Box
-        style={{
-          padding: '32px 0 8px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: 12,
-        }}
-      >
-        <Text style={{ fontSize: 12, color: 'var(--text3)' }}>
+      <Box className="panel-empty">
+        <Text className="panel-empty-text">
           이 장면에는 아직 패널이 없어요.
         </Text>
-        <Box style={{ display: 'flex', gap: 8 }}>
+        <Box className="panel-empty-actions">
           <button
-            style={{
-              background: 'var(--bg2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text2)',
-              padding: '6px 12px',
-              borderRadius: 'var(--r6)',
-              fontSize: 11,
-              cursor: 'pointer',
-            }}
+            className="panel-empty-btn"
             onClick={() => openAddPanelModal(sceneId)}
           >
             + 패널 추가
           </button>
           <button
-            style={{
-              background: 'var(--accent-dim)',
-              border: '1px solid rgba(79, 70, 229, 0.3)',
-              color: 'var(--accent)',
-              padding: '6px 12px',
-              borderRadius: 'var(--r6)',
-              fontSize: 11,
-              cursor: 'pointer',
-            }}
+            className="panel-empty-btn ai"
             onClick={openAiGenModal}
           >
             ✦ AI로 자동 생성
@@ -173,7 +149,6 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
               panel={panel}
               sceneId={sceneId}
               width={viewMode === 'list' ? 600 : minSize}
-              showDetails={viewMode === 'list'}
               variant={viewMode === 'list' ? 'list' : 'grid'}
             />
           ))}

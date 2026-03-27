@@ -12,7 +12,6 @@ interface PanelCardProps {
   panel: Panel;
   sceneId: string;
   width: number;
-  showDetails?: boolean;
   variant?: 'grid' | 'list';
 }
 
@@ -33,7 +32,7 @@ const SOURCE_LABELS: Record<string, string> = {
   empty: '빈 패널',
 };
 
-export function PanelCard({ panel, sceneId, width, showDetails = false, variant = 'grid' }: PanelCardProps) {
+export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCardProps) {
   const { selectedPanelId, selectPanel, project, movePanel } = useProjectStore();
 
   const {
@@ -74,8 +73,8 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
           padding: '10px 12px',
           backgroundColor: 'var(--bg2)',
           borderRadius: 'var(--r8)',
-          border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
-          boxShadow: isSelected ? '0 0 0 1px var(--accent)' : undefined,
+          border: isSelected ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+          boxShadow: isSelected ? '0 0 0 2px var(--accent-dim), 0 0 0 1px var(--accent)' : undefined,
           opacity: isDragging ? 0.5 : 1,
           transform: CSS.Transform.toString(transform),
           transition,
@@ -163,8 +162,8 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
         borderRadius: 'var(--r8)',
         overflow: 'hidden',
         backgroundColor: 'var(--bg2)',
-        border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border)',
-        boxShadow: isSelected ? '0 0 0 1px var(--accent)' : undefined,
+        border: isSelected ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+        boxShadow: isSelected ? '0 0 0 2px var(--accent-dim), 0 0 0 1px var(--accent)' : undefined,
         opacity: isDragging ? 0.5 : 1,
         transform: CSS.Transform.toString(transform),
         transition,
@@ -176,22 +175,7 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
       {...listeners}
     >
       {/* Drag handle */}
-      <Box
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 4,
-          background: 'transparent',
-          cursor: 'grab',
-          zIndex: 2,
-          transition: 'background 0.15s',
-        }}
-        className="drag-handle"
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--border2)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-      />
+      <Box className="panel-drag-handle" />
 
       {/* Panel frame */}
       <Box
@@ -320,17 +304,8 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
         <Box
           className="frame-overlay"
           style={{
-            position: 'absolute',
             inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0)',
-            transition: 'background 0.2s',
-            opacity: 0,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.25)', e.currentTarget.style.opacity = '1')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0)', e.currentTarget.style.opacity = '0')}
         >
           <button
             style={{
@@ -353,64 +328,25 @@ export function PanelCard({ panel, sceneId, width, showDetails = false, variant 
       </Box>
 
       {/* Panel meta */}
-      <Box style={{ padding: '8px 10px 10px' }}>
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: 500,
-            color: 'var(--text)',
-            marginBottom: 3,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
+      <Box className="panel-meta">
+        <Text className="panel-shot">
           {panel.shotType
             ? `${panel.shotType} — ${shotDesc}`
             : '빈 패널'}
         </Text>
 
         {panel.description && (
-          <Text
-            style={{
-              fontSize: 10,
-              color: 'var(--text3)',
-              lineHeight: 1.5,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              minHeight: showDetails ? 'auto' : 28,
-            }}
-          >
+          <Text className="panel-desc">
             {panel.description}
           </Text>
         )}
 
-        <Box style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 6 }}>
-          <Box
-            style={{
-              fontSize: 9,
-              padding: '2px 5px',
-              borderRadius: 2,
-              fontFamily: 'var(--mono)',
-              background: 'var(--bg4)',
-              color: 'var(--text3)',
-            }}
-          >
+        <Box className="panel-footer">
+          <Box className="panel-tag">
             {panel.number}
           </Box>
           {panel.duration && (
-            <Box
-              style={{
-                fontSize: 9,
-                padding: '2px 5px',
-                borderRadius: 2,
-                fontFamily: 'var(--mono)',
-                background: 'var(--bg4)',
-                color: 'var(--text2)',
-              }}
-            >
+            <Box className="panel-tag dur">
               {panel.duration}
             </Box>
           )}
