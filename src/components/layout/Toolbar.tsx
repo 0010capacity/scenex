@@ -16,8 +16,8 @@ export function Toolbar() {
   const updateScenario = useProjectStore(s => s.updateScenario);
 
   const editorMode = useUIStore(s => s.editorMode);
-  const scenarioSidebarOpen = useUIStore(s => s.scenarioSidebarOpen);
-  const toggleScenarioSidebar = useUIStore(s => s.toggleScenarioSidebar);
+  const copilotSidebarOpen = useUIStore(s => s.copilotSidebarOpen);
+  const toggleCopilotSidebar = useUIStore(s => s.toggleCopilotSidebar);
   const zoomLevel = useUIStore(s => s.zoomLevel);
   const setZoomLevel = useUIStore(s => s.setZoomLevel);
   const viewMode = useUIStore(s => s.viewMode);
@@ -48,26 +48,9 @@ export function Toolbar() {
   if (editorMode === 'scenario') {
     return (
       <Box className="toolbar">
-        {/* Scenario selector */}
-        <Box className="tool-group">
-          <select
-            className="scene-select"
-            value={selectedScenarioId ?? ''}
-            onChange={(e) => selectScenario(e.target.value || null)}
-          >
-            {(project?.scenarios ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </Box>
-
-        <Box className="tool-sep" />
-
         {/* Add scenario */}
         <Box className="tool-group">
-          <button className="tool-btn" onClick={() => setAddScenarioModalOpen(true)}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setAddScenarioModalOpen(true)}>
             <IconPlus size={14} stroke={1.5} />
             새 시나리오
           </button>
@@ -78,7 +61,7 @@ export function Toolbar() {
         {/* Rename & Delete scenario */}
         <Box className="tool-group">
           <button
-            className="tool-btn"
+            className="btn btn-ghost btn-sm"
             onClick={() => {
               const scenario = project?.scenarios.find((s) => s.id === selectedScenarioId);
               if (scenario) {
@@ -92,7 +75,7 @@ export function Toolbar() {
             이름 변경
           </button>
           <button
-            className="tool-btn"
+            className="btn btn-ghost btn-sm"
             onClick={() => setDeleteScenarioModalOpen(true)}
             disabled={!selectedScenarioId || (project?.scenarios.length ?? 0) <= 1}
             style={{ color: selectedScenarioId ? 'var(--red)' : undefined }}
@@ -102,17 +85,18 @@ export function Toolbar() {
           </button>
         </Box>
 
-        <Box className="tool-sep" />
+        {/* Spacer to push copilot to the right */}
+        <Box style={{ flex: 1 }} />
 
-        {/* AI Chat toggle */}
-        <ActionIcon
-          size="md"
-          variant={scenarioSidebarOpen ? 'filled' : 'subtle'}
-          onClick={toggleScenarioSidebar}
-          title="AI Chat"
+        {/* AI Copilot toggle */}
+        <button
+          className={`btn-pill ${copilotSidebarOpen ? 'active' : ''}`}
+          onClick={toggleCopilotSidebar}
+          title="AI Copilot"
         >
-          <IconSparkles size={18} stroke={1.5} />
-        </ActionIcon>
+          <IconSparkles size={14} stroke={1.5} />
+          AI
+        </button>
 
         {/* Add Scenario Modal */}
         {addScenarioModalOpen && (
@@ -120,7 +104,7 @@ export function Toolbar() {
             <div className="ap-modal" style={{ width: 360 }} onClick={(e) => e.stopPropagation()}>
               <div className="ap-header">
                 <span style={{ fontSize: 14, fontWeight: 500 }}>새 시나리오 추가</span>
-                <button className="ap-close" onClick={() => { setAddScenarioModalOpen(false); setNewScenarioName(''); }}>×</button>
+                <ActionIcon variant="subtle" onClick={() => { setAddScenarioModalOpen(false); setNewScenarioName(''); }}><IconPlus size={16} style={{ transform: 'rotate(45deg)' }} /></ActionIcon>
               </div>
               <div className="ap-body">
                 <div className="bo-field">
@@ -153,11 +137,11 @@ export function Toolbar() {
                 </div>
               </div>
               <div className="ap-footer">
-                <button className="btn-cancel" onClick={() => { setAddScenarioModalOpen(false); setNewScenarioName(''); }}>
+                <button className="btn btn-outline" onClick={() => { setAddScenarioModalOpen(false); setNewScenarioName(''); }}>
                   취소
                 </button>
                 <button
-                  className="btn-confirm"
+                  className="btn btn-primary"
                   onClick={() => {
                     if (newScenarioName.trim()) {
                       const newId = addScenario(newScenarioName.trim());
@@ -182,7 +166,7 @@ export function Toolbar() {
             <div className="ap-modal" style={{ width: 320 }} onClick={(e) => e.stopPropagation()}>
               <div className="ap-header">
                 <span style={{ fontSize: 14, fontWeight: 500 }}>시나리오 삭제</span>
-                <button className="ap-close" onClick={() => setDeleteScenarioModalOpen(false)}>×</button>
+                <ActionIcon variant="subtle" onClick={() => setDeleteScenarioModalOpen(false)}><IconPlus size={16} style={{ transform: 'rotate(45deg)' }} /></ActionIcon>
               </div>
               <div className="ap-body">
                 <span style={{ fontSize: 13, color: 'var(--text2)' }}>
@@ -190,18 +174,17 @@ export function Toolbar() {
                 </span>
               </div>
               <div className="ap-footer">
-                <button className="btn-cancel" onClick={() => setDeleteScenarioModalOpen(false)}>
+                <button className="btn btn-outline" onClick={() => setDeleteScenarioModalOpen(false)}>
                   취소
                 </button>
                 <button
-                  className="btn-confirm"
+                  className="btn btn-danger"
                   onClick={() => {
                     if (selectedScenarioId) {
                       deleteScenario(selectedScenarioId);
                       setDeleteScenarioModalOpen(false);
                     }
                   }}
-                  style={{ background: 'var(--red)', color: 'var(--text-inverse)' }}
                 >
                   삭제
                 </button>
@@ -216,7 +199,7 @@ export function Toolbar() {
             <div className="ap-modal" style={{ width: 360 }} onClick={(e) => e.stopPropagation()}>
               <div className="ap-header">
                 <span style={{ fontSize: 14, fontWeight: 500 }}>시나리오 이름 변경</span>
-                <button className="ap-close" onClick={() => { setRenameScenarioModalOpen(false); setRenameValue(''); }}>×</button>
+                <ActionIcon variant="subtle" onClick={() => { setRenameScenarioModalOpen(false); setRenameValue(''); }}><IconPlus size={16} style={{ transform: 'rotate(45deg)' }} /></ActionIcon>
               </div>
               <div className="ap-body">
                 <div className="bo-field">
@@ -248,11 +231,11 @@ export function Toolbar() {
                 </div>
               </div>
               <div className="ap-footer">
-                <button className="btn-cancel" onClick={() => { setRenameScenarioModalOpen(false); setRenameValue(''); }}>
+                <button className="btn btn-outline" onClick={() => { setRenameScenarioModalOpen(false); setRenameValue(''); }}>
                   취소
                 </button>
                 <button
-                  className="btn-confirm"
+                  className="btn btn-primary"
                   onClick={() => {
                     if (renameValue.trim() && selectedScenarioId) {
                       updateScenario(selectedScenarioId, { name: renameValue.trim() });
@@ -295,20 +278,15 @@ export function Toolbar() {
 
       {/* Add scene / add panel */}
       <Box className="tool-group">
-        <button className="tool-btn" onClick={() => setAddSceneModalOpen(true)}>
+        <button className="btn btn-ghost btn-sm" onClick={() => setAddSceneModalOpen(true)}>
           <IconPlus size={14} stroke={1.5} />
           장면 추가
         </button>
         <button
-          className="tool-btn"
+          className={`btn btn-sm ${selectedSceneId ? 'btn-accent' : 'btn-ghost'}`}
           onClick={() => {
             const sceneId = selectedSceneId ?? project?.scenes[0]?.id;
             if (sceneId) openAddPanelModal(sceneId);
-          }}
-          style={{
-            background: selectedSceneId ? 'var(--accent-dim)' : undefined,
-            borderColor: selectedSceneId ? 'rgba(79, 70, 229, 0.4)' : undefined,
-            color: selectedSceneId ? 'var(--accent)' : undefined,
           }}
         >
           <IconPlus size={14} stroke={1.5} />
@@ -337,7 +315,7 @@ export function Toolbar() {
 
       {/* Inspector toggle */}
       <button
-        className={`tool-btn ${rightSidebarOpen ? 'active' : ''}`}
+        className={`btn btn-ghost btn-sm ${rightSidebarOpen ? 'active' : ''}`}
         onClick={toggleRightSidebar}
       >
         속성 패널
@@ -345,14 +323,27 @@ export function Toolbar() {
 
       {/* Zoom */}
       <Box className="zoom-group">
-        <button className="tool-btn" onClick={() => setZoomLevel(zoomLevel - 10)} aria-label="줌 아웃">
+        <button className="btn btn-ghost btn-sm btn-icon" onClick={() => setZoomLevel(zoomLevel - 10)} aria-label="줌 아웃">
           <IconMinus size={14} stroke={1.5} />
         </button>
         <span className="zoom-val">{zoomLevel}%</span>
-        <button className="tool-btn" onClick={() => setZoomLevel(zoomLevel + 10)} aria-label="줌 인">
+        <button className="btn btn-ghost btn-sm btn-icon" onClick={() => setZoomLevel(zoomLevel + 10)} aria-label="줌 인">
           <IconPlus size={14} stroke={1.5} />
         </button>
       </Box>
+
+      {/* Spacer to push copilot to the right */}
+      <Box style={{ flex: 1 }} />
+
+      {/* AI Copilot toggle */}
+      <button
+        className={`btn-pill ${copilotSidebarOpen ? 'active' : ''}`}
+        onClick={toggleCopilotSidebar}
+        title="AI Copilot"
+      >
+        <IconSparkles size={14} stroke={1.5} />
+        AI
+      </button>
 
       {/* Add Scene Modal */}
       {addSceneModalOpen && (
@@ -360,7 +351,7 @@ export function Toolbar() {
           <div className="ap-modal" style={{ width: 360 }} onClick={(e) => e.stopPropagation()}>
             <div className="ap-header">
               <span style={{ fontSize: 14, fontWeight: 500 }}>새 장면 추가</span>
-              <button className="ap-close" onClick={() => { setAddSceneModalOpen(false); setNewSceneName(''); }}>×</button>
+              <ActionIcon variant="subtle" onClick={() => { setAddSceneModalOpen(false); setNewSceneName(''); }}><IconPlus size={16} style={{ transform: 'rotate(45deg)' }} /></ActionIcon>
             </div>
             <div className="ap-body">
               <div className="bo-field">
@@ -392,11 +383,11 @@ export function Toolbar() {
               </div>
             </div>
             <div className="ap-footer">
-              <button className="btn-cancel" onClick={() => { setAddSceneModalOpen(false); setNewSceneName(''); }}>
+              <button className="btn btn-outline" onClick={() => { setAddSceneModalOpen(false); setNewSceneName(''); }}>
                 취소
               </button>
               <button
-                className="btn-confirm"
+                className="btn btn-primary"
                 onClick={() => {
                   if (newSceneName.trim()) {
                     addScene(newSceneName.trim());
