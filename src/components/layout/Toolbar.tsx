@@ -1,5 +1,5 @@
-import { Box } from '@mantine/core';
-import { IconPlus, IconMinus, IconTrash, IconPencil } from '@tabler/icons-react';
+import { Box, ActionIcon } from '@mantine/core';
+import { IconPlus, IconMinus, IconTrash, IconPencil, IconSparkles } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -16,6 +16,8 @@ export function Toolbar() {
   const updateScenario = useProjectStore(s => s.updateScenario);
 
   const editorMode = useUIStore(s => s.editorMode);
+  const scenarioSidebarOpen = useUIStore(s => s.scenarioSidebarOpen);
+  const toggleScenarioSidebar = useUIStore(s => s.toggleScenarioSidebar);
   const zoomLevel = useUIStore(s => s.zoomLevel);
   const setZoomLevel = useUIStore(s => s.setZoomLevel);
   const viewMode = useUIStore(s => s.viewMode);
@@ -99,6 +101,18 @@ export function Toolbar() {
             삭제
           </button>
         </Box>
+
+        <Box className="tool-sep" />
+
+        {/* AI Chat toggle */}
+        <ActionIcon
+          size="md"
+          variant={scenarioSidebarOpen ? 'filled' : 'subtle'}
+          onClick={toggleScenarioSidebar}
+          title="AI Chat"
+        >
+          <IconSparkles size={18} stroke={1.5} />
+        </ActionIcon>
 
         {/* Add Scenario Modal */}
         {addScenarioModalOpen && (

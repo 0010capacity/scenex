@@ -1,8 +1,10 @@
 import { Box } from '@mantine/core';
+import { useState } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { PanelCanvas } from './PanelCanvas';
 import { InspectorPanel } from '@/components/inspector/InspectorPanel';
 import { ScenarioEditor } from '@/components/scenario/ScenarioEditor';
+import { AIChatSidebar } from '@/components/scenario/AIChatSidebar';
 import { ResizeHandle } from './ResizeHandle';
 import { SIDEBAR_MIN_WIDTH, SIDEBAR_MAX_WIDTH } from '@/constants';
 
@@ -10,6 +12,8 @@ export function Workspace() {
   const {
     rightSidebarOpen,
     editorMode,
+    scenarioSidebarOpen,
+    toggleScenarioSidebar,
     rightSidebarWidth,
     setRightSidebarWidth,
   } = useUIStore();
@@ -21,11 +25,31 @@ export function Workspace() {
 
   // Scenario mode: full-width ScenarioEditor
   if (editorMode === 'scenario') {
+    const [sidebarWidth, setSidebarWidth] = useState(320);
+    const SIDEBAR_MIN = 280;
+    const SIDEBAR_MAX = 480;
+
+    const handleResize = (delta: number) => {
+      setSidebarWidth((w) => Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, w + delta)));
+    };
+
     return (
       <Box className="workspace">
         <Box className="canvas-area" style={{ flex: 1 }}>
           <ScenarioEditor />
         </Box>
+        <ResizeHandle
+          side="right"
+          onResize={handleResize}
+          minWidth={SIDEBAR_MIN}
+          maxWidth={SIDEBAR_MAX}
+          currentWidth={sidebarWidth}
+        />
+        <AIChatSidebar
+          opened={scenarioSidebarOpen}
+          onClose={toggleScenarioSidebar}
+          width={sidebarWidth}
+        />
       </Box>
     );
   }

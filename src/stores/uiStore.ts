@@ -18,6 +18,7 @@ interface UIState {
   // Sidebar states
   leftSidebarOpen: boolean;
   rightSidebarOpen: boolean;
+  scenarioSidebarOpen: boolean;
   leftSidebarWidth: number;
   rightSidebarWidth: number;
 
@@ -42,6 +43,7 @@ interface UIState {
   // Actions
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
+  toggleScenarioSidebar: () => void;
   openRightSidebar: () => void;
   setLeftSidebarWidth: (width: number) => void;
   setRightSidebarWidth: (width: number) => void;
@@ -65,6 +67,7 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       leftSidebarOpen: true,
       rightSidebarOpen: true,
+      scenarioSidebarOpen: false,
       leftSidebarWidth: DEFAULT_LEFT_SIDEBAR_WIDTH,
       rightSidebarWidth: DEFAULT_RIGHT_SIDEBAR_WIDTH,
       editorMode: 'storyboard',
@@ -80,6 +83,7 @@ export const useUIStore = create<UIState>()(
 
       toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
+      toggleScenarioSidebar: () => set((state) => ({ scenarioSidebarOpen: !state.scenarioSidebarOpen })),
       openRightSidebar: () => set({ rightSidebarOpen: true }),
       setLeftSidebarWidth: (width) => set({ leftSidebarWidth: width }),
       setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),
@@ -111,6 +115,7 @@ export const useUIStore = create<UIState>()(
       partialize: (state) => ({
         leftSidebarOpen: state.leftSidebarOpen,
         rightSidebarOpen: state.rightSidebarOpen,
+        scenarioSidebarOpen: state.scenarioSidebarOpen,
         leftSidebarWidth: state.leftSidebarWidth,
         rightSidebarWidth: state.rightSidebarWidth,
         editorMode: state.editorMode,
