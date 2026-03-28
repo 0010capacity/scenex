@@ -124,7 +124,7 @@ export function ScenarioSidebar() {
         fullLine = `# ${newContent}`;
       } else if (info.badgeType === 'ACT') {
         fullLine = `## ${newContent}`;
-      } else if (info.badgeType === 'SLUG' || info.badgeType === 'SCENE') {
+      } else if (info.badgeType === 'SLUG') {
         fullLine = `### ${newContent}`;
       } else {
         fullLine = newContent;
