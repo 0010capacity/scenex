@@ -50,7 +50,7 @@ export function Toolbar() {
           </button>
           <button className="btn btn-ghost btn-sm" onClick={insertScene}>
             <IconPlus size={14} stroke={1.5} />
-            씬 추가
+            장면 추가
           </button>
         </Box>
 
