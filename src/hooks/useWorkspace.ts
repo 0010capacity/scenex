@@ -175,7 +175,13 @@ export function useWorkspace() {
   const loadProjectFromFile = useCallback(async (filePath: string): Promise<boolean> => {
     try {
       setIsLoading(true);
-      const data = await invoke<ProjectData>('load_project', { path: filePath });
+      const response = await invoke<{ success: boolean; data: { project: ProjectData } }>('load_project', { path: filePath });
+
+      if (!response.success || !response.data?.project) {
+        throw new Error('Failed to load project: invalid response');
+      }
+
+      const data = response.data.project;
 
       const loadedProject: Project = {
         id: data.id,
