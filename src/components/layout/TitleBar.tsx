@@ -155,12 +155,11 @@ export function TitleBar() {
               cursor: 'pointer',
               background: 'var(--bg1)',
               border: '1px solid var(--border)',
-              borderRadius: 8,
+              borderRadius: 'var(--r8)',
               padding: '5px 12px',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
             }}
             onClick={() => setScenarioDropdownOpen((o) => !o)}
           >
@@ -179,11 +178,11 @@ export function TitleBar() {
                 left: 0,
                 background: 'var(--bg1)',
                 border: '1px solid var(--border)',
-                borderRadius: 10,
+                borderRadius: 'var(--r12)',
                 padding: 6,
                 width: 240,
                 zIndex: 9999,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
                 maxHeight: 300,
                 overflowY: 'auto',
               }}
@@ -235,35 +234,19 @@ export function TitleBar() {
 
       {/* Mode Segment Control - center */}
       <Box
+        className="view-toggle"
         style={{
           position: 'absolute',
           left: '50%',
           transform: 'translateX(-50%)',
           WebkitAppRegion: 'no-drag',
-          display: 'flex',
-          alignItems: 'center',
-          background: 'var(--bg2)',
-          borderRadius: 6,
-          padding: '3px 4px',
-          gap: 2,
         }}
       >
         {(['scenario', 'storyboard'] as EditorMode[]).map((mode) => (
           <button
             key={mode}
+            className={editorMode === mode ? 'vt-btn active' : 'vt-btn'}
             onClick={() => setEditorMode(mode)}
-            style={{
-              padding: '4px 10px',
-              fontSize: 11,
-              fontWeight: 500,
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-              background: editorMode === mode ? 'var(--bg0)' : 'transparent',
-              color: editorMode === mode ? 'var(--text)' : 'var(--text3)',
-              boxShadow: editorMode === mode ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-              transition: 'all 0.15s ease',
-            }}
           >
             {mode === 'scenario' ? '시나리오' : '스토리보드'}
           </button>
@@ -306,11 +289,11 @@ export function TitleBar() {
                 right: 0,
                 background: 'var(--bg1)',
                 border: '1px solid var(--border)',
-                borderRadius: 10,
+                borderRadius: 'var(--r12)',
                 padding: 12,
                 width: 260,
                 zIndex: 9999,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
               }}
               onClick={(e) => e.stopPropagation()}
             >
