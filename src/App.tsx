@@ -5,7 +5,6 @@ import { useUIStore } from './stores/uiStore';
 import { useWorkspaceStore } from './stores/workspaceStore';
 import { AUTO_SAVE_INTERVAL_MS, NOTIFICATION_AUTO_DISMISS_MS } from './constants';
 import { TitleBar } from './components/layout/TitleBar';
-import { TabBar } from './components/layout/TabBar';
 import { Toolbar } from './components/layout/Toolbar';
 import { Workspace } from './components/layout/Workspace';
 import { ProjectOnboarding } from './components/onboarding/ProjectOnboarding';
@@ -154,7 +153,6 @@ function App() {
       }}
     >
       <TitleBar />
-      <TabBar />
       <Toolbar />
       <Workspace />
       <Suspense fallback={<ModalLoader />}>

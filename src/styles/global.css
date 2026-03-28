@@ -121,6 +121,183 @@ button {
   cursor: pointer;
 }
 
+/* ════════════════ Unified Button System ════════════════ */
+
+/* Base button - subtle/ghost style */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--r6);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--sans);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Ghost/subtle button - default state */
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text2);
+}
+
+.btn-ghost:hover {
+  background: var(--bg3);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-ghost:active {
+  background: var(--bg4);
+}
+
+/* Outlined button */
+.btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text2);
+}
+
+.btn-outline:hover {
+  background: var(--bg3);
+  border-color: var(--border2);
+  color: var(--text);
+}
+
+.btn-outline:active {
+  background: var(--bg4);
+}
+
+/* Filled/primary button */
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-primary:active {
+  opacity: 0.9;
+}
+
+/* Danger/destructive button */
+.btn-danger {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #c74444;
+  border-color: #c74444;
+}
+
+/* Ghost + accent (for AI toggles, etc.) */
+.btn-accent {
+  background: var(--accent-dim);
+  border-color: rgba(79, 70, 229, 0.3);
+  color: var(--accent);
+}
+
+.btn-accent:hover {
+  background: rgba(79, 70, 229, 0.15);
+  border-color: var(--accent);
+}
+
+/* Small size variant */
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 11px;
+  border-radius: var(--r4);
+}
+
+/* Icon-only button */
+.btn-icon {
+  padding: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r4);
+}
+
+.btn-icon.btn-icon-sm {
+  padding: 4px;
+  width: 24px;
+  height: 24px;
+}
+
+/* Disabled state for all buttons */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Button loading state */
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Pill button (like copilot toggle) */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--sans);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: var(--text2);
+}
+
+.btn-pill:hover {
+  background: var(--bg2);
+  color: var(--text);
+}
+
+.btn-pill.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-pill.active:hover {
+  opacity: 0.9;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -217,21 +394,6 @@ select option {
 .t-min { background: #E8A838; }
 .t-max { background: #4ECBA5; }
 
-.app-wordmark {
-  font-family: var(--serif);
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--text2);
-  flex: 1;
-  text-align: center;
-  letter-spacing: 0.02em;
-}
-
-.app-wordmark b {
-  color: var(--text);
-  font-weight: 400;
-}
-
 .tb-right {
   display: flex;
   gap: 4px;
@@ -317,33 +479,6 @@ select option {
   display: flex;
   align-items: center;
   gap: 2px;
-}
-
-.tool-btn {
-  background: none;
-  border: 1px solid transparent;
-  color: var(--text3);
-  padding: 5px 8px;
-  border-radius: var(--r4);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.tool-btn:hover {
-  background: var(--bg3);
-  border-color: var(--border);
-  color: var(--text2);
-}
-
-.tool-btn.active {
-  background: var(--bg3);
-  border-color: var(--border2);
-  color: var(--text);
 }
 
 .tool-sep {
@@ -576,23 +711,6 @@ select option {
   background: var(--border);
 }
 
-.scene-add-btn {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text3);
-  padding: 2px 8px;
-  border-radius: var(--r4);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.scene-add-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-dim);
-}
-
 /* ── Panel grid ── */
 .panel-grid {
   display: grid;
@@ -623,32 +741,6 @@ select option {
 .panel-empty-actions {
   display: flex;
   gap: 8px;
-}
-
-.panel-empty-btn {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  color: var(--text2);
-  padding: 6px 12px;
-  border-radius: var(--r6);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.panel-empty-btn:hover {
-  border-color: var(--border2);
-  color: var(--text);
-}
-
-.panel-empty-btn.ai {
-  background: var(--accent-dim);
-  border-color: rgba(79, 70, 229, 0.3);
-  color: var(--accent);
-}
-
-.panel-empty-btn.ai:hover {
-  background: rgba(79, 70, 229, 0.15);
 }
 
 /* ════════════════ Panel Card ════════════════ */
@@ -896,20 +988,6 @@ select option {
 .ap-header h2 {
   font-size: 15px;
   font-weight: 500;
-  color: var(--text);
-}
-
-.ap-close {
-  background: none;
-  border: none;
-  color: var(--text3);
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  transition: color 0.15s;
-}
-
-.ap-close:hover {
   color: var(--text);
 }
 
@@ -1182,46 +1260,6 @@ select option {
   gap: 8px;
 }
 
-.btn-cancel {
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text2);
-  padding: 7px 14px;
-  border-radius: var(--r6);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-cancel:hover {
-  border-color: var(--border2);
-}
-
-.btn-confirm {
-  background: var(--accent);
-  color: #FFFFFF;
-  border: none;
-  padding: 7px 18px;
-  border-radius: var(--r6);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.btn-confirm:hover {
-  background: var(--accent-hover);
-}
-
-.btn-confirm:disabled {
-  background: var(--bg4);
-  color: var(--text3);
-  cursor: not-allowed;
-}
-
 /* ════════════════ Inspector Panel ════════════════ */
 .inspector-header {
   height: 40px;
@@ -1347,34 +1385,6 @@ select option {
   font-size: 11px;
   color: var(--text3);
   line-height: 1.6;
-}
-
-.insp-ai-btn {
-  width: 100%;
-  padding: 8px;
-  background: var(--accent-dim);
-  border: 1px solid rgba(79, 70, 229, 0.3);
-  color: var(--accent);
-  border-radius: var(--r6);
-  font-size: 11px;
-  cursor: pointer;
-  font-family: var(--sans);
-  transition: all 0.15s;
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.insp-ai-btn:hover {
-  background: rgba(79, 70, 229, 0.15);
-}
-
-.insp-ai-btn.secondary {
-  background: var(--bg3);
-  border-color: var(--border);
-  color: var(--text2);
-  margin-top: 6px;
 }
 
 /* ════════════════ Scenario Sidebar ════════════════ */
@@ -1864,8 +1874,9 @@ svg[data-combobox-chevron] {
   }
 
   /* Touch-friendly buttons */
-  .btn-confirm,
-  .btn-cancel {
+  .btn,
+  .btn-outline,
+  .btn-primary {
     min-height: 44px;
     padding: 12px 16px;
   }

@@ -2,9 +2,9 @@ import { Box, Group, Text } from '@mantine/core';
 import { IconChevronDown } from '@tabler/icons-react';
 import { useState, useEffect, useRef } from 'react';
 import { useUIStore } from '@/stores/uiStore';
-import { useProjectStore } from '@/stores/projectStore';
-import { useWorkspace } from '@/hooks/useWorkspace';
 import { useClaude } from '@/hooks/useClaude';
+
+type EditorMode = 'scenario' | 'storyboard';
 
 // Window API type definitions
 interface WindowApi {
@@ -60,9 +60,8 @@ export function TitleBar() {
   const claudeStatus = useUIStore(s => s.claudeStatus);
   const claudeModel = useUIStore(s => s.claudeModel);
   const setClaudeModel = useUIStore(s => s.setClaudeModel);
-  const openProjectBrowser = useUIStore(s => s.openProjectBrowser);
-  const isDirty = useProjectStore(s => s.isDirty);
-  const { currentProjectName } = useWorkspace();
+  const editorMode = useUIStore(s => s.editorMode);
+  const setEditorMode = useUIStore(s => s.setEditorMode);
   const { checkAvailability } = useClaude();
   const [claudeDropdownOpen, setClaudeDropdownOpen] = useState(false);
   const [claudeInfo, setClaudeInfo] = useState<{ version: string | null; path: string | null }>({ version: null, path: null });
@@ -102,80 +101,78 @@ export function TitleBar() {
       className="titlebar"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      {/* Traffic lights */}
-      <Group gap={5} style={{ WebkitAppRegion: 'no-drag', alignSelf: 'flex-start', paddingTop: 12 }}>
-        <Box
-          component="span"
-          className="t-close"
-          style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-          onClick={() => windowApi.close()}
-          role="button"
-          aria-label="창 닫기"
-        />
-        <Box
-          component="span"
-          className="t-min"
-          style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-          onClick={() => windowApi.minimize()}
-          role="button"
-          aria-label="창 최소화"
-        />
-        <Box
-          component="span"
-          className="t-max"
-          style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-          onClick={() => windowApi.maximize()}
-          role="button"
-          aria-label="창 최대화"
-        />
-      </Group>
-
-      {/* App wordmark / Project breadcrumb */}
+      {/* Left section: Traffic lights + Mode Segment Control */}
       <Box
-        className="app-wordmark"
         style={{
-          position: 'absolute',
-          left: '50%',
-          transform: 'translateX(-50%)',
+          WebkitAppRegion: 'no-drag',
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
+          gap: 12,
+          paddingTop: 12,
         }}
       >
-        <button
-          onClick={openProjectBrowser}
+        {/* Traffic lights */}
+        <Group gap={5}>
+          <Box
+            component="span"
+            className="t-close"
+            style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
+            onClick={() => windowApi.close()}
+            role="button"
+            aria-label="창 닫기"
+          />
+          <Box
+            component="span"
+            className="t-min"
+            style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
+            onClick={() => windowApi.minimize()}
+            role="button"
+            aria-label="창 최소화"
+          />
+          <Box
+            component="span"
+            className="t-max"
+            style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
+            onClick={() => windowApi.maximize()}
+            role="button"
+            aria-label="창 최대화"
+          />
+        </Group>
+
+        {/* Mode Segment Control */}
+        <Box
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '4px 8px',
+            marginLeft: 64,
+            marginTop: -8,
+            background: 'var(--bg2)',
             borderRadius: 6,
-            transition: 'background 0.15s',
+            padding: '3px 4px',
+            gap: 2,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
         >
-          <Text
-            style={{
-              fontSize: 13,
-              color: 'var(--text)',
-              fontWeight: 500,
-            }}
-          >
-            {currentProjectName ? (
-              <>
-                {currentProjectName}
-                {isDirty && <span style={{ color: 'var(--accent)', marginLeft: 4 }}>•</span>}
-              </>
-            ) : (
-              <span style={{ color: 'var(--text3)' }}>Select project</span>
-            )}
-          </Text>
-          <IconChevronDown size={10} stroke={2} style={{ color: 'var(--text3)' }} />
-        </button>
+          {(['scenario', 'storyboard'] as EditorMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setEditorMode(mode)}
+              style={{
+                padding: '4px 10px',
+                fontSize: 11,
+                fontWeight: 500,
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                background: editorMode === mode ? 'var(--bg0)' : 'transparent',
+                color: editorMode === mode ? 'var(--text)' : 'var(--text3)',
+                boxShadow: editorMode === mode ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {mode === 'scenario' ? '시나리오' : '스토리보드'}
+            </button>
+          ))}
+        </Box>
       </Box>
 
       {/* Right controls */}
