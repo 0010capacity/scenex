@@ -224,14 +224,14 @@ pub mod scenario_to_storyboard {
 pub mod scenario_to_script {
     use super::*;
 
-    pub fn template() -> &'static str {
+    pub fn _template() -> &'static str {
         match PromptVersion::default() {
             PromptVersion::V1 => include_str!("../../prompts/scenario_to_script.md"),
         }
     }
 
-    pub fn build(scene_json: &str) -> String {
-        template().replace("{{scene_json}}", scene_json)
+    pub fn _build(scene_json: &str) -> String {
+        _template().replace("{{scene_json}}", scene_json)
     }
 }
 

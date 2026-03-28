@@ -80,7 +80,7 @@ pub struct ScenarioToStoryboardRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct StoryboardOutput {
+pub struct _StoryboardOutput {
     pub panels: Vec<PanelOutput>,
 }
 
