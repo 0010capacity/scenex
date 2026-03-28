@@ -1625,6 +1625,23 @@ select option {
 }
 
 /* ════════════════ Mantine Overrides ════════════════ */
+
+/* ActionIcon - strip all backgrounds and borders */
+.mantine-ActionIcon-root {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Also target hover/active states */
+.mantine-ActionIcon-root:hover,
+.mantine-ActionIcon-root:active,
+.mantine-ActionIcon-root:focus {
+  background: transparent !important;
+  border: 0 !important;
+}
+
 .mantine-Modal-content {
   background-color: var(--bg1) !important;
   border: 1px solid var(--border) !important;
@@ -1700,23 +1717,67 @@ select option {
 /* ════════════════ CodeMirror Editor ════════════════ */
 .cm-content,
 .cm-line,
-.cm-line *,
 .cm-content * {
-  color: #000 !important;
+  color: var(--text) !important;
+}
+
+.cm-line {
+  color: var(--text) !important;
 }
 
 /* Badge text styling */
 .cm-badge {
-  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+  margin-right: 8px;
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+  line-height: 1.4;
+  vertical-align: middle;
+  border: 1px solid;
 }
 
 /* CodeMirror editor focus outline removal */
 .cm-editor {
   outline: none !important;
+  background: transparent !important;
 }
 
 .cm-editor.cm-focused {
   outline: none !important;
+}
+
+.cm-editor .cm-scroller {
+  font-family: var(--mono) !important;
+}
+
+.cm-editor .cm-gutters {
+  background: transparent !important;
+  border-right: 1px solid var(--border) !important;
+  color: var(--text3) !important;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background: var(--bg2) !important;
+}
+
+.cm-editor .cm-activeLine {
+  background: color-mix(in srgb, var(--accent) 4%, transparent) !important;
+}
+
+.cm-editor .cm-selectionBackground {
+  background: color-mix(in srgb, var(--accent) 20%, transparent) !important;
+}
+
+.cm-editor .cm-cursor {
+  border-left-color: var(--accent) !important;
 }
 
 /* ════════════════ Mantine Combobox / Select ════════════════ */

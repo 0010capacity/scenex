@@ -1,8 +1,8 @@
 // CopilotSidebar - AI Copilot sidebar for storyboard and scenario modes
 // Integrated copilot with Skills Framework
 
-import { Box, Text, ActionIcon, Loader } from '@mantine/core';
-import { IconX, IconSparkles, IconCheck, IconAlertCircle, IconMessageCircle } from '@tabler/icons-react';
+import { Box, Text, Loader } from '@mantine/core';
+import { IconSparkles, IconCheck, IconAlertCircle, IconMessageCircle } from '@tabler/icons-react';
 import { useEffect, useRef } from 'react';
 import { ChatInput } from '@/components/scenario/ChatInput';
 import { useCopilotStore } from '@/stores/copilotStore';
@@ -13,11 +13,10 @@ import type { CopilotMessage, SkillResult } from '@/ai/skills/types';
 
 interface CopilotSidebarProps {
   opened: boolean;
-  onClose: () => void;
   width: number;
 }
 
-export function CopilotSidebar({ opened, onClose, width }: CopilotSidebarProps) {
+export function CopilotSidebar({ opened, width }: CopilotSidebarProps) {
   const project = useProjectStore(s => s.project);
   const editorMode = useUIStore(s => s.editorMode);
   const { messages, isLoading, lastSkillResults } = useCopilotStore();
@@ -42,37 +41,6 @@ export function CopilotSidebar({ opened, onClose, width }: CopilotSidebarProps) 
         flexShrink: 0,
       }}
     >
-      {/* Header */}
-      <Box
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '10px 14px',
-          borderBottom: '1px solid var(--border)',
-          gap: 8,
-        }}
-      >
-        <Box
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 8,
-            background: 'var(--accent-dim)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <IconSparkles size={14} color="var(--accent)" stroke={1.5} />
-        </Box>
-        <Text size="sm" fw={600} style={{ flex: 1, color: 'var(--text)' }}>
-          AI Copilot
-        </Text>
-        <ActionIcon size="sm" variant="subtle" onClick={onClose}>
-          <IconX size={14} stroke={1.5} />
-        </ActionIcon>
-      </Box>
-
       {/* Messages */}
       <CopilotMessageList messages={messages} isLoading={isLoading} skillResults={lastSkillResults} />
 

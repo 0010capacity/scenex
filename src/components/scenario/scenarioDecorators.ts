@@ -7,21 +7,31 @@ import {
 import { RangeSetBuilder } from '@codemirror/state';
 
 // Badge decoration types
-export type BadgeType = 'TITLE' | 'ACT' | 'SLUG' | 'SCENE' | 'NOTE';
+export type BadgeType = 'TITLE' | 'ACT' | 'SLUG' | 'SCENE' | 'NOTE' | 'GENRE' | 'MOOD';
 
-// Badge configuration - minimalist gray styling
+// Badge configuration - elegant styling with distinct colors per type
 const BADGE_CONFIG: Record<BadgeType, { text: string; bgColor: string; textColor: string; borderColor: string }> = {
-  TITLE: { text: 'TITLE', bgColor: 'var(--bg3)', textColor: 'var(--text2)', borderColor: 'var(--border)' },
-  ACT: { text: 'ACT', bgColor: 'var(--bg3)', textColor: 'var(--text2)', borderColor: 'var(--border)' },
-  SLUG: { text: 'SLUG', bgColor: 'var(--bg3)', textColor: 'var(--text2)', borderColor: 'var(--border)' },
-  SCENE: { text: 'SCENE', bgColor: 'var(--bg3)', textColor: 'var(--text2)', borderColor: 'var(--border)' },
-  NOTE: { text: 'NOTE', bgColor: 'var(--bg3)', textColor: 'var(--text2)', borderColor: 'var(--border)' },
+  TITLE: { text: 'TITLE', bgColor: 'color-mix(in srgb, var(--gold) 12%, transparent)', textColor: 'var(--gold2)', borderColor: 'color-mix(in srgb, var(--gold) 30%, transparent)' },
+  ACT: { text: 'ACT', bgColor: 'color-mix(in srgb, var(--purple) 12%, transparent)', textColor: 'var(--purple)', borderColor: 'color-mix(in srgb, var(--purple) 30%, transparent)' },
+  SLUG: { text: 'SLUG', bgColor: 'color-mix(in srgb, var(--blue) 12%, transparent)', textColor: 'var(--blue)', borderColor: 'color-mix(in srgb, var(--blue) 30%, transparent)' },
+  SCENE: { text: 'SCENE', bgColor: 'color-mix(in srgb, var(--green) 12%, transparent)', textColor: 'var(--green)', borderColor: 'color-mix(in srgb, var(--green) 30%, transparent)' },
+  NOTE: { text: 'NOTE', bgColor: 'color-mix(in srgb, var(--text3) 12%, transparent)', textColor: 'var(--text2)', borderColor: 'color-mix(in srgb, var(--text3) 30%, transparent)' },
+  GENRE: { text: 'GENRE', bgColor: 'color-mix(in srgb, var(--accent) 15%, transparent)', textColor: 'var(--accent)', borderColor: 'color-mix(in srgb, var(--accent) 35%, transparent)' },
+  MOOD: { text: 'MOOD', bgColor: 'color-mix(in srgb, var(--accent) 8%, transparent)', textColor: 'color-mix(in srgb, var(--accent) 90%, white)', borderColor: 'color-mix(in srgb, var(--accent) 25%, transparent)' },
 };
 
 // Detect if a line is a slugline (INT./EXT. pattern after ###)
 function isSlugline(text: string): boolean {
   const sluglinePattern = /^(INT|EXT)\.\s*.+\s*[-—]\s*.+$/i;
   return sluglinePattern.test(text.trim());
+}
+
+// Detect metadata tags (@genre:, @mood: patterns)
+function getMetadataType(text: string): 'GENRE' | 'MOOD' | null {
+  const trimmed = text.trim().toLowerCase();
+  if (trimmed.startsWith('@genre:')) return 'GENRE';
+  if (trimmed.startsWith('@mood:')) return 'MOOD';
+  return null;
 }
 
 // Info passed when badge is clicked
@@ -45,25 +55,10 @@ class BadgeWidget extends WidgetType {
     span.textContent = config.text;
     span.className = 'cm-badge';
     span.dataset.badgeType = this.badgeType;
-    span.style.cssText = `
-      font-family: var(--sans);
-      font-size: 10px;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: ${config.textColor};
-      background: ${config.bgColor};
-      border: 1px solid ${config.borderColor};
-      padding: 2px 8px;
-      border-radius: 4px;
-      margin-left: 10px;
-      margin-right: 8px;
-      cursor: pointer;
-      user-select: none;
-      display: inline-block;
-      line-height: 1.4;
-      vertical-align: middle;
-    `;
+    // Only set badge-specific colors via inline style - base styles in CSS
+    span.style.color = config.textColor;
+    span.style.background = config.bgColor;
+    span.style.borderColor = config.borderColor;
     return span;
   }
 
@@ -153,6 +148,19 @@ export function createScenarioBadgeExtension(onBadgeClick?: (info: BadgeClickInf
                 side: 1,
               })
             );
+          } else {
+            // Check for metadata tags (@genre:, @mood:)
+            const metadataType = getMetadataType(lineText);
+            if (metadataType) {
+              builder.add(
+                line.from,
+                line.from,
+                Decoration.widget({
+                  widget: new BadgeWidget(metadataType),
+                  side: 1,
+                })
+              );
+            }
           }
         }
 
@@ -176,6 +184,9 @@ export function createScenarioBadgeExtension(onBadgeClick?: (info: BadgeClickInf
           badgeType = isSlugline(contentAfterHeading) ? 'SLUG' : 'SCENE';
         } else if (lineText.startsWith('> ')) {
           badgeType = 'NOTE';
+        } else {
+          // Check for metadata tags
+          badgeType = getMetadataType(lineText);
         }
 
         if (!badgeType) return null;
