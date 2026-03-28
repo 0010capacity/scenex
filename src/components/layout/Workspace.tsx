@@ -1,5 +1,4 @@
 import { Box } from '@mantine/core';
-import { useState } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { PanelCanvas } from './PanelCanvas';
 import { InspectorPanel } from '@/components/inspector/InspectorPanel';
@@ -16,6 +15,8 @@ export function Workspace() {
     toggleScenarioSidebar,
     rightSidebarWidth,
     setRightSidebarWidth,
+    scenarioSidebarWidth,
+    setScenarioSidebarWidth,
   } = useUIStore();
 
   const handleRightResize = (delta: number) => {
@@ -25,12 +26,14 @@ export function Workspace() {
 
   // Scenario mode: full-width ScenarioEditor
   if (editorMode === 'scenario') {
-    const [sidebarWidth, setSidebarWidth] = useState(320);
     const SIDEBAR_MIN = 280;
     const SIDEBAR_MAX = 480;
 
+    const sidebarWidth = scenarioSidebarWidth || 320;
+
     const handleResize = (delta: number) => {
-      setSidebarWidth((w) => Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, w + delta)));
+      const newWidth = Math.max(SIDEBAR_MIN, Math.min(SIDEBAR_MAX, sidebarWidth + delta));
+      setScenarioSidebarWidth(newWidth);
     };
 
     return (
@@ -38,18 +41,22 @@ export function Workspace() {
         <Box className="canvas-area" style={{ flex: 1 }}>
           <ScenarioEditor />
         </Box>
-        <ResizeHandle
-          side="right"
-          onResize={handleResize}
-          minWidth={SIDEBAR_MIN}
-          maxWidth={SIDEBAR_MAX}
-          currentWidth={sidebarWidth}
-        />
-        <AIChatSidebar
-          opened={scenarioSidebarOpen}
-          onClose={toggleScenarioSidebar}
-          width={sidebarWidth}
-        />
+        {scenarioSidebarOpen && (
+          <>
+            <ResizeHandle
+              side="right"
+              onResize={handleResize}
+              minWidth={SIDEBAR_MIN}
+              maxWidth={SIDEBAR_MAX}
+              currentWidth={sidebarWidth}
+            />
+            <AIChatSidebar
+              opened={scenarioSidebarOpen}
+              onClose={toggleScenarioSidebar}
+              width={sidebarWidth}
+            />
+          </>
+        )}
       </Box>
     );
   }

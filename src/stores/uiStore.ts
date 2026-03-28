@@ -21,6 +21,7 @@ interface UIState {
   scenarioSidebarOpen: boolean;
   leftSidebarWidth: number;
   rightSidebarWidth: number;
+  scenarioSidebarWidth: number;
 
   // View states
   editorMode: 'storyboard' | 'scenario';
@@ -47,6 +48,7 @@ interface UIState {
   openRightSidebar: () => void;
   setLeftSidebarWidth: (width: number) => void;
   setRightSidebarWidth: (width: number) => void;
+  setScenarioSidebarWidth: (width: number) => void;
   setZoomLevel: (level: number) => void;
   setViewMode: (mode: 'grid' | 'list' | 'strip' | 'slide') => void;
   setEditorMode: (mode: 'storyboard' | 'scenario') => void;
@@ -70,6 +72,7 @@ export const useUIStore = create<UIState>()(
       scenarioSidebarOpen: false,
       leftSidebarWidth: DEFAULT_LEFT_SIDEBAR_WIDTH,
       rightSidebarWidth: DEFAULT_RIGHT_SIDEBAR_WIDTH,
+      scenarioSidebarWidth: 320,
       editorMode: 'storyboard',
       zoomLevel: DEFAULT_ZOOM_LEVEL,
       viewMode: 'grid',
@@ -87,6 +90,7 @@ export const useUIStore = create<UIState>()(
       openRightSidebar: () => set({ rightSidebarOpen: true }),
       setLeftSidebarWidth: (width) => set({ leftSidebarWidth: width }),
       setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),
+      setScenarioSidebarWidth: (width) => set({ scenarioSidebarWidth: width }),
       setZoomLevel: (level) => set({ zoomLevel: Math.max(MIN_ZOOM_LEVEL, Math.min(MAX_ZOOM_LEVEL, level)) }),
       setViewMode: (mode) => set({ viewMode: mode }),
       setEditorMode: (mode) => set({ editorMode: mode }),
@@ -118,6 +122,7 @@ export const useUIStore = create<UIState>()(
         scenarioSidebarOpen: state.scenarioSidebarOpen,
         leftSidebarWidth: state.leftSidebarWidth,
         rightSidebarWidth: state.rightSidebarWidth,
+        scenarioSidebarWidth: state.scenarioSidebarWidth,
         editorMode: state.editorMode,
         zoomLevel: state.zoomLevel,
         viewMode: state.viewMode,
