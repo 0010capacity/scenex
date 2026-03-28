@@ -35,6 +35,9 @@ pub fn run() {
             commands::workspace::create_project,
             commands::workspace::list_projects,
             commands::workspace::git_auto_commit,
+            commands::checkpoints::create_scenario_checkpoint,
+            commands::checkpoints::restore_scenario_checkpoint,
+            commands::checkpoints::list_scenario_checkpoints,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]
