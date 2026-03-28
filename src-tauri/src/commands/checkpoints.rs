@@ -112,31 +112,28 @@ pub async fn restore_scenario_checkpoint(
     let tree = commit.tree()
         .map_err(|e| format!("Failed to get tree: {}", e))?;
 
-    // Find the backup file in the tree - look for .scenex-ai-backup/{scenario_id}/*.md
-    let prefix = format!(".scenex-ai-backup/{}/", scenario_id);
+    // Get the .scenex-ai-backup/{scenario_id}/ subtree entry
+    let subtree_prefix = format!(".scenex-ai-backup/{}/", scenario_id);
+    let subtree_entry = tree.get_path(std::path::Path::new(&subtree_prefix))
+        .map_err(|e| format!("Failed to get subtree: {}", e))?;
+
+    // Convert entry to tree using find_tree
+    let subtree_id = subtree_entry.id();
+    let subtree = repo.find_tree(subtree_id)
+        .map_err(|e| format!("Failed to find subtree: {}", e))?;
 
     let mut content: Option<String> = None;
-
-    // Get the subtree for .scenex-ai-backup/{scenario_id}/
-    if let Ok(subtree_entry) = tree.get_path(std::path::Path::new(&prefix)) {
-        // subtree_entry is a TreeEntry pointing to a Tree (directory)
-        let subtree_id = subtree_entry.id();
-        if let Ok(subtree) = repo.find_tree(subtree_id) {
-            // subtree is a Tree containing the .md files
-            for entry in subtree.iter() {
-                if let Some(name) = entry.name() {
-                    if name.ends_with(".md") {
-                        let blob = repo.find_blob(entry.id())
-                            .map_err(|e| format!("Failed to find blob: {}", e))?;
-                        content = Some(String::from_utf8_lossy(blob.content()).to_string());
-                        break;
-                    }
-                }
+    for entry in subtree.iter() {
+        if let Some(name) = entry.name() {
+            if name.ends_with(".md") {
+                let blob = repo.find_blob(entry.id())
+                    .map_err(|e| format!("Failed to find blob: {}", e))?;
+                content = Some(String::from_utf8_lossy(blob.content()).to_string());
+                break;
             }
         }
     }
-
-    let content = content.ok_or_else(|| "Backup file not found in checkpoint".to_string())?;
+    let content = content.ok_or_else(|| "No .md file found in scenario backup".to_string())?;
 
     Ok(RestoredContent {
         content,
