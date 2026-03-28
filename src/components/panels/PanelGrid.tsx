@@ -27,8 +27,9 @@ interface PanelGridProps {
 }
 
 export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
-  const { reorderPanels } = useProjectStore();
-  const { openAddPanelModal, openAiGenModal } = useUIStore();
+  const reorderPanels = useProjectStore(s => s.reorderPanels);
+  const openAddPanelModal = useUIStore(s => s.openAddPanelModal);
+  const openAiGenModal = useUIStore(s => s.openAiGenModal);
   const [slideIndex, setSlideIndex] = useState(0);
 
   const sensors = useSensors(

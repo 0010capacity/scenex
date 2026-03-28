@@ -23,19 +23,19 @@ interface CreateProjectResult {
 }
 
 export function useWorkspace() {
-  const {
-    currentWorkspacePath,
-    currentWorkspaceName,
-    currentProjectPath,
-    currentProjectName,
-    recentProjects,
-    setCurrentWorkspace,
-    setCurrentProject,
-    addRecentProject,
-  } = useWorkspaceStore();
+  const currentWorkspacePath = useWorkspaceStore(s => s.currentWorkspacePath);
+  const currentWorkspaceName = useWorkspaceStore(s => s.currentWorkspaceName);
+  const currentProjectPath = useWorkspaceStore(s => s.currentProjectPath);
+  const currentProjectName = useWorkspaceStore(s => s.currentProjectName);
+  const recentProjects = useWorkspaceStore(s => s.recentProjects);
+  const setCurrentWorkspace = useWorkspaceStore(s => s.setCurrentWorkspace);
+  const setCurrentProject = useWorkspaceStore(s => s.setCurrentProject);
+  const addRecentProject = useWorkspaceStore(s => s.addRecentProject);
 
-  const { loadProject, project } = useProjectStore();
-  const { closeProjectBrowser, addNotification } = useUIStore();
+  const loadProject = useProjectStore(s => s.loadProject);
+  const project = useProjectStore(s => s.project);
+  const closeProjectBrowser = useUIStore(s => s.closeProjectBrowser);
+  const addNotification = useUIStore(s => s.addNotification);
   const [isLoading, setIsLoading] = useState(false);
 
   // Get the default workspaces directory

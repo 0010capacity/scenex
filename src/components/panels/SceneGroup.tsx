@@ -10,7 +10,7 @@ interface SceneGroupProps {
 }
 
 export function SceneGroup({ scene, viewMode }: SceneGroupProps) {
-  const { openAddPanelModal } = useUIStore();
+  const openAddPanelModal = useUIStore(s => s.openAddPanelModal);
   const duration = calculateSceneDuration(scene.panels);
 
   // Scene index from 1

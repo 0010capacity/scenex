@@ -1,0 +1,123 @@
+<h2>워크스페이스 UI 구조 옵션</h2>
+<p class="subtitle">프로젝트 목록을 어떻게 표시할까요?</p>
+
+<div class="split">
+  <!-- Option A: Sidebar Extension -->
+  <div class="mockup">
+    <div class="mockup-header">A: 사이드바 확장</div>
+    <div class="mockup-body" style="display: flex; height: 300px;">
+      <!-- Left sidebar -->
+      <div style="width: 200px; background: #1a1a2e; display: flex; flex-direction: column;">
+        <div style="padding: 8px; background: #16162a; border-bottom: 1px solid #333;">
+          <div style="font-size: 10px; color: #888; margin-bottom: 4px;">WORKSPACE</div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="color: #fff; font-size: 12px;">📁 영화 프로젝트</span>
+            <span style="color: #666; font-size: 10px;">▼</span>
+          </div>
+        </div>
+        <div style="padding: 8px; background: #16162a;">
+          <div style="font-size: 10px; color: #888; margin-bottom: 4px;">PROJECTS</div>
+          <div style="background: #2a2a4a; padding: 6px 8px; border-radius: 4px; margin-bottom: 4px;">
+            <span style="color: #fff; font-size: 11px;">🎬 단편 영화 A</span>
+          </div>
+          <div style="padding: 6px 8px;">
+            <span style="color: #888; font-size: 11px;">🎬 다큐멘터리 B</span>
+          </div>
+          <div style="padding: 6px 8px;">
+            <span style="color: #888; font-size: 11px;">🎬 뮤직비디오 C</span>
+          </div>
+          <div style="padding: 6px 8px; color: #666; font-size: 11px;">+ New Project</div>
+        </div>
+        <div style="flex: 1; border-top: 1px solid #333; padding: 8px;">
+          <div style="font-size: 10px; color: #888; margin-bottom: 4px;">SCENES</div>
+          <div style="padding: 4px 8px; color: #aaa; font-size: 11px;">Scene 1</div>
+          <div style="padding: 4px 8px; color: #888; font-size: 11px;">Scene 2</div>
+        </div>
+      </div>
+      <!-- Main area -->
+      <div style="flex: 1; background: #0d0d1a; display: flex; align-items: center; justify-content: center; color: #444;">
+        Panel Canvas
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Startup Modal -->
+  <div class="mockup">
+    <div class="mockup-header">B: 시작 화면 (모달)</div>
+    <div class="mockup-body" style="height: 300px; background: #0d0d1a; position: relative;">
+      <!-- Dimmed background -->
+      <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;">
+        <!-- Modal -->
+        <div style="background: #1a1a2e; border-radius: 12px; width: 400px; padding: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <span style="color: #fff; font-weight: bold;">Project Browser</span>
+            <span style="color: #666;">✕</span>
+          </div>
+          <div style="background: #16162a; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <div style="font-size: 10px; color: #888; margin-bottom: 8px;">CURRENT WORKSPACE</div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="color: #fff;">📁 영화 프로젝트</span>
+              <span style="color: #666; font-size: 11px;">Switch ▼</span>
+            </div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 10px; color: #888; margin-bottom: 8px;">RECENT PROJECTS</div>
+            <div style="background: #2a2a4a; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between;">
+              <span style="color: #fff;">🎬 단편 영화 A</span>
+              <span style="color: #666; font-size: 10px;">2 hours ago</span>
+            </div>
+            <div style="padding: 12px; border-radius: 8px; display: flex; justify-content: space-between;">
+              <span style="color: #888;">🎬 다큐멘터리 B</span>
+              <span style="color: #555; font-size: 10px;">Yesterday</span>
+            </div>
+          </div>
+          <button style="width: 100%; background: #4a4a6a; border: none; color: #fff; padding: 10px; border-radius: 6px;">
+            + New Project
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top: 20px;">
+  <div class="mockup-header">C: 전용 패널 (전체 화면 브라우저)</div>
+  <div class="mockup-body" style="height: 280px; background: #1a1a2e; display: flex; flex-direction: column;">
+    <!-- Top bar -->
+    <div style="padding: 12px 16px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+      <span style="color: #fff; font-weight: bold;">Project Manager</span>
+      <span style="color: #666;">✕</span>
+    </div>
+    <div style="display: flex; flex: 1;">
+      <!-- Workspace list -->
+      <div style="width: 180px; background: #16162a; padding: 12px; border-right: 1px solid #333;">
+        <div style="font-size: 10px; color: #888; margin-bottom: 8px;">WORKSPACES</div>
+        <div style="background: #2a2a4a; padding: 8px; border-radius: 4px; margin-bottom: 4px; color: #fff;">📁 영화 프로젝트</div>
+        <div style="padding: 8px; color: #888;">📁 개인 작업</div>
+        <div style="padding: 8px; color: #666;">+ Add Workspace</div>
+      </div>
+      <!-- Project grid -->
+      <div style="flex: 1; padding: 16px;">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+          <div style="background: #2a2a4a; border-radius: 8px; padding: 12px; aspect-ratio: 1;">
+            <div style="font-size: 24px; margin-bottom: 8px;">🎬</div>
+            <div style="color: #fff; font-size: 12px;">단편 영화 A</div>
+            <div style="color: #666; font-size: 10px;">12 scenes • 48 panels</div>
+          </div>
+          <div style="background: #222240; border-radius: 8px; padding: 12px; aspect-ratio: 1;">
+            <div style="font-size: 24px; margin-bottom: 8px;">🎬</div>
+            <div style="color: #888; font-size: 12px;">다큐멘터리 B</div>
+            <div style="color: #555; font-size: 10px;">5 scenes • 20 panels</div>
+          </div>
+          <div style="background: #1a1a30; border-radius: 8px; padding: 12px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #333;">
+            <span style="color: #555;">+ New</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 20px; padding: 16px; background: #16162a; border-radius: 8px;">
+  <p style="color: #aaa; margin: 0;">💡 <strong style="color: #fff;">추천:</strong> <strong>B (시작 화면)</strong> - 깔끔한 UX, 현재 구조와 잘 맞음. 프로젝트 열린 후에는 타이틀바에서 워크스페이스/프로젝트 전환 가능.</p>
+</div>

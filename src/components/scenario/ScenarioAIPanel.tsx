@@ -23,8 +23,9 @@ interface ScenarioAIPanelProps {
 type AIAction = 'polish' | 'expand' | 'condense' | 'toStoryboard';
 
 export function ScenarioAIPanel({ opened, onClose, scenario }: ScenarioAIPanelProps) {
-  const { updateScenario } = useProjectStore();
-  const { addTask, updateTask } = useAIStore();
+  const updateScenario = useProjectStore(s => s.updateScenario);
+  const addTask = useAIStore(s => s.addTask);
+  const updateTask = useAIStore(s => s.updateTask);
 
   const [selectedAction, setSelectedAction] = useState<AIAction | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);

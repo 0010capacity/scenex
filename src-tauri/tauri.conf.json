@@ -20,7 +20,7 @@
         "titleBarStyle": "Overlay",
         "trafficLightPosition": {
           "x": 16,
-          "y": 12
+          "y": 22
         },
         "fullscreen": false,
         "resizable": true
@@ -33,7 +33,13 @@
   "bundle": {
     "active": true,
     "targets": ["dmg"],
-    "icon": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
     "macOS": {
       "minimumSystemVersion": "10.13"
     }

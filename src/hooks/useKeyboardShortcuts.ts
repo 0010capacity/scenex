@@ -32,13 +32,15 @@ async function getImageFromClipboard(): Promise<string | null> {
 }
 
 export function useKeyboardShortcuts() {
-  const { selectedPanelId, selectedSceneId, deletePanel, addPanel, project } = useProjectStore();
-  const {
-    setZoomLevel,
-    zoomLevel,
-    openAddPanelModal,
-    addNotification,
-  } = useUIStore();
+  const selectedPanelId = useProjectStore(s => s.selectedPanelId);
+  const selectedSceneId = useProjectStore(s => s.selectedSceneId);
+  const deletePanel = useProjectStore(s => s.deletePanel);
+  const addPanel = useProjectStore(s => s.addPanel);
+  const project = useProjectStore(s => s.project);
+  const setZoomLevel = useUIStore(s => s.setZoomLevel);
+  const zoomLevel = useUIStore(s => s.zoomLevel);
+  const openAddPanelModal = useUIStore(s => s.openAddPanelModal);
+  const addNotification = useUIStore(s => s.addNotification);
   const { saveProjectWithAutoCommit, currentProjectPath } = useWorkspace();
 
   const handleKeyDown = useCallback(

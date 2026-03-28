@@ -4,8 +4,10 @@ import { useUIStore } from '@/stores/uiStore';
 import { SceneGroup } from '@/components/panels/SceneGroup';
 
 export function PanelCanvas() {
-  const { project, selectedSceneId } = useProjectStore();
-  const { zoomLevel, viewMode } = useUIStore();
+  const project = useProjectStore(s => s.project);
+  const selectedSceneId = useProjectStore(s => s.selectedSceneId);
+  const zoomLevel = useUIStore(s => s.zoomLevel);
+  const viewMode = useUIStore(s => s.viewMode);
 
   if (!project) {
     return (

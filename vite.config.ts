@@ -27,4 +27,20 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks for better caching
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-mantine': ['@mantine/core', '@mantine/hooks', '@mantine/form'],
+          'vendor-dnd': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          'vendor-codemirror': ['codemirror', '@codemirror/commands', '@codemirror/lang-markdown'],
+          'vendor-icons': ['@tabler/icons-react'],
+        },
+      },
+    },
+    // Increase limit since we have large dependencies
+    chunkSizeWarningLimit: 600,
+  },
 }));

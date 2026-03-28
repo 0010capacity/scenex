@@ -10,8 +10,9 @@ interface ScenarioAIGeneratorProps {
 }
 
 export function ScenarioAIGenerator({ opened, onClose }: ScenarioAIGeneratorProps) {
-  const { addScenario } = useProjectStore();
-  const { addTask, updateTask } = useAIStore();
+  const addScenario = useProjectStore(s => s.addScenario);
+  const addTask = useAIStore(s => s.addTask);
+  const updateTask = useAIStore(s => s.updateTask);
 
   const [concept, setConcept] = useState('');
   const [genre, setGenre] = useState<string | null>(null);

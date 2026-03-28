@@ -1,0 +1,86 @@
+<h2>Minimal + Compact Hybrid</h2>
+<p class="subtitle">A와 C를 합치고, 아이콘을 제거한 버전</p>
+
+<div class="cards" style="grid-template-columns: 1fr 1fr; gap: 24px; justify-items: center;">
+  <div class="mockup" style="width:280px">
+    <div class="mockup-header">연결됨 상태</div>
+    <div class="mockup-body">
+      <div style="background:#13141A;border:1px solid #2A2D3A;border-radius:10px;padding:14px;font-family:'DM Sans',sans-serif">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div>
+            <div style="color:#E8E5DC;font-size:13px;font-weight:600">Claude Code</div>
+            <div style="color:#4ECBA5;font-size:11px;margin-top:2px">● 연결됨 · v1.0.42</div>
+          </div>
+          <button style="background:#1A1C24;border:1px solid #2A2D3A;border-radius:6px;padding:6px 10px;color:#9A9790;font-size:11px;cursor:pointer">↻ 확인</button>
+        </div>
+        <div style="border-top:1px solid #2A2D3A;padding-top:12px">
+          <div style="color:#9A9790;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;font-weight:600">모델 선택</div>
+          <select style="width:100%;background:#1A1C24;border:1px solid #2A2D3A;border-radius:6px;padding:10px 12px;color:#E8E5DC;font-size:12px;cursor:pointer">
+            <option>Claude Haiku — 빠르고 효율적</option>
+            <option selected>Claude Sonnet — 균형 잡힌 성능</option>
+            <option>Claude Opus — 가장 강력함</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup" style="width:280px">
+    <div class="mockup-header">연결 실패 상태</div>
+    <div class="mockup-body">
+      <div style="background:#13141A;border:1px solid #2A2D3A;border-radius:10px;padding:14px;font-family:'DM Sans',sans-serif">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div>
+            <div style="color:#E8E5DC;font-size:13px;font-weight:600">Claude Code</div>
+            <div style="color:#E05252;font-size:11px;margin-top:2px">● 연결 실패</div>
+          </div>
+          <button style="background:#1A1C24;border:1px solid #2A2D3A;border-radius:6px;padding:6px 10px;color:#9A9790;font-size:11px;cursor:pointer">↻ 확인</button>
+        </div>
+        <div style="background:rgba(224,82,82,0.06);border:1px solid rgba(224,82,82,0.15);border-radius:8px;padding:12px;margin-bottom:10px">
+          <div style="color:#9A9790;font-size:11px;line-height:1.5">Claude Code가 시스템에서 감지되지 않았습니다.</div>
+        </div>
+        <button style="width:100%;padding:10px;background:var(--gold-dim, rgba(232,168,56,0.12));border:1px solid rgba(232,168,56,0.3);border-radius:6px;color:#E8A838;font-size:12px;font-weight:600;cursor:pointer">설치하기 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:32px">
+  <h3>세부 사항</h3>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:16px">
+    <div style="background:#1A1C24;border:1px solid #2A2D3A;border-radius:8px;padding:14px">
+      <div style="color:#E8E5DC;font-size:12px;font-weight:600;margin-bottom:8px">레이아웃</div>
+      <ul style="color:#9A9790;font-size:11px;line-height:1.8;padding-left:16px">
+        <li>이름 + 상태 + 버전 (1줄)</li>
+        <li>확인 버튼 (우측)</li>
+        <li>모델 선택은 bordered select</li>
+      </ul>
+    </div>
+    <div style="background:#1A1C24;border:1px solid #2A2D3A;border-radius:8px;padding:14px">
+      <div style="color:#E8E5DC;font-size:12px;font-weight:600;margin-bottom:8px">컬러</div>
+      <ul style="color:#9A9790;font-size:11px;line-height:1.8;padding-left:16px">
+        <li><span style="color:#4ECBA5">● 초록</span> — 연결됨</li>
+        <li><span style="color:#E05252">● 빨강</span> — 연결 실패</li>
+        <li><span style="color:#9A9790">● 회색</span> — 확인 중</li>
+        <li><span style="color:#E8A838">■ 골드</span> — 액센트/설치</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:20px">
+  <h3>코드 구조</h3>
+  <pre style="background:#0B0C10;border:1px solid #2A2D3A;border-radius:8px;padding:16px;font-family:'DM Mono',monospace;font-size:11px;color:#9A9790;line-height:1.6;overflow-x:auto">
+<span style="color:#E8A838">// States</span>
+claudeStatus: 'checking' | 'available' | 'unavailable'
+claudeModel:  'haiku' | 'sonnet' | 'opus'
+
+<span style="color:#E8A838">// Dropdown</span>
+Popover →
+  Header (이름 + 상태배지)
+  확인 버튼 (↻)
+  ─────────────
+  모델 선택 (if available)
+  설치하기 (if unavailable)
+  </pre>
+</div>

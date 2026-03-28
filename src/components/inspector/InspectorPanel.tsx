@@ -13,8 +13,10 @@ import {
 } from '@/types';
 
 export function InspectorPanel() {
-  const { getSelectedPanel, updatePanel } = useProjectStore();
-  const { toggleRightSidebar, addNotification } = useUIStore();
+  const getSelectedPanel = useProjectStore(s => s.getSelectedPanel);
+  const updatePanel = useProjectStore(s => s.updatePanel);
+  const toggleRightSidebar = useUIStore(s => s.toggleRightSidebar);
+  const addNotification = useUIStore(s => s.addNotification);
   const { generatePanel, generateDescriptionSuggestion } = useClaude();
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -151,8 +153,9 @@ export function InspectorPanel() {
               <Text className="insp-sec-label">프레임</Text>
               <Box className="insp-row">
                 <Box className="insp-field">
-                  <label>샷 타입</label>
+                  <label htmlFor="shot-type">샷 타입</label>
                   <Select
+                    id="shot-type"
                     value={panel.shotType ?? null}
                     onChange={(value) =>
                       updatePanel(panel.id, { shotType: value as any })
@@ -167,8 +170,9 @@ export function InspectorPanel() {
                   />
                 </Box>
                 <Box className="insp-field">
-                  <label>지속 시간</label>
+                  <label htmlFor="duration">지속 시간</label>
                   <TextInput
+                    id="duration"
                     value={panel.duration}
                     onChange={(e) =>
                       updatePanel(panel.id, { duration: e.currentTarget.value })
@@ -179,8 +183,9 @@ export function InspectorPanel() {
                 </Box>
               </Box>
               <Box className="insp-field">
-                <label>카메라 무브먼트</label>
+                <label htmlFor="camera-movement">카메라 무브먼트</label>
                 <Select
+                  id="camera-movement"
                   value={panel.cameraMovement ?? null}
                   onChange={(value) =>
                     updatePanel(panel.id, { cameraMovement: value as any })
@@ -200,8 +205,9 @@ export function InspectorPanel() {
             <Box className="insp-section">
               <Text className="insp-sec-label">내용</Text>
               <Box className="insp-field">
-                <label>장면 설명</label>
+                <label htmlFor="description">장면 설명</label>
                 <Textarea
+                  id="description"
                   value={panel.description}
                   onChange={(e) =>
                     updatePanel(panel.id, { description: e.currentTarget.value })
@@ -213,8 +219,9 @@ export function InspectorPanel() {
                 />
               </Box>
               <Box className="insp-field">
-                <label>대사 / 나레이션</label>
+                <label htmlFor="dialogue">대사 / 나레이션</label>
                 <TextInput
+                  id="dialogue"
                   value={panel.dialogue}
                   onChange={(e) =>
                     updatePanel(panel.id, { dialogue: e.currentTarget.value })
@@ -224,8 +231,9 @@ export function InspectorPanel() {
                 />
               </Box>
               <Box className="insp-field">
-                <label>사운드</label>
+                <label htmlFor="sound">사운드</label>
                 <TextInput
+                  id="sound"
                   value={panel.sound}
                   onChange={(e) =>
                     updatePanel(panel.id, { sound: e.currentTarget.value })
@@ -270,7 +278,9 @@ export function InspectorPanel() {
             <Box className="insp-section">
               <Text className="insp-sec-label">전환</Text>
               <Box className="insp-field">
+                <label htmlFor="transition" className="sr-only">전환 효과</label>
                 <Select
+                  id="transition"
                   value={panel.transition}
                   onChange={(value) =>
                     updatePanel(panel.id, { transition: value as any })

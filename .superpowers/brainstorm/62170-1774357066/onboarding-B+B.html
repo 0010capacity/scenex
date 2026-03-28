@@ -1,0 +1,191 @@
+<h2>온보딩: Split + Inline Adapter</h2>
+<p class="subtitle">B 레이아웃 + 인라인 어댑터 설정 — 전체 플로우</p>
+
+<div class="mockup" style="max-width: 900px; margin: 0 auto;">
+  <div class="mockup-header">온보딩 화면 — Split 레이아웃</div>
+  <div class="mockup-body">
+    <div style="display: flex; height: 500px; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #E5E5E3; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
+
+      <!-- Left: Branding Panel -->
+      <div style="width: 280px; background: #4F46E5; display: flex; flex-direction: column; padding: 40px 32px;">
+        <!-- Logo -->
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 48px;">
+          <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 20px; height: 20px; background: white; border-radius: 5px;"></div>
+          </div>
+          <div>
+            <div style="font-family: 'Playfair Display', serif; font-size: 20px; color: white;">SceneX</div>
+            <div style="font-size: 11px; color: rgba(255,255,255,0.6);">스토리보드 에디터</div>
+          </div>
+        </div>
+
+        <!-- Feature list -->
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <div style="width: 12px; height: 12px; background: rgba(255,255,255,0.8); border-radius: 3px;"></div>
+            </div>
+            <div>
+              <div style="font-size: 13px; font-weight: 500; color: white; margin-bottom: 2px;">비주얼 스토리보드</div>
+              <div style="font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.5;">이미지와 텍스트로<br/>영상을策划</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <div style="font-size: 12px; color: rgba(255,255,255,0.8);">⚡</div>
+            </div>
+            <div>
+              <div style="font-size: 13px; font-weight: 500; color: white; margin-bottom: 2px;">AI 어시스턴트</div>
+              <div style="font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.5;">AI가Panel을<br/>자동 생성</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.15); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <div style="font-size: 12px; color: rgba(255,255,255,0.8);">📁</div>
+            </div>
+            <div>
+              <div style="font-size: 13px; font-weight: 500; color: white; margin-bottom: 2px;">프로젝트 관리</div>
+              <div style="font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.5;">워크스페이스 기반<br/>파일 관리</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Version -->
+        <div style="font-size: 10px; color: rgba(255,255,255,0.4); font-family: 'DM Mono', monospace;">v1.0.0</div>
+      </div>
+
+      <!-- Right: Action Panel -->
+      <div style="flex: 1; background: #FAFAF9; display: flex; flex-direction: column;">
+
+        <!-- Header -->
+        <div style="padding: 24px 32px 0; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 18px; font-weight: 500; color: #1A1A1A;">시작하기</div>
+          <div style="font-size: 12px; color: #A0A0A0;">Step 1 / 2</div>
+        </div>
+
+        <!-- Action Cards -->
+        <div style="padding: 24px 32px; display: flex; flex-direction: column; gap: 12px;">
+          <!-- Card 1: New Project -->
+          <div style="background: white; border: 1px solid #E5E5E3; border-radius: 10px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="width: 44px; height: 44px; background: #4F46E5; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <div style="width: 18px; height: 18px; background: white; border-radius: 4px;"></div>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 500; color: #1A1A1A; margin-bottom: 2px;">새 프로젝트 만들기</div>
+              <div style="font-size: 12px; color: #6B6B6B;">워크스페이스를 생성하고 첫 프로젝트를 시작하세요</div>
+            </div>
+            <div style="color: #A0A0A0; font-size: 16px;">→</div>
+          </div>
+
+          <!-- Card 2: Open Existing -->
+          <div style="background: white; border: 1px solid #E5E5E3; border-radius: 10px; padding: 18px 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: all 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="width: 44px; height: 44px; background: #F5F5F4; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #E5E5E3;">
+              <div style="font-size: 18px; color: #6B6B6B;">📁</div>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 500; color: #1A1A1A; margin-bottom: 2px;">기존 프로젝트 열기</div>
+              <div style="font-size: 12px; color: #6B6B6B;">최근 프로젝트 또는 파일에서 불러오기</div>
+            </div>
+            <div style="color: #A0A0A0; font-size: 16px;">→</div>
+          </div>
+        </div>
+
+        <!-- Divider with text -->
+        <div style="padding: 0 32px; display: flex; align-items: center; gap: 16px;">
+          <div style="flex: 1; height: 1px; background: #E5E5E3;"></div>
+          <div style="font-size: 11px; color: #A0A0A0; white-space: nowrap;">어댑터 설정</div>
+          <div style="flex: 1; height: 1px; background: #E5E5E3;"></div>
+        </div>
+
+        <!-- Adapter Settings Inline -->
+        <div style="padding: 20px 32px; flex: 1;">
+          <div style="background: white; border: 1px solid #E5E5E3; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+              <div style="width: 32px; height: 32px; background: #4F46E5; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <div style="font-size: 14px; color: white;">⚡</div>
+              </div>
+              <div>
+                <div style="font-size: 13px; font-weight: 500; color: #1A1A1A;">AI 어댑터</div>
+                <div style="font-size: 11px; color: #A0A0A0;">Claude API 연결 설정</div>
+              </div>
+            </div>
+
+            <!-- API Key input -->
+            <div style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 10px; font-weight: 500; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">API Key</label>
+              <input type="password" placeholder="sk-ant-..." style="width: 100%; background: #F5F5F4; border: 1px solid #E5E5E3; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #1A1A1A; outline: none; box-sizing: border-box;">
+            </div>
+
+            <!-- Endpoint select -->
+            <div style="margin-bottom: 14px;">
+              <label style="display: block; font-size: 10px; font-weight: 500; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">Endpoint</label>
+              <select style="width: 100%; background: #F5F5F4; border: 1px solid #E5E5E3; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #1A1A1A; outline: none; cursor: pointer;">
+                <option>Anthropic API (api.anthropic.com)</option>
+                <option>AWS Bedrock</option>
+                <option>Google Vertex AI</option>
+              </select>
+            </div>
+
+            <!-- Status -->
+            <div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #F5F5F4; border-radius: 6px;">
+              <div style="width: 8px; height: 8px; border-radius: 50%; background: #A0A0A0;"></div>
+              <div style="font-size: 11px; color: #6B6B6B;">연결 안 됨</div>
+              <button style="margin-left: auto; background: #4F46E5; color: white; border: none; padding: 6px 12px; border-radius: 5px; font-size: 11px; cursor: pointer;">연결 테스트</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 16px 32px; border-top: 1px solid #E5E5E3; display: flex; justify-content: flex-end;">
+          <button style="background: #4F46E5; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">계속</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 32px;">
+  <h3>워크스페이스 선택 시 (Step 2)</h3>
+  <p class="subtitle">프로젝트 이름 입력 + 워크스페이스 선택</p>
+</div>
+
+<div class="mockup" style="max-width: 900px; margin: 0 auto;">
+  <div class="mockup-body">
+    <div style="display: flex; height: 300px; background: white; border-radius: 12px; overflow: hidden; border: 1px solid #E5E5E3; box-shadow: 0 4px 24px rgba(0,0,0,0.06);">
+
+      <!-- Left: Branding (smaller) -->
+      <div style="width: 200px; background: #4F46E5; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;">
+        <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 10px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center;">
+          <div style="width: 16px; height: 16px; background: white; border-radius: 4px;"></div>
+        </div>
+        <div style="font-family: 'Playfair Display', serif; font-size: 16px; color: white;">SceneX</div>
+      </div>
+
+      <!-- Right: Project creation form -->
+      <div style="flex: 1; background: #FAFAF9; padding: 32px; display: flex; flex-direction: column; gap: 20px;">
+        <div style="font-size: 18px; font-weight: 500; color: #1A1A1A;">새 프로젝트</div>
+
+        <!-- Project name -->
+        <div>
+          <label style="display: block; font-size: 10px; font-weight: 500; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">프로젝트 이름</label>
+          <input type="text" placeholder="내 영상 프로젝트" value="" style="width: 100%; background: white; border: 1px solid #E5E5E3; border-radius: 6px; padding: 10px 12px; font-size: 13px; color: #1A1A1A; outline: none; box-sizing: border-box;">
+        </div>
+
+        <!-- Workspace selector -->
+        <div>
+          <label style="display: block; font-size: 10px; font-weight: 500; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">워크스페이스</label>
+          <select style="width: 100%; background: white; border: 1px solid #E5E5E3; border-radius: 6px; padding: 10px 12px; font-size: 12px; color: #1A1A1A; outline: none; cursor: pointer;">
+            <option>기본 워크스페이스</option>
+            <option>작업室</option>
+          </select>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 10px; margin-top: auto;">
+          <button style="flex: 1; background: white; border: 1px solid #E5E5E3; color: #6B6B6B; padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer;">취소</button>
+          <button style="flex: 1; background: #4F46E5; border: none; color: white; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;">프로젝트 생성</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

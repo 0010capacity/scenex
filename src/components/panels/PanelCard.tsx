@@ -6,6 +6,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { Panel } from '@/types';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAIStore } from '@/stores/aiStore';
+import { useUIStore } from '@/stores/uiStore';
 import { PanelHistoryDrawer } from './PanelHistoryDrawer';
 
 interface PanelCardProps {
@@ -33,7 +34,11 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCardProps) {
-  const { selectedPanelId, selectPanel, project, movePanel } = useProjectStore();
+  const selectedPanelId = useProjectStore(s => s.selectedPanelId);
+  const selectPanel = useProjectStore(s => s.selectPanel);
+  const project = useProjectStore(s => s.project);
+  const movePanel = useProjectStore(s => s.movePanel);
+  const openRightSidebar = useUIStore(s => s.openRightSidebar);
 
   const {
     attributes,
@@ -115,7 +120,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
           {panel.imageData ? (
             <img src={panel.imageData} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : panel.svgData ? (
-            <Box dangerouslySetInnerHTML={{ __html: panel.svgData }} style={{ width: '100%', height: '100%' }} />
+            <img src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(panel.svgData)}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <IconPlayerPlay size={14} color="var(--text3)" stroke={1.5} />
           )}
@@ -157,6 +162,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
       <Menu.Target>
         <Box
       ref={setNodeRef}
+      className={`panel-card ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{
         cursor: 'pointer',
         borderRadius: 'var(--r8)',
@@ -198,9 +204,10 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : panel.svgData ? (
-          <Box
-            dangerouslySetInnerHTML={{ __html: panel.svgData }}
-            style={{ width: '100%', height: '100%' }}
+          <img
+            src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(panel.svgData)}`}
+            alt={`AI generated panel ${panel.number}`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
           /* Empty state */
@@ -307,6 +314,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
             onClick={(e) => {
               e.stopPropagation();
               selectPanel(panel.id);
+              openRightSidebar();
             }}
           >
             편집

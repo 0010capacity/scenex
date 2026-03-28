@@ -104,14 +104,14 @@ export const theme = createTheme({
         option: {
           color: 'var(--text2)',
           fontSize: rem(12),
-          '&[data-selected]': {
-            backgroundColor: 'var(--accent-dim)',
-            color: 'var(--accent)',
-          },
-          '&:hover': {
-            backgroundColor: 'var(--bg2)',
-          },
+          // Note: data-selected and hover styles are handled via CSS classes
+          // in global.css to avoid React style prop warnings
         },
+      },
+    },
+    Combobox: {
+      defaultProps: {
+        withinPortal: false,
       },
     },
     Chip: {
@@ -121,11 +121,8 @@ export const theme = createTheme({
           borderColor: 'var(--border)',
           color: 'var(--text2)',
           fontSize: rem(10),
-          '&[data-checked]': {
-            backgroundColor: 'var(--accent-dim)',
-            borderColor: 'var(--accent)',
-            color: 'var(--accent)',
-          },
+          // Note: data-checked styles are handled via CSS classes
+          // in global.css to avoid React style prop warnings
         },
       },
     },

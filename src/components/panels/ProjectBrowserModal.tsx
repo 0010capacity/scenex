@@ -6,7 +6,9 @@ import { WorkspaceInfo, ProjectInfo } from '@/stores/workspaceStore';
 import { useWorkspace } from '@/hooks/useWorkspace';
 
 export function ProjectBrowserModal() {
-  const { projectBrowserOpen, closeProjectBrowser, addNotification } = useUIStore();
+  const projectBrowserOpen = useUIStore(s => s.projectBrowserOpen);
+  const closeProjectBrowser = useUIStore(s => s.closeProjectBrowser);
+  const addNotification = useUIStore(s => s.addNotification);
   const {
     currentWorkspacePath,
     currentProjectName,

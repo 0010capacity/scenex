@@ -1,0 +1,11 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="white"/>
+
+  <!-- Stylized X - two diagonal bars forming X with panel accents -->
+  <path d="M256 256 L448 512 L256 768" stroke="#1a1a1a" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M768 256 L576 512 L768 768" stroke="#1a1a1a" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Center dot for focus point -->
+  <circle cx="512" cy="512" r="32" fill="#1a1a1a"/>
+</svg>

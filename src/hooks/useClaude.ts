@@ -19,8 +19,9 @@ import type {
 } from '@/ai/types';
 
 export function useClaude() {
-  const { setClaudeStatus } = useUIStore();
-  const { addTask, updateTask } = useAIStore();
+  const setClaudeStatus = useUIStore(s => s.setClaudeStatus);
+  const addTask = useAIStore(s => s.addTask);
+  const updateTask = useAIStore(s => s.updateTask);
   const provider = getAIProvider();
 
   const checkAvailability = useCallback(async (): Promise<ClaudeStatus> => {

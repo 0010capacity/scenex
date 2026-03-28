@@ -5,7 +5,7 @@ import { useWorkspaceStore } from '@/stores/workspaceStore';
 
 export function FirstProjectOnboarding() {
   const { createProject, recentProjects, isLoading } = useWorkspace();
-  const { currentWorkspaceName } = useWorkspaceStore();
+  const currentWorkspaceName = useWorkspaceStore(s => s.currentWorkspaceName);
   const [projectName, setProjectName] = useState('');
   const [selectedOption, setSelectedOption] = useState<'blank' | 'script' | 'storyboard' | 'existing' | null>(null);
 

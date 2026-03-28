@@ -116,14 +116,14 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'var(--serif)',
     fontSize: 24,
     fontWeight: 400,
-    color: '#FFFFFF',
+    color: 'var(--text-inverse)',
     letterSpacing: '0.02em',
     marginBottom: 4,
   },
   tagline: {
     fontFamily: 'var(--sans)',
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: 'var(--text-inverse-dim)',
     marginBottom: 40,
   },
   features: {
@@ -138,7 +138,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 10,
     fontFamily: 'var(--sans)',
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'var(--text-inverse-dim)',
   },
   featureIcon: {
     width: 28,
@@ -148,7 +148,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'var(--text-inverse)',
   },
   rightPanel: {
     flex: 1,
@@ -188,7 +188,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
     padding: '14px 20px',
     backgroundColor: 'var(--accent)',
-    color: '#FFFFFF',
+    color: 'var(--text-inverse)',
     border: 'none',
     borderRadius: 'var(--r10)',
     fontFamily: 'var(--sans)',

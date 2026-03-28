@@ -38,7 +38,9 @@
   /* Dark Mode Text */
   --text: #E8E5DC;
   --text2: #9A9790;
-  --text3: #4E4C48;
+  --text3: #7A7872;
+  --text-inverse: #FFFFFF;
+  --text-inverse-dim: rgba(255, 255, 255, 0.65);
 
   /* Typography */
   --mono: 'DM Mono', monospace;
@@ -50,6 +52,15 @@
   --r6: 6px;
   --r8: 8px;
   --r12: 12px;
+
+  /* Z-index scale */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-modal-backdrop: 200;
+  --z-modal: 300;
+  --z-toast: 1000;
+  --z-tooltip: 2000;
 }
 
 /* ── Light Mode (Clean Studio) ── */
@@ -88,6 +99,8 @@
   --text: #1A1A1A;
   --text2: #6B6B6B;
   --text3: #6B6B6B;
+  --text-inverse: #1A1A1A;
+  --text-inverse-dim: rgba(26, 26, 26, 0.65);
 }
 
 html, body {
@@ -119,8 +132,8 @@ select option {
 
 /* ════════════════ Scrollbar ════════════════ */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -142,6 +155,31 @@ select option {
 :focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
+}
+
+/* ════════════════ Reduced Motion ════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ════════════════ TitleBar ════════════════ */
@@ -486,6 +524,7 @@ select option {
 
 .resize-handle.dragging {
   background: var(--accent);
+  cursor: col-resize;
 }
 
 .resize-handle.dragging::after {
@@ -558,7 +597,7 @@ select option {
 .panel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
 .panel-list {
@@ -626,8 +665,8 @@ select option {
 
 .panel-card:hover {
   border-color: var(--border2);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  will-change: box-shadow;
 }
 
 .panel-card.selected {
@@ -731,7 +770,7 @@ select option {
 .badge-ai { color: var(--accent); border-color: rgba(79, 70, 229, 0.3); background: var(--accent-dim); }
 
 .panel-meta {
-  padding: 8px 10px 10px;
+  padding: 10px 12px 12px;
 }
 
 .panel-shot {
@@ -829,8 +868,8 @@ select option {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 200;
-  backdrop-filter: blur(4px);
+  z-index: var(--z-modal-backdrop);
+  backdrop-filter: blur(2px);
 }
 
 .modal-backdrop.open {
@@ -1712,4 +1751,156 @@ svg[data-combobox-chevron="true"] {
 svg[data-combobox-chevron] {
   width: 12px !important;
   height: 12px !important;
+}
+
+/* ════════════════ Responsive & Touch Adaptations ════════════════ */
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  .tool-btn,
+  .tb-btn,
+  .scene-select,
+  .vt-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Remove hover-only effects */
+  .panel-card:hover {
+    box-shadow: none;
+  }
+
+  /* Larger touch feedback */
+  .panel-card:active {
+    opacity: 0.9;
+  }
+
+  /* Touch-friendly resize handles */
+  .resize-handle {
+    width: 8px;
+  }
+
+  /* Bigger scrollbar on touch */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* Tablet breakpoint (768px+) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .panel-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+  }
+
+  .canvas-inner {
+    padding: 20px 20px 60px;
+  }
+}
+
+/* Mobile breakpoint (< 768px) */
+@media (max-width: 767px) {
+  /* Compact toolbar */
+  .toolbar {
+    padding: 0 10px;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tool-group {
+    flex-shrink: 0;
+  }
+
+  .tool-sep {
+    display: none;
+  }
+
+  /* Single column panel grid */
+  .panel-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  /* Full-width canvas */
+  .canvas-inner {
+    padding: 16px 16px 60px;
+    min-width: unset;
+  }
+
+  /* Compact right panel */
+  .right-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100% !important;
+    max-width: 320px;
+    z-index: var(--z-modal);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Stack workspace vertically */
+  .workspace {
+    flex-direction: column;
+  }
+
+  .canvas-area {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Mobile modal */
+  .ap-modal {
+    width: calc(100% - 32px) !important;
+    max-width: 400px;
+    margin: 16px;
+  }
+
+  /* Touch-friendly buttons */
+  .btn-confirm,
+  .btn-cancel {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+
+  /* Larger touch targets for panel cards */
+  .panel-card {
+    min-height: 120px;
+  }
+
+  /* Show edit button always on touch */
+  .frame-edit-btn {
+    opacity: 1;
+  }
+
+  /* Bigger modal backdrop tap area */
+  .modal-backdrop {
+    align-items: flex-end;
+  }
+
+  /* Bottom sheet style for modals on mobile */
+  .ap-modal {
+    border-radius: var(--r12) var(--r12) 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* Large desktop (> 1440px) */
+@media (min-width: 1440px) {
+  .canvas-inner {
+    padding: 32px 40px 80px;
+  }
+
+  .panel-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+  }
 }

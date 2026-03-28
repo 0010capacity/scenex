@@ -58,8 +58,13 @@ const MODEL_OPTIONS = [
 ];
 
 export function TitleBar() {
-  const { toggleLeftSidebar, claudeStatus, claudeModel, setClaudeModel, openProjectBrowser, openAiGenModal } = useUIStore();
-  const { isDirty } = useProjectStore();
+  const toggleLeftSidebar = useUIStore(s => s.toggleLeftSidebar);
+  const claudeStatus = useUIStore(s => s.claudeStatus);
+  const claudeModel = useUIStore(s => s.claudeModel);
+  const setClaudeModel = useUIStore(s => s.setClaudeModel);
+  const openProjectBrowser = useUIStore(s => s.openProjectBrowser);
+  const openAiGenModal = useUIStore(s => s.openAiGenModal);
+  const isDirty = useProjectStore(s => s.isDirty);
   const { currentWorkspaceName, currentProjectName } = useWorkspace();
   const { checkAvailability } = useClaude();
   const { exportPDF, exportImages, exportFCPXML, exportPremiereXML } = useExport();
@@ -94,8 +99,8 @@ export function TitleBar() {
   };
 
   const statusColor =
-    claudeStatus === 'available' ? '#16A34A' :
-    claudeStatus === 'unavailable' ? '#DC2626' : '#A0A0A0';
+    claudeStatus === 'available' ? 'var(--green)' :
+    claudeStatus === 'unavailable' ? 'var(--red)' : 'var(--text3)';
 
   const handleExport = async (type: 'pdf' | 'images' | 'fcp' | 'premiere') => {
     setExportDropdownOpen(false);
@@ -131,18 +136,24 @@ export function TitleBar() {
           className="t-close"
           style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
           onClick={() => windowApi.close()}
+          role="button"
+          aria-label="창 닫기"
         />
         <Box
           component="span"
           className="t-min"
           style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
           onClick={() => windowApi.minimize()}
+          role="button"
+          aria-label="창 최소화"
         />
         <Box
           component="span"
           className="t-max"
           style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
           onClick={() => windowApi.maximize()}
+          role="button"
+          aria-label="창 최대화"
         />
       </Group>
 
@@ -258,26 +269,30 @@ export function TitleBar() {
 
               {/* Action Row - Model Select or Install */}
               {claudeStatus === 'available' ? (
-                <select
-                  value={claudeModel}
-                  onChange={(e) => setClaudeModel(e.target.value as 'haiku' | 'sonnet' | 'opus')}
-                  style={{
-                    width: '100%',
-                    background: 'var(--bg2)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 6,
-                    padding: '8px 10px',
-                    color: 'var(--text)',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                    marginBottom: 10,
-                    outline: 'none',
-                  }}
-                >
-                  {MODEL_OPTIONS.map((model) => (
-                    <option key={model.value} value={model.value}>{model.label}</option>
-                  ))}
-                </select>
+                <Box>
+                  <label htmlFor="claude-model" style={{ fontSize: 10, color: 'var(--text3)', display: 'block', marginBottom: 4 }}>모델</label>
+                  <select
+                    id="claude-model"
+                    value={claudeModel}
+                    onChange={(e) => setClaudeModel(e.target.value as 'haiku' | 'sonnet' | 'opus')}
+                    style={{
+                      width: '100%',
+                      background: 'var(--bg2)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 6,
+                      padding: '8px 10px',
+                      color: 'var(--text)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      marginBottom: 10,
+                      outline: 'none',
+                    }}
+                  >
+                    {MODEL_OPTIONS.map((model) => (
+                      <option key={model.value} value={model.value}>{model.label}</option>
+                    ))}
+                  </select>
+                </Box>
               ) : claudeStatus === 'unavailable' ? (
                 <Box
                   component="a"
@@ -290,7 +305,7 @@ export function TitleBar() {
                     padding: '8px',
                     background: 'var(--accent)',
                     borderRadius: 6,
-                    color: '#FFFFFF',
+                    color: 'var(--text-inverse)',
                     fontSize: 12,
                     fontWeight: 600,
                     textAlign: 'center',
@@ -314,6 +329,7 @@ export function TitleBar() {
                       e.stopPropagation();
                       handleRefreshStatus();
                     }}
+                    aria-label="상태 새로고침"
                     style={{
                       background: 'none',
                       border: 'none',

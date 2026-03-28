@@ -50,8 +50,8 @@ async function rasterizeSvgToPng(svgData: string): Promise<string> {
 }
 
 export function useExport() {
-  const { project } = useProjectStore();
-  const { addNotification } = useUIStore();
+  const project = useProjectStore(s => s.project);
+  const addNotification = useUIStore(s => s.addNotification);
 
   const prepareExportData = useCallback(async (): Promise<ExportProject | null> => {
     if (!project) return null;

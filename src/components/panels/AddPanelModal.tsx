@@ -17,8 +17,9 @@ interface AddPanelModalProps {
 }
 
 export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) {
-  const { addPanel, project } = useProjectStore();
-  const { addNotification } = useUIStore();
+  const addPanel = useProjectStore(s => s.addPanel);
+  const project = useProjectStore(s => s.project);
+  const addNotification = useUIStore(s => s.addNotification);
   const { generatePanel } = useClaude();
   const [selectedMethod, setSelectedMethod] = useState<AddMethod>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -246,8 +247,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                 <Box className="blank-options show">
                   <Box className="bo-row">
                     <Box className="bo-field">
-                      <label>샷 타입</label>
+                      <label htmlFor="blank-shot-type">샷 타입</label>
                       <Select
+                        id="blank-shot-type"
                         value={shotType}
                         onChange={setShotType}
                         data={SHOT_TYPE_OPTIONS.map((o) => ({
@@ -260,8 +262,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                       />
                     </Box>
                     <Box className="bo-field">
-                      <label>지속 시간</label>
+                      <label htmlFor="blank-duration">지속 시간</label>
                       <input
+                        id="blank-duration"
                         className="bo-field input"
                         value={duration}
                         onChange={(e) => setDuration(e.target.value)}
@@ -271,8 +274,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                     </Box>
                   </Box>
                   <Box className="bo-field">
-                    <label>장면 설명 <span style={{ color: 'var(--text3)', fontSize: 9, textTransform: 'none', letterSpacing: 0 }}>(선택 사항)</span></label>
+                    <label htmlFor="blank-description">장면 설명 <span style={{ color: 'var(--text3)', fontSize: 9, textTransform: 'none', letterSpacing: 0 }}>(선택 사항)</span></label>
                     <textarea
+                      id="blank-description"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="이 프레임에서 무슨 일이 일어나나요?"
@@ -294,8 +298,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                   </Box>
                   <Box className="bo-row">
                     <Box className="bo-field">
-                      <label>대사</label>
+                      <label htmlFor="blank-dialogue">대사</label>
                       <input
+                        id="blank-dialogue"
                         value={dialogue}
                         onChange={(e) => setDialogue(e.target.value)}
                         placeholder="없음"
@@ -313,8 +318,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                       />
                     </Box>
                     <Box className="bo-field">
-                      <label>사운드</label>
+                      <label htmlFor="blank-sound">사운드</label>
                       <input
+                        id="blank-sound"
                         value={sound}
                         onChange={(e) => setSound(e.target.value)}
                         placeholder="없음"
@@ -406,8 +412,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                   </Box>
                   <Box className="import-meta">
                     <Box className="bo-field">
-                      <label>샷 타입</label>
+                      <label htmlFor="import-shot-type">샷 타입</label>
                       <Select
+                        id="import-shot-type"
                         value={importShotType}
                         onChange={setImportShotType}
                         data={SHOT_TYPE_OPTIONS.map((o) => ({
@@ -420,8 +427,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                       />
                     </Box>
                     <Box className="bo-field">
-                      <label>지속 시간</label>
+                      <label htmlFor="import-duration">지속 시간</label>
                       <input
+                        id="import-duration"
                         value={importDuration}
                         onChange={(e) => setImportDuration(e.target.value)}
                         placeholder="예: 3s"
@@ -439,8 +447,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                       />
                     </Box>
                     <Box className="bo-field" style={{ gridColumn: 'span 2' }}>
-                      <label>설명 (선택)</label>
+                      <label htmlFor="import-description">설명 (선택)</label>
                       <input
+                        id="import-description"
                         value={importDescription}
                         onChange={(e) => setImportDescription(e.target.value)}
                         placeholder="이 프레임 설명..."
@@ -467,6 +476,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                   <Box className="ai-prompt-area">
                     <Box className="ai-prompt-icon"><IconSparkles size={12} stroke={1.5} /></Box>
                     <textarea
+                      id="ai-prompt"
                       className="ai-prompt-input"
                       placeholder="예: 미소가 창밖을 바라보는 클로즈업. 수업 중이지만 딴생각을 하고 있다. 오후의 빛이 창문을 통해 들어온다."
                       value={aiPrompt}
@@ -475,8 +485,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                   </Box>
                   <Box className="bo-row">
                     <Box className="bo-field">
-                      <label>샷 타입 힌트</label>
+                      <label htmlFor="ai-shot-hint">샷 타입 힌트</label>
                       <Select
+                        id="ai-shot-hint"
                         value={aiShotHint}
                         onChange={setAiShotHint}
                         data={SHOT_TYPE_OPTIONS.map((o) => ({
@@ -489,8 +500,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                       />
                     </Box>
                     <Box className="bo-field">
-                      <label>지속 시간</label>
+                      <label htmlFor="ai-duration">지속 시간</label>
                       <input
+                        id="ai-duration"
                         value={aiDuration}
                         onChange={(e) => setAiDuration(e.target.value)}
                         placeholder="예: 3s"

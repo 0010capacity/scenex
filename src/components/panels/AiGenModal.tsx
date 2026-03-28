@@ -20,9 +20,13 @@ interface GeneratedPanelPreview {
 }
 
 export function AiGenModal({ opened, onClose }: AiGenModalProps) {
-  const { project, addPanel, addScene } = useProjectStore();
-  const { addNotification } = useUIStore();
-  const { addTask, updateTask, removeTask } = useAIStore();
+  const project = useProjectStore(s => s.project);
+  const addPanel = useProjectStore(s => s.addPanel);
+  const addScene = useProjectStore(s => s.addScene);
+  const addNotification = useUIStore(s => s.addNotification);
+  const addTask = useAIStore(s => s.addTask);
+  const updateTask = useAIStore(s => s.updateTask);
+  const removeTask = useAIStore(s => s.removeTask);
   const { batchGeneratePanels } = useClaude();
 
   const [sceneDescription, setSceneDescription] = useState('');

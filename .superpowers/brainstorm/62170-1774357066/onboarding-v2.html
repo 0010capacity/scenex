@@ -1,0 +1,131 @@
+<h2>온보딩 화면 — Empty State</h2>
+<p class="subtitle">라이트모드 디자인 시스템 적용. 어떤 구성이 좋겠나요?</p>
+
+<div class="cards">
+  <!-- Option A: Centered Minimal -->
+  <div class="card" data-choice="centered-minimal" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: #FAFAF9; height: 240px; display: flex; align-items: center; justify-content: center;">
+        <div style="text-align: center; padding: 32px;">
+          <!-- Logo mark -->
+          <div style="width: 56px; height: 56px; background: #4F46E5; border-radius: 14px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 24px; height: 24px; background: white; border-radius: 6px;"></div>
+          </div>
+          <!-- Wordmark -->
+          <div style="font-family: 'Playfair Display', serif; font-size: 22px; color: #1A1A1A; margin-bottom: 6px;">SceneX</div>
+          <div style="font-size: 12px; color: #A0A0A0; margin-bottom: 28px;">스토리보드 에디터</div>
+          <!-- CTA -->
+          <div style="background: #4F46E5; color: white; padding: 10px 24px; border-radius: 8px; font-size: 13px; font-weight: 500; display: inline-block;">새 프로젝트 시작</div>
+          <div style="font-size: 11px; color: #A0A0A0; margin-top: 12px;">또는 <span style="color: #4F46E5;">기존 프로젝트 열기</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Centered Minimal</h3>
+      <p>화면 중앙에 로고 + 타이틀 + CTA만 있는 심플한 구성</p>
+    </div>
+  </div>
+
+  <!-- Option B: Split with Features -->
+  <div class="card" data-choice="split-features" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: #FAFAF9; height: 240px; display: flex;">
+        <!-- Left: Branding -->
+        <div style="flex: 1; background: #4F46E5; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;">
+          <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 20px; height: 20px; background: white; border-radius: 5px;"></div>
+          </div>
+          <div style="font-family: 'Playfair Display', serif; font-size: 18px; color: white; margin-bottom: 4px;">SceneX</div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.7);">스토리보드 에디터</div>
+        </div>
+        <!-- Right: Actions -->
+        <div style="flex: 1.2; background: white; padding: 24px; display: flex; flex-direction: column; justify-content: center; gap: 14px;">
+          <div style="font-size: 14px; font-weight: 500; color: #1A1A1A;">처음이신가요?</div>
+          <div style="background: #F5F5F4; border: 1px solid #E5E5E3; border-radius: 8px; padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <div style="width: 32px; height: 32px; background: #EEEEEC; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px;">+</div>
+            <div>
+              <div style="font-size: 12px; font-weight: 500; color: #1A1A1A;">새 프로젝트 만들기</div>
+              <div style="font-size: 10px; color: #A0A0A0;">워크스페이스부터 시작</div>
+            </div>
+          </div>
+          <div style="background: #F5F5F4; border: 1px solid #E5E5E3; border-radius: 8px; padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;">
+            <div style="width: 32px; height: 32px; background: #EEEEEC; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px;">📁</div>
+            <div>
+              <div style="font-size: 12px; font-weight: 500; color: #1A1A1A;">기존 프로젝트 열기</div>
+              <div style="font-size: 10px; color: #A0A0A0;">최근 작업 파일 불러오기</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Split — Branding + Actions</h3>
+      <p>왼쪽에 브랜드 아이덴티티, 오른쪽에 액션 카드 2개</p>
+    </div>
+  </div>
+
+  <!-- Option C: Full Editor with Empty State Overlay -->
+  <div class="card" data-choice="editor-overlay" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background: #FAFAF9; height: 240px; display: flex; flex-direction: column;">
+        <!-- TitleBar -->
+        <div style="height: 38px; background: white; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; padding: 0 14px; gap: 10px;">
+          <div style="display: flex; gap: 5px;">
+            <div style="width: 11px; height: 11px; border-radius: 50%; background: #E05252;"></div>
+            <div style="width: 11px; height: 11px; border-radius: 50%; background: #E8A838;"></div>
+            <div style="width: 11px; height: 11px; border-radius: 50%; background: #4ECBA5;"></div>
+          </div>
+          <div style="flex: 1; text-align: center; font-family: 'Playfair Display', serif; font-size: 12px; color: #6B6B6B;">SceneX</div>
+        </div>
+        <!-- Toolbar -->
+        <div style="height: 42px; background: white; border-bottom: 1px solid #E5E5E3; display: flex; align-items: center; padding: 0 16px; gap: 6px;">
+          <div style="font-size: 11px; color: #A0A0A0; padding: 3px 9px; border: 1px solid #E5E5E3; border-radius: 4px;">새_scene</div>
+          <div style="width: 1px; height: 20px; background: #E5E5E3; margin: 0 4px;"></div>
+          <div style="font-size: 11px; color: #A0A0A0;">전체</div>
+        </div>
+        <!-- Canvas area with empty state -->
+        <div style="flex: 1; background: #FAFAF9; display: flex; align-items: center; justify-content: center;">
+          <div style="text-align: center;">
+            <div style="width: 64px; height: 64px; border: 1px dashed #D0D0CC; border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #A0A0A0;">+</div>
+            <div style="font-size: 14px; font-weight: 500; color: #6B6B6B; margin-bottom: 6px;">프로젝트가 없습니다</div>
+            <div style="font-size: 12px; color: #A0A0A0; margin-bottom: 16px;">새 프로젝트를 만들어 스토리보드를 시작하세요</div>
+            <div style="background: #4F46E5; color: white; padding: 8px 18px; border-radius: 8px; font-size: 12px; font-weight: 500; display: inline-block;">+ 새 프로젝트</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Editor Preview + Overlay</h3>
+      <p>실제 에디터 레이아웃 위에 빈 상태 오버레이</p>
+    </div>
+  </div>
+</div>
+
+<!-- Additional question -->
+<div class="section" style="margin-top: 24px;">
+  <h3>어댑터 연결은 어디서?</h3>
+  <p class="subtitle">온보딩에서 AI 어댑터 연결을 어디서 할 수 있어야 하나요?</p>
+  <div class="options" data-multiselect>
+    <div class="option" data-choice="adapter-modal" onclick="toggleMulti(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>별도 모달</h3>
+        <p>온보딩 내에서 "어댑터 연결" 버튼 → 새 모달에서 설정</p>
+      </div>
+    </div>
+    <div class="option" data-choice="adapter-inline" onclick="toggleMulti(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>인라인</h3>
+        <p>온보딩 화면 자체에 어댑터 설정 섹션 포함</p>
+      </div>
+    </div>
+    <div class="option" data-choice="adapter-later" onclick="toggleMulti(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>나중에</h3>
+        <p>첫 프로젝트 생성 후 Settings에서 별도로</p>
+      </div>
+    </div>
+  </div>
+</div>

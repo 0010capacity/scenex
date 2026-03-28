@@ -82,8 +82,14 @@ function SortableSceneTab({ sceneId, index, isSelected, onSelect }: SortableScen
 }
 
 export function ScenarioSidebar() {
-  const { project, selectedSceneId, selectScene, addScene, updateScene, reorderScenes } = useProjectStore();
-  const { toggleLeftSidebar, addNotification } = useUIStore();
+  const project = useProjectStore(s => s.project);
+  const selectedSceneId = useProjectStore(s => s.selectedSceneId);
+  const selectScene = useProjectStore(s => s.selectScene);
+  const addScene = useProjectStore(s => s.addScene);
+  const updateScene = useProjectStore(s => s.updateScene);
+  const reorderScenes = useProjectStore(s => s.reorderScenes);
+  const toggleLeftSidebar = useUIStore(s => s.toggleLeftSidebar);
+  const addNotification = useUIStore(s => s.addNotification);
   const { generateDescriptionSuggestion } = useClaude();
   const [aiInput, setAiInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

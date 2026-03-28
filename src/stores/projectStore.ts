@@ -9,7 +9,7 @@ import {
   createEmptyScene,
   createEmptyPanel,
 } from '@/types';
-import { Scenario, Act, ScenarioScene } from '@/types/scenario';
+import { Scenario } from '@/types/scenario';
 import { invokeWrapper } from '@/utils/invokeWrapper';
 import type { PanelVersion } from '@/types/ai';
 
@@ -17,6 +17,7 @@ interface ProjectState {
   project: Project | null;
   selectedSceneId: string | null;
   selectedPanelId: string | null;
+  selectedScenarioId: string | null;
   isDirty: boolean;
 
   // Project actions
@@ -48,11 +49,7 @@ interface ProjectState {
   addScenario: (name: string) => string;
   updateScenario: (id: string, updates: Partial<Scenario>) => void;
   deleteScenario: (id: string) => void;
-  addAct: (scenarioId: string, name: string) => string;
-  updateAct: (scenarioId: string, actId: string, updates: Partial<Act>) => void;
-  addSceneToAct: (scenarioId: string, actId: string, name: string) => void;
-  updateSceneInAct: (scenarioId: string, actId: string, sceneId: string, updates: Partial<Scene>) => void;
-  deleteSceneFromAct: (scenarioId: string, actId: string, sceneId: string) => void;
+  selectScenario: (scenarioId: string | null) => void;
 
   // Selection
   selectScene: (sceneId: string | null) => void;
@@ -70,6 +67,7 @@ export const useProjectStore = create<ProjectState>()(
       project: null,
       selectedSceneId: null,
       selectedPanelId: null,
+      selectedScenarioId: null,
       isDirty: false,
 
       newProject: (name) => {
@@ -100,36 +98,12 @@ export const useProjectStore = create<ProjectState>()(
         }));
       },
 
-      addScene: async (name) => {
+      addScene: (name) => {
         const state = get();
         if (!state.project) return;
 
         const sceneNumber = state.project.scenes.length + 1;
         const newScene = createEmptyScene(name ?? `Scene ${sceneNumber}`);
-
-        // Try to generate script lines with AI
-        try {
-          const response = await invokeWrapper<{
-            script_lines: Array<{
-              line_type: string;
-              text: string;
-              character: string | null;
-            }>;
-            success: boolean;
-          }>('generate_script_lines', { request: { slugline: newScene.slugline } });
-
-          if (response && response.success && response.script_lines) {
-            newScene.scriptLines = response.script_lines.map((line) => ({
-              id: crypto.randomUUID(),
-              type: line.line_type as ScriptLine['type'],
-              text: line.text,
-              character: line.character ?? undefined,
-            }));
-          }
-        } catch (e) {
-          // AI failed - continue with empty script lines
-          console.warn('Failed to generate script lines:', e);
-        }
 
         set((state) => ({
           project: state.project
@@ -142,6 +116,30 @@ export const useProjectStore = create<ProjectState>()(
           selectedSceneId: newScene.id,
           isDirty: true,
         }));
+
+        // Generate script lines in background (non-blocking)
+        invokeWrapper<{
+          script_lines: Array<{
+            line_type: string;
+            text: string;
+            character: string | null;
+          }>;
+          success: boolean;
+        }>('generate_script_lines', { request: { slugline: newScene.slugline } })
+          .then((response) => {
+            if (response && response.success && response.script_lines) {
+            const scriptLines = response.script_lines.map((line) => ({
+              id: crypto.randomUUID(),
+              type: line.line_type as ScriptLine['type'],
+              text: line.text,
+              character: line.character ?? undefined,
+            }));
+            get().updateScene(newScene.id, { scriptLines });
+          }
+        })
+          .catch((e) => {
+            console.warn('Failed to generate script lines:', e);
+          });
       },
 
       updateScene: (sceneId, updates) => {
@@ -426,7 +424,7 @@ export const useProjectStore = create<ProjectState>()(
           id,
           name,
           description: '',
-          acts: [],
+          content: `# ${name}\n\n## Act 1\n\n### Scene 1\n`,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -457,153 +455,28 @@ export const useProjectStore = create<ProjectState>()(
       deleteScenario: (id) => {
         set((state) => {
           if (!state.project) return state;
+          if (state.project.scenarios.length <= 1) return state; // Keep at least one scenario
+
+          const newScenarios = state.project.scenarios.filter((s) => s.id !== id);
+          const newSelectedScenarioId =
+            state.selectedScenarioId === id
+              ? newScenarios[0]?.id ?? null
+              : state.selectedScenarioId;
+
           return {
             project: {
               ...state.project,
-              scenarios: state.project.scenarios.filter((s) => s.id !== id),
+              scenarios: newScenarios,
+              updatedAt: new Date().toISOString(),
             },
+            selectedScenarioId: newSelectedScenarioId,
             isDirty: true,
           };
         });
       },
 
-      addAct: (scenarioId, name) => {
-        const id = crypto.randomUUID();
-        const act: Act = {
-          id,
-          name,
-          synopsis: '',
-          scenes: [],
-          order: 0,
-        };
-        set((state) => {
-          if (!state.project) return state;
-          return {
-            project: {
-              ...state.project,
-              scenarios: state.project.scenarios.map((s) =>
-                s.id === scenarioId
-                  ? { ...s, acts: [...s.acts, act], updatedAt: new Date().toISOString() }
-                  : s
-              ),
-            },
-            isDirty: true,
-          };
-        });
-        return id;
-      },
-
-      updateAct: (scenarioId, actId, updates) => {
-        set((state) => {
-          if (!state.project) return state;
-          return {
-            project: {
-              ...state.project,
-              scenarios: state.project.scenarios.map((s: Scenario) =>
-                s.id === scenarioId
-                  ? {
-                      ...s,
-                      acts: s.acts.map((a: Act) =>
-                        a.id === actId ? { ...a, ...updates } : a
-                      ),
-                      updatedAt: new Date().toISOString(),
-                    }
-                  : s
-              ),
-            },
-            isDirty: true,
-          };
-        });
-      },
-
-      addSceneToAct: (scenarioId, actId, name) => {
-        const newSceneId = crypto.randomUUID();
-        const scene: ScenarioScene = {
-          id: newSceneId,
-          name,
-          slugline: 'INT. LOCATION — DAY',
-          description: '',
-          scriptLines: [],
-          panels: [],
-          order: 0,
-        };
-        set((state) => {
-          if (!state.project) return state;
-          return {
-            project: {
-              ...state.project,
-              scenarios: state.project.scenarios.map((s: Scenario) =>
-                s.id === scenarioId
-                  ? {
-                      ...s,
-                      acts: s.acts.map((a: Act) =>
-                        a.id === actId
-                          ? { ...a, scenes: [...a.scenes, scene] }
-                          : a
-                      ),
-                      updatedAt: new Date().toISOString(),
-                    }
-                  : s
-              ),
-            },
-            isDirty: true,
-          };
-        });
-      },
-
-      updateSceneInAct: (scenarioId, actId, sceneId, updates) => {
-        set((state) => {
-          if (!state.project) return state;
-          return {
-            project: {
-              ...state.project,
-              scenarios: state.project.scenarios.map((s: Scenario) =>
-                s.id === scenarioId
-                  ? {
-                      ...s,
-                      acts: s.acts.map((a: Act) =>
-                        a.id === actId
-                          ? {
-                              ...a,
-                              scenes: a.scenes.map((sc: ScenarioScene) =>
-                                sc.id === sceneId ? { ...sc, ...updates } : sc
-                              ),
-                            }
-                          : a
-                      ),
-                      updatedAt: new Date().toISOString(),
-                    }
-                  : s
-              ),
-            },
-            isDirty: true,
-          };
-        });
-      },
-
-      deleteSceneFromAct: (scenarioId, actId, sceneId) => {
-        set((state) => {
-          if (!state.project) return state;
-          return {
-            project: {
-              ...state.project,
-              scenarios: state.project.scenarios.map((s: Scenario) =>
-                s.id === scenarioId
-                  ? {
-                      ...s,
-                      acts: s.acts.map((a: Act) =>
-                        a.id === actId
-                          ? { ...a, scenes: a.scenes.filter((sc: ScenarioScene) => sc.id !== sceneId) }
-                          : a
-                      ),
-                      updatedAt: new Date().toISOString(),
-                    }
-                  : s
-              ),
-            },
-            isDirty: true,
-          };
-        });
+      selectScenario: (scenarioId) => {
+        set({ selectedScenarioId: scenarioId });
       },
 
       updatePanelVersion: (sceneId, panelId, updates) => {
@@ -690,6 +563,7 @@ export const useProjectStore = create<ProjectState>()(
       name: 'scenex-project',
       partialize: (state) => ({
         selectedSceneId: state.selectedSceneId,
+        selectedScenarioId: state.selectedScenarioId,
       }),
     }
   )
