@@ -67,7 +67,9 @@ pub async fn save_project(path: String, project: ProjectData) -> CommandResult<S
 /// Load project from a file
 #[command]
 pub async fn load_project(path: String) -> CommandResult<LoadProjectResponse> {
+    eprintln!("[DEBUG] load_project called with path: {}", path);
     let path_buf = PathBuf::from(&path);
+    eprintln!("[DEBUG] load_project: path_buf={}, exists={}", path_buf.display(), path_buf.exists());
 
     // Check if file exists
     if !path_buf.exists() {
