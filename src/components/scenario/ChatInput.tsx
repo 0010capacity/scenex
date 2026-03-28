@@ -1,4 +1,4 @@
-import { Box, TextInput, ActionIcon } from '@mantine/core';
+import { Box, ActionIcon } from '@mantine/core';
 import { IconSend } from '@tabler/icons-react';
 import { useState, KeyboardEvent } from 'react';
 
@@ -8,7 +8,7 @@ interface ChatInputProps {
   placeholder?: string;
 }
 
-export function ChatInput({ onSend, disabled, placeholder = '시나리오 수정 요청...' }: ChatInputProps) {
+export function ChatInput({ onSend, disabled, placeholder = '메시지를 입력하세요...' }: ChatInputProps) {
   const [value, setValue] = useState('');
 
   const handleSend = () => {
@@ -25,41 +25,44 @@ export function ChatInput({ onSend, disabled, placeholder = '시나리오 수정
     }
   };
 
+  const canSend = value.trim() && !disabled;
+
   return (
     <Box
       style={{
         display: 'flex',
+        alignItems: 'center',
         gap: 8,
-        padding: '12px',
+        padding: '12px 14px',
         borderTop: '1px solid var(--border)',
         background: 'var(--bg1)',
       }}
     >
-      <TextInput
+      <input
+        type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
-        style={{ flex: 1 }}
-        styles={{
-          input: {
-            background: 'var(--bg2)',
-            border: '1px solid var(--border)',
-            '&:focus': {
-              borderColor: 'var(--accent)',
-            },
-          },
+        style={{
+          flex: 1,
+          background: 'transparent',
+          border: 'none',
+          outline: 'none',
+          fontSize: 13,
+          color: 'var(--text)',
+          fontFamily: 'var(--sans)',
+          padding: 0,
         }}
       />
       <ActionIcon
-        size="lg"
-        variant="filled"
-        color="blue"
+        size="md"
+        variant="subtle"
         onClick={handleSend}
-        disabled={disabled || !value.trim()}
+        disabled={!canSend}
         style={{
-          background: value.trim() && !disabled ? 'var(--accent)' : undefined,
+          color: canSend ? 'var(--accent)' : 'var(--text3)',
         }}
       >
         <IconSend size={16} stroke={1.5} />

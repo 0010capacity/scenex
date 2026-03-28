@@ -5,7 +5,6 @@ import { SceneGroup } from '@/components/panels/SceneGroup';
 
 export function PanelCanvas() {
   const project = useProjectStore(s => s.project);
-  const selectedSceneId = useProjectStore(s => s.selectedSceneId);
   const zoomLevel = useUIStore(s => s.zoomLevel);
   const viewMode = useUIStore(s => s.viewMode);
 
@@ -17,9 +16,7 @@ export function PanelCanvas() {
     );
   }
 
-  const scenesToShow = selectedSceneId
-    ? project.scenes.filter((s) => s.id === selectedSceneId)
-    : project.scenes;
+  const scenesToShow = project.scenario.scenes;
 
   if (scenesToShow.length === 0) {
     return (

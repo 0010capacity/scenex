@@ -1,4 +1,4 @@
-import { Box, Text, Select, TextInput, Textarea, Loader } from '@mantine/core';
+import { Box, Text, Select, TextInput, Textarea, Loader, ActionIcon } from '@mantine/core';
 import { IconX, IconSquare, IconSparkles } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
@@ -96,24 +96,13 @@ export function InspectorPanel() {
         >
           속성
         </Text>
-        <button
+        <ActionIcon
+          variant="subtle"
           onClick={toggleRightSidebar}
-          style={{
-            marginLeft: 'auto',
-            background: 'none',
-            border: 'none',
-            color: 'var(--text3)',
-            cursor: 'pointer',
-            fontSize: 13,
-            padding: '2px 4px',
-            borderRadius: 3,
-            transition: 'color 0.15s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text3)')}
+          style={{ marginLeft: 'auto', background: 'transparent' }}
         >
           <IconX size={14} stroke={1.5} />
-        </button>
+        </ActionIcon>
       </Box>
 
       {/* Body */}
@@ -298,29 +287,31 @@ export function InspectorPanel() {
             <Box className="insp-section">
               <Text className="insp-sec-label">AI</Text>
               <button
-                className="insp-ai-btn"
+                className="btn btn-accent"
                 onClick={handleRegenerate}
                 disabled={!panel.description.trim() || isRegenerating}
+                style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
               >
                 {isRegenerating ? (
                   <Loader size={12} color="var(--accent)" />
                 ) : (
                   <>
-                    <IconSparkles size={12} stroke={1.5} style={{ marginRight: 4 }} />
+                    <IconSparkles size={12} stroke={1.5} />
                     이 패널 AI 재생성
                   </>
                 )}
               </button>
               <button
-                className="insp-ai-btn secondary"
+                className="btn btn-outline btn-sm"
                 onClick={handleAutoEnhance}
                 disabled={!panel.description.trim() || isEnhancing}
+                style={{ width: '100%', justifyContent: 'center', marginTop: 6 }}
               >
                 {isEnhancing ? (
                   <Loader size={12} color="var(--accent)" />
                 ) : (
                   <>
-                    <IconSparkles size={12} stroke={1.5} style={{ marginRight: 4 }} />
+                    <IconSparkles size={12} stroke={1.5} />
                     설명 자동 완성
                   </>
                 )}

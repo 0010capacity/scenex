@@ -2,7 +2,7 @@
 // Provides add_panel, edit_panel, delete_panel, draw_svg, reorder_panels, batch_edit
 
 import type { Skill, SkillResult, ToolExecutor } from './types';
-import { getPanelById, getSceneById, getScenarioById } from './types';
+import { getPanelById, getSceneById } from './types';
 import { registerSkill } from './registry';
 import { useProjectStore } from '@/stores/projectStore';
 import { getAIProvider } from '@/ai';
@@ -338,17 +338,12 @@ function applyStyle(scene: ReturnType<typeof getSceneById>, style: string, store
 /**
  * Generate entire storyboard from a scenario
  */
-const generateStoryboard: ToolExecutor = async (ctx, params) => {
+const generateStoryboard: ToolExecutor = async (_ctx, params) => {
   const store = useProjectStore.getState();
 
-  const scenarioId = (params.scenario_id as string) || ctx.selectedScenarioId;
-  if (!scenarioId) {
-    return { success: false, error: 'No scenario specified and no scenario selected' };
-  }
-
-  const scenario = getScenarioById(store.project!, scenarioId);
+  const scenario = store.project?.scenario;
   if (!scenario) {
-    return { success: false, error: `Scenario not found: ${scenarioId}` };
+    return { success: false, error: 'No scenario found' };
   }
 
   const provider = getAIProvider();
@@ -379,7 +374,7 @@ const generateStoryboard: ToolExecutor = async (ctx, params) => {
   }
 
   // Get initial scene count to know which scenes we added
-  const initialSceneCount = store.project!.scenes.length;
+  const initialSceneCount = store.project!.scenario.scenes.length;
 
   // Add all scenes first
   for (const [, sceneData] of sceneMap) {
@@ -387,7 +382,7 @@ const generateStoryboard: ToolExecutor = async (ctx, params) => {
   }
 
   // Get IDs of newly added scenes (they're at the end of the array)
-  const newScenes = store.project!.scenes.slice(initialSceneCount);
+  const newScenes = store.project!.scenario.scenes.slice(initialSceneCount);
   const sceneIds = newScenes.map(s => s.id);
 
   // Add panels to each scene
@@ -416,11 +411,6 @@ const generateStoryboard: ToolExecutor = async (ctx, params) => {
   // Fire and forget SVG generation
   for (const { sceneId, panelId } of allPanels) {
     generateSVGForPanel(sceneId, panelId);
-  }
-
-  const firstSceneId = sceneIds[0];
-  if (firstSceneId) {
-    store.selectScene(firstSceneId);
   }
 
   return {
@@ -471,7 +461,6 @@ const storyboardSkill: Skill = {
       name: 'generate_storyboard',
       description: '시나리오에서 전체 스토리보드 생성',
       parameters: {
-        scenario_id: { type: 'string', optional: true, description: '시나리오 ID (없으면 현재 선택된 시나리오)' },
         panel_count: { type: 'number', optional: true, default: 16, description: '생성할 패널 수' },
       },
     },

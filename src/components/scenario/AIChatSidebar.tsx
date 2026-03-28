@@ -17,7 +17,7 @@ interface AIChatSidebarProps {
 }
 
 export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
-  const { project, selectedScenarioId, updateScenario } = useProjectStore();
+  const { project, updateScenario } = useProjectStore();
   const { currentProjectPath: workspacePath } = useWorkspaceStore();
   const { addNotification } = useUIStore();
   const { generateDescriptionSuggestion } = useClaude();
@@ -29,15 +29,13 @@ export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
     setLoading,
   } = useAIChatStore();
 
-  const messages = selectedScenarioId ? getMessages(selectedScenarioId) : [];
+  const scenario = project?.scenario;
+  const messages = scenario ? getMessages(scenario.id) : [];
 
   const handleSend = async (content: string) => {
-    if (!selectedScenarioId || !project) return;
+    if (!scenario || !project) return;
 
-    const scenario = project.scenarios.find(s => s.id === selectedScenarioId);
-    if (!scenario) return;
-
-    addUserMessage(selectedScenarioId, content);
+    addUserMessage(scenario.id, content);
     setLoading(true);
 
     try {
@@ -46,7 +44,7 @@ export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
       try {
         const checkpoint = await invoke<{ id: string }>('create_scenario_checkpoint', {
           projectPath: workspacePath,
-          scenarioId: selectedScenarioId,
+          scenarioId: scenario.id,
           content: scenario.content,
           message: content.slice(0, 50),
         });
@@ -62,11 +60,11 @@ export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
 
       if (result.success && result.suggestion) {
         // 3. Update scenario with AI response
-        updateScenario(selectedScenarioId, { content: result.suggestion });
-        addAssistantMessage(selectedScenarioId, result.suggestion, checkpointId);
+        updateScenario({ content: result.suggestion });
+        addAssistantMessage(scenario.id, result.suggestion, checkpointId);
       } else {
         addAssistantMessage(
-          selectedScenarioId,
+          scenario.id,
           `오류: ${result.error || '알 수 없는 오류가 발생했습니다'}`
         );
       }
@@ -76,17 +74,17 @@ export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
   };
 
   const handleUndo = async (checkpointId: string) => {
-    if (!selectedScenarioId) return;
+    if (!scenario) return;
 
     try {
       const result = await invoke<{ content: string }>('restore_scenario_checkpoint', {
         projectPath: workspacePath,
         checkpointId,
-        scenarioId: selectedScenarioId,
+        scenarioId: scenario.id,
       });
 
       if (result.content) {
-        updateScenario(selectedScenarioId, { content: result.content });
+        updateScenario({ content: result.content });
         addNotification('info', '변경사항을 되돌렸습니다');
       }
     } catch (e) {
@@ -132,7 +130,7 @@ export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
       <ChatMessageList messages={messages} isLoading={isLoading} onUndo={handleUndo} />
 
       {/* Input */}
-      <ChatInput onSend={handleSend} disabled={!selectedScenarioId} />
+      <ChatInput onSend={handleSend} disabled={!scenario?.id} />
     </Box>
   );
 }

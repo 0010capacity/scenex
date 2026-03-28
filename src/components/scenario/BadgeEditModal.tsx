@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { ActionIcon } from '@mantine/core';
+import { IconX } from '@tabler/icons-react';
 import { BadgeType, BadgeClickInfo } from './scenarioDecorators';
 
 interface BadgeEditModalProps {
@@ -29,6 +31,8 @@ function getModalTitle(type: BadgeType): string {
     SLUG: '장면 위치 수정',
     SCENE: '소단위 수정',
     NOTE: '노트 수정',
+    GENRE: '장르 수정',
+    MOOD: '분위기 수정',
   };
   return titles[type];
 }
@@ -94,7 +98,9 @@ export function BadgeEditModal({ opened, onClose, badgeInfo, onSave }: BadgeEdit
       <div className="ap-modal" style={{ width: 420 }}>
         <div className="ap-header">
           <span style={{ fontSize: 14, fontWeight: 500 }}>{getModalTitle(badgeInfo.badgeType)}</span>
-          <button className="ap-close" onClick={handleCancel}>×</button>
+          <ActionIcon variant="subtle" onClick={handleCancel}>
+            <IconX size={16} stroke={1.5} />
+          </ActionIcon>
         </div>
         <div className="ap-body">
           {isSlug ? (
@@ -147,7 +153,11 @@ export function BadgeEditModal({ opened, onClose, badgeInfo, onSave }: BadgeEdit
                       ? '대단원 이름'
                       : badgeInfo.badgeType === 'SCENE'
                         ? '소단위 이름'
-                        : '노트 내용'
+                        : badgeInfo.badgeType === 'GENRE'
+                          ? '장르 (예: fantasy, thriller)'
+                          : badgeInfo.badgeType === 'MOOD'
+                            ? '분위기 (예: dark, bright)'
+                            : '노트 내용'
                 }
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
@@ -158,10 +168,10 @@ export function BadgeEditModal({ opened, onClose, badgeInfo, onSave }: BadgeEdit
           )}
         </div>
         <div className="ap-footer">
-          <button className="btn-cancel" onClick={handleCancel}>
+          <button className="btn btn-outline" onClick={handleCancel}>
             취소
           </button>
-          <button className="btn-confirm" onClick={handleSave}>
+          <button className="btn btn-primary" onClick={handleSave}>
             저장
           </button>
         </div>

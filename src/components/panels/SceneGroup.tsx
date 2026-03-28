@@ -25,7 +25,7 @@ export function SceneGroup({ scene, viewMode }: SceneGroupProps) {
         <Text className="scene-dur">{duration}</Text>
         <Box className="scene-line" />
         <button
-          className="scene-add-btn"
+          className="btn btn-ghost btn-sm"
           onClick={() => openAddPanelModal(scene.id)}
         >
           + 패널

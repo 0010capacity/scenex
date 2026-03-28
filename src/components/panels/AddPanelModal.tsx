@@ -1,4 +1,4 @@
-import { Box, Text, Select, Button, Loader } from '@mantine/core';
+import { Box, Text, Select, Button, Loader, ActionIcon } from '@mantine/core';
 import { IconPhoto, IconDownload, IconSparkles, IconX, IconArrowLeft } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -94,7 +94,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
   const handleConfirm = async () => {
     if (!sceneId || !selectedMethod) return;
 
-    const scene = project?.scenes.find((s) => s.id === sceneId);
+    const scene = project?.scenario.scenes.find((s) => s.id === sceneId);
     const panelNumber = scene ? scene.panels.length + 1 : 1;
 
     if (selectedMethod === 'blank') {
@@ -129,7 +129,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
         if (result.success && result.svg_data) {
           // Update panel with generated SVG
           // The panel was just added, we need to find it and update it
-          const updatedScene = project?.scenes.find((s) => s.id === sceneId);
+          const updatedScene = project?.scenario.scenes.find((s) => s.id === sceneId);
           const createdPanel = updatedScene?.panels.find((p) => p.description === aiPrompt && !p.svgData);
           if (createdPanel) {
             useProjectStore.getState().updatePanel(createdPanel.id, { svgData: result.svg_data });
@@ -175,14 +175,9 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
           <Text style={{ fontSize: 15, fontWeight: 500, color: 'var(--text)' }}>
             패널 추가
           </Text>
-          <button
-            className="ap-close"
-            onClick={onClose}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text3)')}
-          >
+          <ActionIcon variant="subtle" onClick={onClose}>
             <IconX size={16} stroke={1.5} />
-          </button>
+          </ActionIcon>
         </Box>
 
         {/* Body */}
@@ -528,18 +523,13 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
 
         {/* Footer */}
         <Box className="ap-footer">
-          <button className="btn-cancel" onClick={onClose} disabled={isGenerating}>
+          <button className="btn btn-outline" onClick={onClose} disabled={isGenerating}>
             취소
           </button>
           <button
-            className="btn-confirm"
+            className="btn btn-primary"
             onClick={handleConfirm}
             disabled={!selectedMethod || isGenerating || (selectedMethod === 'import' && !importedImage)}
-            style={
-              !selectedMethod || isGenerating || (selectedMethod === 'import' && !importedImage)
-                ? { background: 'var(--bg4)', color: 'var(--text3)', cursor: 'not-allowed' }
-                : {}
-            }
           >
             {isGenerating ? (
               <Loader size={12} color="var(--accent)" />

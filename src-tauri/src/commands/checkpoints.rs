@@ -20,15 +20,14 @@ pub struct RestoredContent {
 #[command]
 pub async fn create_scenario_checkpoint(
     project_path: String,
-    scenario_id: String,
+    _scenario_id: String,
     content: String,
     message: String,
 ) -> Result<CheckpointInfo, String> {
     let project_path = PathBuf::from(&project_path);
 
-    // Find the scenario file (project.scenex/scenarios/{id}.md or similar)
-    // For now, we'll create a .scenex-ai-backup directory for checkpoints
-    let backup_dir = project_path.join(".scenex-ai-backup").join(&scenario_id);
+    // Single scenario per project - store in .scenex-ai-backup directory
+    let backup_dir = project_path.join(".scenex-ai-backup");
     std::fs::create_dir_all(&backup_dir)
         .map_err(|e| format!("Failed to create backup directory: {}", e))?;
 
@@ -96,7 +95,7 @@ pub async fn create_scenario_checkpoint(
 pub async fn restore_scenario_checkpoint(
     project_path: String,
     checkpoint_id: String,
-    scenario_id: String,
+    _scenario_id: String,
 ) -> Result<RestoredContent, String> {
     let project_path = PathBuf::from(&project_path);
 
@@ -112,8 +111,8 @@ pub async fn restore_scenario_checkpoint(
     let tree = commit.tree()
         .map_err(|e| format!("Failed to get tree: {}", e))?;
 
-    // Get the .scenex-ai-backup/{scenario_id}/ subtree entry
-    let subtree_prefix = format!(".scenex-ai-backup/{}/", scenario_id);
+    // Get the .scenex-ai-backup/ subtree entry (single scenario)
+    let subtree_prefix = ".scenex-ai-backup/";
     let subtree_entry = tree.get_path(std::path::Path::new(&subtree_prefix))
         .map_err(|e| format!("Failed to get subtree: {}", e))?;
 
@@ -151,7 +150,7 @@ pub async fn restore_scenario_checkpoint(
 #[command]
 pub async fn list_scenario_checkpoints(
     project_path: String,
-    scenario_id: String,
+    _scenario_id: String,
     limit: u32,
 ) -> Result<Vec<CheckpointInfo>, String> {
     let project_path = PathBuf::from(&project_path);
@@ -166,7 +165,7 @@ pub async fn list_scenario_checkpoints(
         .map_err(|e| format!("Failed to push head: {}", e))?;
 
     let mut checkpoints = Vec::new();
-    let prefix = format!(".scenex-ai-backup/{}/", scenario_id);
+    let prefix = ".scenex-ai-backup/";
 
     for (count, oid_result) in revwalk.enumerate() {
         if count >= limit as usize {
@@ -181,7 +180,7 @@ pub async fn list_scenario_checkpoints(
 
         let message = commit.summary().unwrap_or_default().to_string();
 
-        // Only include AI edit checkpoints for this scenario
+        // Only include AI edit checkpoints
         if message.starts_with("ai-edit(scenario):") {
             let tree = commit.tree()
                 .map_err(|e| format!("Failed to get tree: {}", e))?;

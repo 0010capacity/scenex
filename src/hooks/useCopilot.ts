@@ -23,7 +23,6 @@ export function useCopilot() {
   const project = useProjectStore(s => s.project);
   const selectedSceneId = useProjectStore(s => s.selectedSceneId);
   const selectedPanelId = useProjectStore(s => s.selectedPanelId);
-  const selectedScenarioId = useProjectStore(s => s.selectedScenarioId);
   const getSelectedScene = useProjectStore(s => s.getSelectedScene);
   const editorMode = useUIStore(s => s.editorMode);
 
@@ -36,7 +35,7 @@ export function useCopilot() {
    */
   const findSelectedPanel = useCallback((): Panel | null => {
     if (!project || !selectedPanelId) return null;
-    for (const scene of project.scenes) {
+    for (const scene of project.scenario.scenes) {
       const panel = scene.panels.find(p => p.id === selectedPanelId);
       if (panel) return panel;
     }
@@ -44,20 +43,12 @@ export function useCopilot() {
   }, [project, selectedPanelId]);
 
   /**
-   * Find selected scenario from project
-   */
-  const findSelectedScenario = useCallback(() => {
-    if (!project || !selectedScenarioId) return null;
-    return project.scenarios.find(s => s.id === selectedScenarioId) ?? null;
-  }, [project, selectedScenarioId]);
-
-  /**
    * Build context object for copilot
    */
   const buildContext = useCallback((): CopilotContext => {
     const selectedScene = getSelectedScene();
     const selectedPanel = findSelectedPanel();
-    const selectedScenario = findSelectedScenario();
+    const scenario = project?.scenario;
 
     return {
       mode: editorMode,
@@ -71,11 +62,11 @@ export function useCopilot() {
       panelDuration: selectedPanel?.duration || null,
       panelMoodTags: selectedPanel?.moodTags?.length ? selectedPanel.moodTags : null,
       // Scenario context
-      selectedScenarioId,
-      selectedScenarioName: selectedScenario?.name ?? null,
-      scenarioDescription: selectedScenario?.description || null,
+      selectedScenarioId: scenario?.id ?? null,
+      selectedScenarioName: scenario?.name ?? null,
+      scenarioDescription: scenario?.description || null,
     };
-  }, [editorMode, selectedSceneId, selectedPanelId, selectedScenarioId, getSelectedScene, findSelectedPanel, findSelectedScenario]);
+  }, [editorMode, selectedSceneId, selectedPanelId, project, getSelectedScene, findSelectedPanel]);
 
   /**
    * Execute skill calls and return results
@@ -93,7 +84,6 @@ export function useCopilot() {
           project,
           selectedSceneId,
           selectedPanelId,
-          selectedScenarioId,
           editorMode,
         },
         call.parameters
@@ -107,7 +97,7 @@ export function useCopilot() {
     }
 
     return results;
-  }, [project, selectedSceneId, selectedPanelId, selectedScenarioId, editorMode]);
+  }, [project, selectedSceneId, selectedPanelId, editorMode]);
 
   /**
    * Send a message to copilot and handle the response

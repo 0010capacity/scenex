@@ -1,9 +1,8 @@
 import { Box, Group, Text } from '@mantine/core';
-import { IconChevronDown } from '@tabler/icons-react';
 import { useState, useEffect, useRef } from 'react';
 import { useUIStore } from '@/stores/uiStore';
-import { useProjectStore } from '@/stores/projectStore';
 import { useClaude } from '@/hooks/useClaude';
+import { IconChevronDown } from '@tabler/icons-react';
 
 type EditorMode = 'scenario' | 'storyboard';
 
@@ -65,18 +64,9 @@ export function TitleBar() {
   const setEditorMode = useUIStore(s => s.setEditorMode);
   const { checkAvailability } = useClaude();
   const [claudeDropdownOpen, setClaudeDropdownOpen] = useState(false);
-  const [scenarioDropdownOpen, setScenarioDropdownOpen] = useState(false);
   const [claudeInfo, setClaudeInfo] = useState<{ version: string | null; path: string | null }>({ version: null, path: null });
   const [isChecking, setIsChecking] = useState(false);
   const claudeDropdownRef = useRef<HTMLDivElement>(null);
-  const scenarioDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Project & scenario state
-  const project = useProjectStore(s => s.project);
-  const selectedScenarioId = useProjectStore(s => s.selectedScenarioId);
-  const selectScenario = useProjectStore(s => s.selectScenario);
-
-  const selectedScenario = project?.scenarios.find(s => s.id === selectedScenarioId);
 
   useEffect(() => {
     checkAvailability().then((status) => {
@@ -89,9 +79,6 @@ export function TitleBar() {
     const handleClickOutside = (e: MouseEvent) => {
       if (claudeDropdownRef.current && !claudeDropdownRef.current.contains(e.target as Node)) {
         setClaudeDropdownOpen(false);
-      }
-      if (scenarioDropdownRef.current && !scenarioDropdownRef.current.contains(e.target as Node)) {
-        setScenarioDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -144,92 +131,6 @@ export function TitleBar() {
           />
         </Group>
 
-        {/* Scenario Selector */}
-        {project && project.scenarios.length > 0 && (
-          <Box
-            ref={scenarioDropdownRef}
-            style={{ position: 'relative', marginLeft: 80 }}
-          >
-          <Box
-            style={{
-              cursor: 'pointer',
-              background: 'var(--bg1)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--r8)',
-              padding: '5px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-            onClick={() => setScenarioDropdownOpen((o) => !o)}
-          >
-            <Text size="xs" fw={500} style={{ color: 'var(--text2)' }}>
-              {selectedScenario?.name || '시나리오 선택'}
-            </Text>
-            <IconChevronDown size={10} stroke={2} style={{ color: 'var(--text3)' }} />
-          </Box>
-
-          {/* Scenario Dropdown Panel */}
-          {scenarioDropdownOpen && (
-            <Box
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                left: 0,
-                background: 'var(--bg1)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--r12)',
-                padding: 6,
-                width: 240,
-                zIndex: 9999,
-                boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
-                maxHeight: 300,
-                overflowY: 'auto',
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {project.scenarios.map((scenario, index) => (
-                <Box key={scenario.id}>
-                  {index > 0 && (
-                    <Box style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
-                  )}
-                  <Box
-                    onClick={() => {
-                      selectScenario(scenario.id);
-                      setScenarioDropdownOpen(false);
-                    }}
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                      background: scenario.id === selectedScenarioId ? 'var(--accent-dim)' : 'transparent',
-                      color: scenario.id === selectedScenarioId ? 'var(--accent)' : 'var(--text)',
-                      transition: 'background 0.15s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Text size="sm" fw={scenario.id === selectedScenarioId ? 600 : 400}>
-                      {scenario.name}
-                    </Text>
-                    {scenario.id === selectedScenarioId && (
-                      <Box
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: '50%',
-                          background: 'var(--accent)',
-                        }}
-                      />
-                    )}
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </Box>
-      )}
       </Box>
 
       {/* Mode Segment Control - center */}

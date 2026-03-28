@@ -57,13 +57,13 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
         </Text>
         <Box className="panel-empty-actions">
           <button
-            className="panel-empty-btn"
+            className="btn btn-outline btn-sm"
             onClick={() => openAddPanelModal(sceneId)}
           >
             + 패널 추가
           </button>
           <button
-            className="panel-empty-btn ai"
+            className="btn btn-accent btn-sm"
             onClick={openAiGenModal}
           >
             ✦ AI로 자동 생성
@@ -100,10 +100,9 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
       >
         <ActionIcon
           size="xl"
-          variant="filled"
-          color="gray"
+          variant="subtle"
           onClick={() => navigate(-1)}
-          style={{ background: 'var(--bg3)', border: '1px solid var(--border)' }}
+          style={{ color: 'var(--text2)' }}
         >
           <IconChevronLeft size={20} />
         </ActionIcon>
@@ -114,10 +113,9 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
 
         <ActionIcon
           size="xl"
-          variant="filled"
-          color="gray"
+          variant="subtle"
           onClick={() => navigate(1)}
-          style={{ background: 'var(--bg3)', border: '1px solid var(--border)' }}
+          style={{ color: 'var(--text2)' }}
         >
           <IconChevronRight size={20} />
         </ActionIcon>

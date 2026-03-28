@@ -1,5 +1,6 @@
 pub mod checkpoints;
 pub mod claude;
+pub mod copilot;
 pub mod export;
 pub mod file_io;
 pub mod prompts;

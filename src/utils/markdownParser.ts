@@ -10,6 +10,7 @@ export function createEmptyScenario(name: string = '새 시나리오'): Scenario
     name,
     description: '',
     content: `# ${name}\n\n## Act 1\n\n### Scene 1\n`,
+    scenes: [],
     createdAt: now,
     updatedAt: now,
   };

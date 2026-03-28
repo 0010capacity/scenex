@@ -1,86 +1,24 @@
 // ScenarioSkill - Tools for scenario manipulation
-// Provides create_scenario, edit_scenario, expand_scenario, condense_scenario, polish_scenario
+// Single scenario per project - provides edit_scenario, expand_scenario, condense_scenario, polish_scenario
 
 import type { Skill, ToolExecutor } from './types';
-import { getScenarioById } from './types';
 import { registerSkill } from './registry';
 import { useProjectStore } from '@/stores/projectStore';
 import type { Scenario } from '@/types/scenario';
 
 /**
- * Create a new scenario
+ * Edit the project scenario
  */
-const createScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
+const editScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
   const store = useProjectStore.getState();
 
   if (!store.project) {
     return { success: false, error: 'No project loaded' };
   }
 
-  const name = (params.name as string) || 'Untitled Scenario';
-  const content = params.content as string | undefined;  // Full story content
-  const genre = params.genre as string | undefined;
-  const mood = params.mood as string | undefined;
-
-  // Create scenario with initial content
-  const scenarioId = store.addScenario(name);
-
-  // If content provided, use it directly
-  // If only genre/mood provided (no content), create header with them
-  if (content || genre || mood) {
-    let initialContent: string;
-
-    if (content) {
-      // Content provided - use as-is
-      initialContent = content;
-    } else {
-      // No content but genre/mood provided - create header
-      let header = `# ${name}\n\n`;
-      if (genre) {
-        header += `@genre: ${genre}\n`;
-      }
-      if (mood) {
-        header += `@mood: ${mood}\n`;
-      }
-      header += `\n---\n\n`;
-      initialContent = header;
-    }
-
-    if (initialContent.trim()) {
-      store.updateScenario(scenarioId, { content: initialContent });
-    }
-  }
-
-  // Select the newly created scenario so it shows in the editor
-  store.selectScenario(scenarioId);
-
-  const scenario = getScenarioById(useProjectStore.getState().project!, scenarioId);
-
-  return {
-    success: true,
-    data: { scenarioId },
-    message: `시나리오 "${scenario?.name || name}"을(를) 생성했습니다.`,
-  };
-};
-
-/**
- * Edit an existing scenario
- */
-const editScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
-  const store = useProjectStore.getState();
-
-  if (!store.project) {
-    return { success: false, error: 'No project loaded' };
-  }
-
-  const scenarioId = (params.scenario_id as string) || ctx.selectedScenarioId;
-  if (!scenarioId) {
-    return { success: false, error: 'No scenario specified and no scenario selected' };
-  }
-
-  const scenario = getScenarioById(store.project, scenarioId);
+  const scenario = store.project.scenario;
   if (!scenario) {
-    return { success: false, error: `Scenario not found: ${scenarioId}` };
+    return { success: false, error: 'No scenario found' };
   }
 
   const updates: Partial<Scenario> = {};
@@ -105,11 +43,11 @@ const editScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
     return { success: false, error: 'No updates provided' };
   }
 
-  store.updateScenario(scenarioId, updates);
+  store.updateScenario(updates);
 
   return {
     success: true,
-    data: { scenarioId },
+    data: { scenarioId: scenario.id },
     message: `시나리오 "${scenario.name}"을(를) 수정했습니다.`,
   };
 };
@@ -117,21 +55,16 @@ const editScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
 /**
  * Expand scenario with more content
  */
-const expandScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
+const expandScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
   const store = useProjectStore.getState();
 
   if (!store.project) {
     return { success: false, error: 'No project loaded' };
   }
 
-  const scenarioId = (params.scenario_id as string) || ctx.selectedScenarioId;
-  if (!scenarioId) {
-    return { success: false, error: 'No scenario specified and no scenario selected' };
-  }
-
-  const scenario = getScenarioById(store.project, scenarioId);
+  const scenario = store.project.scenario;
   if (!scenario) {
-    return { success: false, error: `Scenario not found: ${scenarioId}` };
+    return { success: false, error: 'No scenario found' };
   }
 
   const expansionType = params.expansion_type as string || 'scene';
@@ -164,11 +97,11 @@ const expandScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
       updatedContent = scenario.content + '\n\n' + newContent;
   }
 
-  store.updateScenario(scenarioId, { content: updatedContent });
+  store.updateScenario({ content: updatedContent });
 
   return {
     success: true,
-    data: { scenarioId },
+    data: { scenarioId: scenario.id },
     message: `시나리오 "${scenario.name}"에 새로운 내용을 추가했습니다.`,
   };
 };
@@ -176,21 +109,16 @@ const expandScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
 /**
  * Condense scenario to core beats
  */
-const condenseScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
+const condenseScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
   const store = useProjectStore.getState();
 
   if (!store.project) {
     return { success: false, error: 'No project loaded' };
   }
 
-  const scenarioId = (params.scenario_id as string) || ctx.selectedScenarioId;
-  if (!scenarioId) {
-    return { success: false, error: 'No scenario specified and no scenario selected' };
-  }
-
-  const scenario = getScenarioById(store.project, scenarioId);
+  const scenario = store.project.scenario;
   if (!scenario) {
-    return { success: false, error: `Scenario not found: ${scenarioId}` };
+    return { success: false, error: 'No scenario found' };
   }
 
   const condensedContent = params.content as string | undefined;
@@ -199,11 +127,11 @@ const condenseScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => 
     return { success: false, error: 'No condensed content provided' };
   }
 
-  store.updateScenario(scenarioId, { content: condensedContent });
+  store.updateScenario({ content: condensedContent });
 
   return {
     success: true,
-    data: { scenarioId },
+    data: { scenarioId: scenario.id },
     message: `시나리오 "${scenario.name}"을(를) 요약했습니다.`,
   };
 };
@@ -211,21 +139,16 @@ const condenseScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => 
 /**
  * Polish scenario for better flow
  */
-const polishScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
+const polishScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
   const store = useProjectStore.getState();
 
   if (!store.project) {
     return { success: false, error: 'No project loaded' };
   }
 
-  const scenarioId = (params.scenario_id as string) || ctx.selectedScenarioId;
-  if (!scenarioId) {
-    return { success: false, error: 'No scenario specified and no scenario selected' };
-  }
-
-  const scenario = getScenarioById(store.project, scenarioId);
+  const scenario = store.project.scenario;
   if (!scenario) {
-    return { success: false, error: `Scenario not found: ${scenarioId}` };
+    return { success: false, error: 'No scenario found' };
   }
 
   const polishedContent = params.content as string | undefined;
@@ -234,11 +157,11 @@ const polishScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
     return { success: false, error: 'No polished content provided' };
   }
 
-  store.updateScenario(scenarioId, { content: polishedContent });
+  store.updateScenario({ content: polishedContent });
 
   return {
     success: true,
-    data: { scenarioId },
+    data: { scenarioId: scenario.id },
     message: `시나리오 "${scenario.name}"을(를) 다듬었습니다.`,
   };
 };
@@ -246,24 +169,13 @@ const polishScenario: ToolExecutor<{ scenarioId: string }> = (ctx, params) => {
 // Skill definition
 const scenarioSkill: Skill = {
   name: 'scenario',
-  description: '시나리오 생성, 수정, 확장, 축약, 다듬기',
+  description: '시나리오 수정, 확장, 축약, 다듬기',
   modes: ['scenario'],
   tools: [
     {
-      name: 'create_scenario',
-      description: '새 시나리오 생성',
-      parameters: {
-        name: { type: 'string', optional: true, description: '시나리오 이름' },
-        content: { type: 'string', optional: true, description: '시나리오 본문 내용 (스토리 전체)' },
-        genre: { type: 'string', optional: true, description: '장르 (예: 액션, 로맨스, 스릴러)' },
-        mood: { type: 'string', optional: true, description: '분위기 (예: 어두운, 밝은, 긴장감)' },
-      },
-    },
-    {
       name: 'edit_scenario',
-      description: '선택된 시나리오 수정',
+      description: '시나리오 수정',
       parameters: {
-        scenario_id: { type: 'string', optional: true, description: '시나리오 ID (없으면 선택된 시나리오)' },
         name: { type: 'string', optional: true, description: '새 이름' },
         description: { type: 'string', optional: true, description: '시나리오 설명' },
         content: { type: 'string', optional: true, description: '전체 내용 교체' },
@@ -275,7 +187,6 @@ const scenarioSkill: Skill = {
       name: 'expand_scenario',
       description: '시나리오 확장 (새 씬, 서브플롯, 대화 추가)',
       parameters: {
-        scenario_id: { type: 'string', optional: true, description: '시나리오 ID (없으면 선택된 시나리오)' },
         expansion_type: {
           type: 'string',
           enum: ['scene', 'subplot', 'character', 'dialogue'],
@@ -290,7 +201,6 @@ const scenarioSkill: Skill = {
       name: 'condense_scenario',
       description: '시나리오 축약 (핵심 비트만 남김)',
       parameters: {
-        scenario_id: { type: 'string', optional: true, description: '시나리오 ID (없으면 선택된 시나리오)' },
         content: { type: 'string', optional: false, description: '축약된 내용' },
       },
     },
@@ -298,7 +208,6 @@ const scenarioSkill: Skill = {
       name: 'polish_scenario',
       description: '시나리오 다듬기 (생동감, 페이싱 개선)',
       parameters: {
-        scenario_id: { type: 'string', optional: true, description: '시나리오 ID (없으면 선택된 시나리오)' },
         content: { type: 'string', optional: false, description: '다듬어진 내용' },
       },
     },
@@ -307,7 +216,6 @@ const scenarioSkill: Skill = {
 
 // Register skill with executors
 registerSkill(scenarioSkill, {
-  create_scenario: createScenario,
   edit_scenario: editScenario,
   expand_scenario: expandScenario,
   condense_scenario: condenseScenario,

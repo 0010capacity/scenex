@@ -3,7 +3,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { useWorkspaceStore, ProjectInfo, RecentProject } from '@/stores/workspaceStore';
 import { useProjectStore } from '@/stores/projectStore';
-import { Project } from '@/types';
+import { Project, migrateProject } from '@/types';
 import { useUIStore } from '@/stores/uiStore';
 
 interface ProjectData {
@@ -11,7 +11,8 @@ interface ProjectData {
   name: string;
   created_at: string;
   updated_at: string;
-  scenes: any;
+  scenario?: any;
+  scenes?: any;
   scenarios?: any[];
 }
 
@@ -94,16 +95,18 @@ export function useWorkspace() {
 
       const data = response.data.project;
 
-      const loadedProject: Project = {
+      // Migrate legacy format to new single-scenario format
+      const migratedProject = migrateProject({
         id: data.id,
         name: data.name,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
+        scenario: data.scenario,
         scenes: data.scenes,
-        scenarios: data.scenarios || [],
-      };
+        scenarios: data.scenarios,
+      } as any);
 
-      loadProject(loadedProject);
+      loadProject(migratedProject);
 
       // Extract project name and path from file path
       const pathParts = filePath.split('/');
@@ -150,12 +153,12 @@ export function useWorkspace() {
       setIsLoading(true);
       const filePath = `${currentProjectPath}/${proj.name}.scenex`;
 
-      const projectData: ProjectData = {
+      const projectData = {
         id: proj.id,
         name: proj.name,
         created_at: proj.createdAt,
         updated_at: proj.updatedAt,
-        scenes: proj.scenes,
+        scenario: proj.scenario,
       };
 
       // Save the project file

@@ -34,6 +34,7 @@ pub fn run() {
             commands::checkpoints::create_scenario_checkpoint,
             commands::checkpoints::restore_scenario_checkpoint,
             commands::checkpoints::list_scenario_checkpoints,
+            commands::copilot::copilot_chat,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]

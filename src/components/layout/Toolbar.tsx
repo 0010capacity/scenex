@@ -1,5 +1,5 @@
 import { Box, ActionIcon } from '@mantine/core';
-import { IconPlus, IconMinus, IconTrash, IconPencil, IconSparkles } from '@tabler/icons-react';
+import { IconPlus, IconMinus, IconPencil, IconSparkles } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -7,12 +7,6 @@ import { useUIStore } from '@/stores/uiStore';
 export function Toolbar() {
   const project = useProjectStore(s => s.project);
   const addScene = useProjectStore(s => s.addScene);
-  const selectedSceneId = useProjectStore(s => s.selectedSceneId);
-  const selectScene = useProjectStore(s => s.selectScene);
-  const addScenario = useProjectStore(s => s.addScenario);
-  const selectedScenarioId = useProjectStore(s => s.selectedScenarioId);
-  const selectScenario = useProjectStore(s => s.selectScenario);
-  const deleteScenario = useProjectStore(s => s.deleteScenario);
   const updateScenario = useProjectStore(s => s.updateScenario);
 
   const editorMode = useUIStore(s => s.editorMode);
@@ -27,16 +21,8 @@ export function Toolbar() {
   const rightSidebarOpen = useUIStore(s => s.rightSidebarOpen);
   const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
   const [newSceneName, setNewSceneName] = useState('');
-  const [addScenarioModalOpen, setAddScenarioModalOpen] = useState(false);
-  const [newScenarioName, setNewScenarioName] = useState('');
-  const [deleteScenarioModalOpen, setDeleteScenarioModalOpen] = useState(false);
   const [renameScenarioModalOpen, setRenameScenarioModalOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-
-  const sceneOptions = [
-    { value: 'all', label: '전체 장면' },
-    ...(project?.scenes.map((s, i) => ({ value: s.id, label: `S${i + 1} — ${s.name}` })) ?? []),
-  ];
 
   const viewModes = [
     { key: 'grid', label: '그리드' },
@@ -44,44 +30,24 @@ export function Toolbar() {
     { key: 'slide', label: '슬라이드' },
   ] as const;
 
-  // Scenario Toolbar
+  // Scenario Toolbar - simplified
   if (editorMode === 'scenario') {
     return (
       <Box className="toolbar">
-        {/* Add scenario */}
-        <Box className="tool-group">
-          <button className="btn btn-ghost btn-sm" onClick={() => setAddScenarioModalOpen(true)}>
-            <IconPlus size={14} stroke={1.5} />
-            새 시나리오
-          </button>
-        </Box>
-
-        <Box className="tool-sep" />
-
-        {/* Rename & Delete scenario */}
+        {/* Rename scenario */}
         <Box className="tool-group">
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => {
-              const scenario = project?.scenarios.find((s) => s.id === selectedScenarioId);
-              if (scenario) {
-                setRenameValue(scenario.name);
+              if (project?.scenario) {
+                setRenameValue(project.scenario.name);
                 setRenameScenarioModalOpen(true);
               }
             }}
-            disabled={!selectedScenarioId}
+            disabled={!project?.scenario}
           >
             <IconPencil size={14} stroke={1.5} />
-            이름 변경
-          </button>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => setDeleteScenarioModalOpen(true)}
-            disabled={!selectedScenarioId || (project?.scenarios.length ?? 0) <= 1}
-            style={{ color: selectedScenarioId ? 'var(--red)' : undefined }}
-          >
-            <IconTrash size={14} stroke={1.5} />
-            삭제
+            시나리오 이름 변경
           </button>
         </Box>
 
@@ -97,101 +63,6 @@ export function Toolbar() {
           <IconSparkles size={14} stroke={1.5} />
           AI
         </button>
-
-        {/* Add Scenario Modal */}
-        {addScenarioModalOpen && (
-          <div className="modal-backdrop open" onClick={() => { setAddScenarioModalOpen(false); setNewScenarioName(''); }}>
-            <div className="ap-modal" style={{ width: 360 }} onClick={(e) => e.stopPropagation()}>
-              <div className="ap-header">
-                <span style={{ fontSize: 14, fontWeight: 500 }}>새 시나리오 추가</span>
-                <ActionIcon variant="subtle" onClick={() => { setAddScenarioModalOpen(false); setNewScenarioName(''); }}><IconPlus size={16} style={{ transform: 'rotate(45deg)' }} /></ActionIcon>
-              </div>
-              <div className="ap-body">
-                <div className="bo-field">
-                  <input
-                    type="text"
-                    placeholder="시나리오 이름"
-                    value={newScenarioName}
-                    onChange={(e) => setNewScenarioName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && newScenarioName.trim()) {
-                        const newId = addScenario(newScenarioName.trim());
-                        selectScenario(newId);
-                        setAddScenarioModalOpen(false);
-                        setNewScenarioName('');
-                      }
-                    }}
-                    autoFocus
-                    style={{
-                      width: '100%',
-                      background: 'var(--bg2)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text)',
-                      padding: '8px 12px',
-                      borderRadius: 'var(--r4)',
-                      fontSize: 13,
-                      fontFamily: 'var(--sans)',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="ap-footer">
-                <button className="btn btn-outline" onClick={() => { setAddScenarioModalOpen(false); setNewScenarioName(''); }}>
-                  취소
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    if (newScenarioName.trim()) {
-                      const newId = addScenario(newScenarioName.trim());
-                      selectScenario(newId);
-                      setAddScenarioModalOpen(false);
-                      setNewScenarioName('');
-                    }
-                  }}
-                  disabled={!newScenarioName.trim()}
-                  style={!newScenarioName.trim() ? { background: 'var(--bg4)', color: 'var(--text3)', cursor: 'not-allowed' } : {}}
-                >
-                  추가
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Delete Scenario Modal */}
-        {deleteScenarioModalOpen && (
-          <div className="modal-backdrop open" onClick={() => setDeleteScenarioModalOpen(false)}>
-            <div className="ap-modal" style={{ width: 320 }} onClick={(e) => e.stopPropagation()}>
-              <div className="ap-header">
-                <span style={{ fontSize: 14, fontWeight: 500 }}>시나리오 삭제</span>
-                <ActionIcon variant="subtle" onClick={() => setDeleteScenarioModalOpen(false)}><IconPlus size={16} style={{ transform: 'rotate(45deg)' }} /></ActionIcon>
-              </div>
-              <div className="ap-body">
-                <span style={{ fontSize: 13, color: 'var(--text2)' }}>
-                  정말로 이 시나리오를 삭제하시겠습니까?
-                </span>
-              </div>
-              <div className="ap-footer">
-                <button className="btn btn-outline" onClick={() => setDeleteScenarioModalOpen(false)}>
-                  취소
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => {
-                    if (selectedScenarioId) {
-                      deleteScenario(selectedScenarioId);
-                      setDeleteScenarioModalOpen(false);
-                    }
-                  }}
-                >
-                  삭제
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Rename Scenario Modal */}
         {renameScenarioModalOpen && (
@@ -209,8 +80,8 @@ export function Toolbar() {
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && renameValue.trim() && selectedScenarioId) {
-                        updateScenario(selectedScenarioId, { name: renameValue.trim() });
+                      if (e.key === 'Enter' && renameValue.trim()) {
+                        updateScenario({ name: renameValue.trim() });
                         setRenameScenarioModalOpen(false);
                         setRenameValue('');
                       }
@@ -237,8 +108,8 @@ export function Toolbar() {
                 <button
                   className="btn btn-primary"
                   onClick={() => {
-                    if (renameValue.trim() && selectedScenarioId) {
-                      updateScenario(selectedScenarioId, { name: renameValue.trim() });
+                    if (renameValue.trim()) {
+                      updateScenario({ name: renameValue.trim() });
                       setRenameScenarioModalOpen(false);
                       setRenameValue('');
                     }
@@ -259,23 +130,6 @@ export function Toolbar() {
   // Storyboard Toolbar
   return (
     <Box className="toolbar">
-      {/* Scene selector */}
-      <Box className="tool-group">
-        <select
-          className="scene-select"
-          value={selectedSceneId ?? 'all'}
-          onChange={(e) => selectScene(e.target.value === 'all' ? null : e.target.value)}
-        >
-          {sceneOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </Box>
-
-      <Box className="tool-sep" />
-
       {/* Add scene / add panel */}
       <Box className="tool-group">
         <button className="btn btn-ghost btn-sm" onClick={() => setAddSceneModalOpen(true)}>
@@ -283,9 +137,9 @@ export function Toolbar() {
           장면 추가
         </button>
         <button
-          className={`btn btn-sm ${selectedSceneId ? 'btn-accent' : 'btn-ghost'}`}
+          className="btn btn-ghost btn-sm"
           onClick={() => {
-            const sceneId = selectedSceneId ?? project?.scenes[0]?.id;
+            const sceneId = project?.scenario.scenes[0]?.id;
             if (sceneId) openAddPanelModal(sceneId);
           }}
         >

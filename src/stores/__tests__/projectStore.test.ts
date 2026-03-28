@@ -14,7 +14,6 @@ describe('projectStore', () => {
       project: null,
       selectedSceneId: null,
       selectedPanelId: null,
-      selectedScenarioId: null,
       isDirty: false,
     });
   });
@@ -26,7 +25,7 @@ describe('projectStore', () => {
       const project = useProjectStore.getState().project;
       expect(project).toBeDefined();
       expect(project!.name).toBe('Untitled Project');
-      expect(project!.scenes).toHaveLength(1);
+      expect(project!.scenario.scenes).toHaveLength(1);
     });
 
     it('should create new project with custom name', () => {
@@ -40,7 +39,7 @@ describe('projectStore', () => {
       useProjectStore.getState().newProject('Test');
 
       const project = useProjectStore.getState().project;
-      expect(useProjectStore.getState().selectedSceneId).toBe(project!.scenes[0].id);
+      expect(useProjectStore.getState().selectedSceneId).toBe(project!.scenario.scenes[0].id);
     });
 
     it('should clear panel selection', () => {
@@ -68,7 +67,7 @@ describe('projectStore', () => {
       const project = createEmptyProject('Test');
       useProjectStore.getState().loadProject(project);
 
-      expect(useProjectStore.getState().selectedSceneId).toBe(project.scenes[0].id);
+      expect(useProjectStore.getState().selectedSceneId).toBe(project.scenario.scenes[0].id);
     });
 
     it('should clear panel selection', () => {
@@ -117,18 +116,18 @@ describe('projectStore', () => {
   describe('addScene', () => {
     it('should add a new scene', () => {
       useProjectStore.getState().newProject('Test');
-      const initialCount = useProjectStore.getState().project!.scenes.length;
+      const initialCount = useProjectStore.getState().project!.scenario.scenes.length;
 
       useProjectStore.getState().addScene('New Scene');
 
-      expect(useProjectStore.getState().project!.scenes).toHaveLength(initialCount + 1);
+      expect(useProjectStore.getState().project!.scenario.scenes).toHaveLength(initialCount + 1);
     });
 
     it('should auto-select the new scene', () => {
       useProjectStore.getState().newProject('Test');
       useProjectStore.getState().addScene('New Scene');
 
-      const newScene = useProjectStore.getState().project!.scenes[1];
+      const newScene = useProjectStore.getState().project!.scenario.scenes[1];
       expect(useProjectStore.getState().selectedSceneId).toBe(newScene.id);
     });
 
@@ -143,17 +142,17 @@ describe('projectStore', () => {
   describe('updateScene', () => {
     it('should update scene name', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
 
       useProjectStore.getState().updateScene(sceneId, { name: 'Updated Scene' });
 
-      const scene = useProjectStore.getState().project!.scenes[0];
+      const scene = useProjectStore.getState().project!.scenario.scenes[0];
       expect(scene.name).toBe('Updated Scene');
     });
 
     it('should set isDirty to true', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().markClean();
 
       useProjectStore.getState().updateScene(sceneId, { name: 'Updated' });
@@ -166,37 +165,37 @@ describe('projectStore', () => {
     it('should delete a scene', () => {
       useProjectStore.getState().newProject('Test');
       useProjectStore.getState().addScene('Scene 2');
-      const sceneToDelete = useProjectStore.getState().project!.scenes[1].id;
+      const sceneToDelete = useProjectStore.getState().project!.scenario.scenes[1].id;
 
       useProjectStore.getState().deleteScene(sceneToDelete);
 
-      expect(useProjectStore.getState().project!.scenes).toHaveLength(1);
+      expect(useProjectStore.getState().project!.scenario.scenes).toHaveLength(1);
     });
 
     it('should not delete if only one scene exists', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
 
       useProjectStore.getState().deleteScene(sceneId);
 
-      expect(useProjectStore.getState().project!.scenes).toHaveLength(1);
+      expect(useProjectStore.getState().project!.scenario.scenes).toHaveLength(1);
     });
 
     it('should re-select first scene if deleted scene was selected', () => {
       useProjectStore.getState().newProject('Test');
       useProjectStore.getState().addScene('Scene 2');
-      const sceneToDelete = useProjectStore.getState().project!.scenes[1].id;
+      const sceneToDelete = useProjectStore.getState().project!.scenario.scenes[1].id;
 
       useProjectStore.getState().deleteScene(sceneToDelete);
 
-      const firstSceneId = useProjectStore.getState().project!.scenes[0].id;
+      const firstSceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       expect(useProjectStore.getState().selectedSceneId).toBe(firstSceneId);
     });
 
     it('should clear panel selection', () => {
       useProjectStore.getState().newProject('Test');
       useProjectStore.getState().addScene('Scene 2');
-      const sceneToDelete = useProjectStore.getState().project!.scenes[1].id;
+      const sceneToDelete = useProjectStore.getState().project!.scenario.scenes[1].id;
 
       useProjectStore.getState().deleteScene(sceneToDelete);
 
@@ -208,7 +207,7 @@ describe('projectStore', () => {
     it('should select a scene', () => {
       useProjectStore.getState().newProject('Test');
       useProjectStore.getState().addScene('Scene 2');
-      const sceneId = useProjectStore.getState().project!.scenes[1].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[1].id;
 
       useProjectStore.getState().selectScene(sceneId);
 
@@ -217,7 +216,7 @@ describe('projectStore', () => {
 
     it('should clear panel selection', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       const panel = createEmptyPanel(1);
       useProjectStore.getState().addPanel(sceneId, panel);
       useProjectStore.getState().selectPanel(panel.id);
@@ -231,7 +230,7 @@ describe('projectStore', () => {
   describe('selectPanel', () => {
     it('should select a panel', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       const panel = createEmptyPanel(1);
       useProjectStore.getState().addPanel(sceneId, panel);
 
@@ -243,12 +242,12 @@ describe('projectStore', () => {
     it('should auto-select the scene containing the panel', () => {
       useProjectStore.getState().newProject('Test');
       useProjectStore.getState().addScene('Scene 2');
-      const scene2Id = useProjectStore.getState().project!.scenes[1].id;
+      const scene2Id = useProjectStore.getState().project!.scenario.scenes[1].id;
       const panel = createEmptyPanel(1);
       useProjectStore.getState().addPanel(scene2Id, panel);
 
       // First select scene 1
-      useProjectStore.getState().selectScene(useProjectStore.getState().project!.scenes[0].id);
+      useProjectStore.getState().selectScene(useProjectStore.getState().project!.scenario.scenes[0].id);
 
       // Then select panel in scene 2
       useProjectStore.getState().selectPanel(panel.id);
@@ -260,27 +259,27 @@ describe('projectStore', () => {
   describe('addPanel', () => {
     it('should add a panel to a scene', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
 
       useProjectStore.getState().addPanel(sceneId);
 
-      const scene = useProjectStore.getState().project!.scenes[0];
+      const scene = useProjectStore.getState().project!.scenario.scenes[0];
       expect(scene.panels).toHaveLength(1);
     });
 
     it('should auto-select the new panel', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
 
       useProjectStore.getState().addPanel(sceneId);
 
-      const panel = useProjectStore.getState().project!.scenes[0].panels[0];
+      const panel = useProjectStore.getState().project!.scenario.scenes[0].panels[0];
       expect(useProjectStore.getState().selectedPanelId).toBe(panel.id);
     });
 
     it('should set isDirty to true', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().markClean();
 
       useProjectStore.getState().addPanel(sceneId);
@@ -292,21 +291,21 @@ describe('projectStore', () => {
   describe('updatePanel', () => {
     it('should update panel properties', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().addPanel(sceneId);
-      const panelId = useProjectStore.getState().project!.scenes[0].panels[0].id;
+      const panelId = useProjectStore.getState().project!.scenario.scenes[0].panels[0].id;
 
       useProjectStore.getState().updatePanel(panelId, { description: 'New description' });
 
-      const panel = useProjectStore.getState().project!.scenes[0].panels[0];
+      const panel = useProjectStore.getState().project!.scenario.scenes[0].panels[0];
       expect(panel.description).toBe('New description');
     });
 
     it('should set isDirty to true', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().addPanel(sceneId);
-      const panelId = useProjectStore.getState().project!.scenes[0].panels[0].id;
+      const panelId = useProjectStore.getState().project!.scenario.scenes[0].panels[0].id;
       useProjectStore.getState().markClean();
 
       useProjectStore.getState().updatePanel(panelId, { description: 'Updated' });
@@ -318,21 +317,21 @@ describe('projectStore', () => {
   describe('deletePanel', () => {
     it('should delete a panel', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().addPanel(sceneId);
-      const panelId = useProjectStore.getState().project!.scenes[0].panels[0].id;
+      const panelId = useProjectStore.getState().project!.scenario.scenes[0].panels[0].id;
 
       useProjectStore.getState().deletePanel(panelId);
 
-      const scene = useProjectStore.getState().project!.scenes[0];
+      const scene = useProjectStore.getState().project!.scenario.scenes[0];
       expect(scene.panels).toHaveLength(0);
     });
 
     it('should clear selection if deleted panel was selected', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().addPanel(sceneId);
-      const panelId = useProjectStore.getState().project!.scenes[0].panels[0].id;
+      const panelId = useProjectStore.getState().project!.scenario.scenes[0].panels[0].id;
       useProjectStore.getState().selectPanel(panelId);
 
       useProjectStore.getState().deletePanel(panelId);
@@ -342,16 +341,16 @@ describe('projectStore', () => {
 
     it('should renumber remaining panels', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().addPanel(sceneId);
       useProjectStore.getState().addPanel(sceneId);
       useProjectStore.getState().addPanel(sceneId);
 
       // Delete the first panel (number 1)
-      const firstPanelId = useProjectStore.getState().project!.scenes[0].panels[0].id;
+      const firstPanelId = useProjectStore.getState().project!.scenario.scenes[0].panels[0].id;
       useProjectStore.getState().deletePanel(firstPanelId);
 
-      const scene = useProjectStore.getState().project!.scenes[0];
+      const scene = useProjectStore.getState().project!.scenario.scenes[0];
       expect(scene.panels[0].number).toBe(1);
       expect(scene.panels[1].number).toBe(2);
     });
@@ -372,7 +371,7 @@ describe('projectStore', () => {
 
     it('should return the selected scene', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
 
       const scene = useProjectStore.getState().getSelectedScene();
 
@@ -394,9 +393,9 @@ describe('projectStore', () => {
 
     it('should return the selected panel', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().addPanel(sceneId);
-      const panelId = useProjectStore.getState().project!.scenes[0].panels[0].id;
+      const panelId = useProjectStore.getState().project!.scenario.scenes[0].panels[0].id;
       useProjectStore.getState().selectPanel(panelId);
 
       const panel = useProjectStore.getState().getSelectedPanel();
@@ -424,7 +423,7 @@ describe('projectStore', () => {
       useProjectStore.getState().addScene('Scene 2');
       useProjectStore.getState().addScene('Scene 3');
 
-      const scenes = useProjectStore.getState().project!.scenes;
+      const scenes = useProjectStore.getState().project!.scenario.scenes;
       const firstId = scenes[0].id;
       const secondId = scenes[1].id;
       const thirdId = scenes[2].id;
@@ -432,7 +431,7 @@ describe('projectStore', () => {
       // Move first scene to last position
       useProjectStore.getState().reorderScenes(0, 2);
 
-      const reordered = useProjectStore.getState().project!.scenes;
+      const reordered = useProjectStore.getState().project!.scenario.scenes;
       expect(reordered[0].id).toBe(secondId);
       expect(reordered[1].id).toBe(thirdId);
       expect(reordered[2].id).toBe(firstId);
@@ -452,7 +451,7 @@ describe('projectStore', () => {
   describe('reorderPanels', () => {
     it('should reorder panels within a scene', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().addPanel(sceneId, { description: 'Panel 1' });
       useProjectStore.getState().addPanel(sceneId, { description: 'Panel 2' });
       useProjectStore.getState().addPanel(sceneId, { description: 'Panel 3' });
@@ -460,7 +459,7 @@ describe('projectStore', () => {
       // Move first panel to last position
       useProjectStore.getState().reorderPanels(sceneId, 0, 2);
 
-      const panels = useProjectStore.getState().project!.scenes[0].panels;
+      const panels = useProjectStore.getState().project!.scenario.scenes[0].panels;
       expect(panels[0].description).toBe('Panel 2');
       expect(panels[1].description).toBe('Panel 3');
       expect(panels[2].description).toBe('Panel 1');
@@ -468,14 +467,14 @@ describe('projectStore', () => {
 
     it('should renumber panels after reorder', () => {
       useProjectStore.getState().newProject('Test');
-      const sceneId = useProjectStore.getState().project!.scenes[0].id;
+      const sceneId = useProjectStore.getState().project!.scenario.scenes[0].id;
       useProjectStore.getState().addPanel(sceneId);
       useProjectStore.getState().addPanel(sceneId);
       useProjectStore.getState().addPanel(sceneId);
 
       useProjectStore.getState().reorderPanels(sceneId, 0, 2);
 
-      const panels = useProjectStore.getState().project!.scenes[0].panels;
+      const panels = useProjectStore.getState().project!.scenario.scenes[0].panels;
       expect(panels[0].number).toBe(1);
       expect(panels[1].number).toBe(2);
       expect(panels[2].number).toBe(3);
@@ -487,16 +486,16 @@ describe('projectStore', () => {
       useProjectStore.getState().newProject('Test');
       useProjectStore.getState().addScene('Scene 2');
 
-      const scene1Id = useProjectStore.getState().project!.scenes[0].id;
-      const scene2Id = useProjectStore.getState().project!.scenes[1].id;
+      const scene1Id = useProjectStore.getState().project!.scenario.scenes[0].id;
+      const scene2Id = useProjectStore.getState().project!.scenario.scenes[1].id;
 
       useProjectStore.getState().addPanel(scene1Id, { description: 'Moving Panel' });
-      const panelId = useProjectStore.getState().project!.scenes[0].panels[0].id;
+      const panelId = useProjectStore.getState().project!.scenario.scenes[0].panels[0].id;
 
       useProjectStore.getState().movePanel(panelId, scene2Id);
 
-      const scene1 = useProjectStore.getState().project!.scenes[0];
-      const scene2 = useProjectStore.getState().project!.scenes[1];
+      const scene1 = useProjectStore.getState().project!.scenario.scenes[0];
+      const scene2 = useProjectStore.getState().project!.scenario.scenes[1];
 
       expect(scene1.panels).toHaveLength(0);
       expect(scene2.panels).toHaveLength(1);
@@ -507,8 +506,8 @@ describe('projectStore', () => {
       useProjectStore.getState().newProject('Test');
       useProjectStore.getState().addScene('Scene 2');
 
-      const scene1Id = useProjectStore.getState().project!.scenes[0].id;
-      const scene2Id = useProjectStore.getState().project!.scenes[1].id;
+      const scene1Id = useProjectStore.getState().project!.scenario.scenes[0].id;
+      const scene2Id = useProjectStore.getState().project!.scenario.scenes[1].id;
 
       // Add 2 panels to scene 1, 1 panel to scene 2
       useProjectStore.getState().addPanel(scene1Id);
@@ -516,11 +515,11 @@ describe('projectStore', () => {
       useProjectStore.getState().addPanel(scene2Id);
 
       // Move first panel from scene 1 to scene 2
-      const panelId = useProjectStore.getState().project!.scenes[0].panels[0].id;
+      const panelId = useProjectStore.getState().project!.scenario.scenes[0].panels[0].id;
       useProjectStore.getState().movePanel(panelId, scene2Id);
 
-      const scene1 = useProjectStore.getState().project!.scenes[0];
-      const scene2 = useProjectStore.getState().project!.scenes[1];
+      const scene1 = useProjectStore.getState().project!.scenario.scenes[0];
+      const scene2 = useProjectStore.getState().project!.scenario.scenes[1];
 
       // Scene 1 should have 1 panel numbered 1
       expect(scene1.panels[0].number).toBe(1);

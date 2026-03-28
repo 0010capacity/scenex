@@ -103,7 +103,7 @@ export function ScenarioSidebar() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const selectedScene = project?.scenes.find((s) => s.id === selectedSceneId);
+  const selectedScene = project?.scenario.scenes.find((s) => s.id === selectedSceneId);
 
   // Handle badge click
   const handleBadgeClick = useCallback((info: BadgeClickInfo) => {
@@ -224,8 +224,8 @@ export function ScenarioSidebar() {
   const handleSceneDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = project?.scenes.findIndex((s) => s.id === active.id) ?? -1;
-      const newIndex = project?.scenes.findIndex((s) => s.id === over.id) ?? -1;
+      const oldIndex = project?.scenario.scenes.findIndex((s) => s.id === active.id) ?? -1;
+      const newIndex = project?.scenario.scenes.findIndex((s) => s.id === over.id) ?? -1;
       if (oldIndex !== -1 && newIndex !== -1) {
         reorderScenes(oldIndex, newIndex);
       }
@@ -310,7 +310,7 @@ export function ScenarioSidebar() {
 
       {/* Scene tabs */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSceneDragEnd}>
-        <SortableContext items={project.scenes.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
+        <SortableContext items={project.scenario.scenes.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
           <Box
             style={{
               padding: '8px 12px',
@@ -321,7 +321,7 @@ export function ScenarioSidebar() {
               overflowX: 'auto',
             }}
           >
-            {project.scenes.map((scene, i) => (
+            {project.scenario.scenes.map((scene, i) => (
               <SortableSceneTab
                 key={scene.id}
                 sceneId={scene.id}

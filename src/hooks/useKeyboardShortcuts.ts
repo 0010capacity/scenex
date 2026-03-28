@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 import { useWorkspace } from '@/hooks/useWorkspace';
@@ -33,7 +33,6 @@ async function getImageFromClipboard(): Promise<string | null> {
 
 export function useKeyboardShortcuts() {
   const selectedPanelId = useProjectStore(s => s.selectedPanelId);
-  const selectedSceneId = useProjectStore(s => s.selectedSceneId);
   const deletePanel = useProjectStore(s => s.deletePanel);
   const addPanel = useProjectStore(s => s.addPanel);
   const project = useProjectStore(s => s.project);
@@ -42,6 +41,17 @@ export function useKeyboardShortcuts() {
   const openAddPanelModal = useUIStore(s => s.openAddPanelModal);
   const addNotification = useUIStore(s => s.addNotification);
   const { saveProjectWithAutoCommit, currentProjectPath } = useWorkspace();
+
+  // Derive target scene from selected panel, fallback to first scene
+  const targetSceneId = useMemo(() => {
+    if (!project) return null;
+    if (selectedPanelId) {
+      for (const scene of project.scenario.scenes) {
+        if (scene.panels.some(p => p.id === selectedPanelId)) return scene.id;
+      }
+    }
+    return project.scenario.scenes[0]?.id ?? null;
+  }, [project, selectedPanelId]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -84,13 +94,13 @@ export function useKeyboardShortcuts() {
           return;
         }
         // Handle clipboard paste
-        if (selectedSceneId) {
+        if (targetSceneId) {
           e.preventDefault();
           getImageFromClipboard().then((imageData) => {
             if (imageData) {
-              const scene = project?.scenes.find(s => s.id === selectedSceneId);
+              const scene = project?.scenario.scenes.find(s => s.id === targetSceneId);
               const panelNumber = scene ? scene.panels.length + 1 : 1;
-              addPanel(selectedSceneId, {
+              addPanel(targetSceneId, {
                 number: panelNumber,
                 imageData,
                 sourceType: 'imported',
@@ -106,7 +116,7 @@ export function useKeyboardShortcuts() {
       }
 
       // N: New panel (when not typing)
-      if (e.key === 'n' && !cmdKey && selectedSceneId) {
+      if (e.key === 'n' && !cmdKey && targetSceneId) {
         const target = e.target as HTMLElement;
         if (
           target.tagName === 'INPUT' ||
@@ -116,7 +126,7 @@ export function useKeyboardShortcuts() {
           return;
         }
         e.preventDefault();
-        openAddPanelModal(selectedSceneId);
+        openAddPanelModal(targetSceneId);
         return;
       }
 
@@ -168,7 +178,7 @@ export function useKeyboardShortcuts() {
     [
       selectedPanelId,
       deletePanel,
-      selectedSceneId,
+      targetSceneId,
       saveProjectWithAutoCommit,
       currentProjectPath,
       openAddPanelModal,

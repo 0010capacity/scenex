@@ -66,7 +66,7 @@ export function ScenarioAIPanel({ opened, onClose, scenario }: ScenarioAIPanelPr
       if (result && typeof result === 'object') {
         const resultObj = result as any;
         if (resultObj.success && resultObj.scenario) {
-          updateScenario(scenario.id, resultObj.scenario);
+          updateScenario(resultObj.scenario);
         }
       }
 

@@ -55,7 +55,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
   const shotDesc = panel.shotType ? SHOT_LABELS[panel.shotType] ?? '' : '';
   const sourceLabel = SOURCE_LABELS[panel.sourceType] ?? '';
 
-  const otherScenes = project?.scenes.filter((s) => s.id !== sceneId) ?? [];
+  const otherScenes = project?.scenario.scenes.filter((s) => s.id !== sceneId) ?? [];
 
   const handleMoveToScene = (toSceneId: string) => {
     movePanel(panel.id, toSceneId);
@@ -358,7 +358,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
               onClick={() => handleMoveToScene(scene.id)}
               leftSection={<IconArrowMoveRight size={14} stroke={1.5} />}
             >
-              S{project!.scenes.findIndex(s => s.id === scene.id) + 1} — {scene.name}
+              S{project!.scenario.scenes.findIndex(s => s.id === scene.id) + 1} — {scene.name}
             </Menu.Item>
           ))
         ) : (

@@ -44,7 +44,6 @@ export interface SkillContext {
   project: Project | null;
   selectedSceneId: string | null;
   selectedPanelId: string | null;
-  selectedScenarioId: string | null;
   editorMode: EditorMode;
 }
 
@@ -150,7 +149,7 @@ export interface RegisteredSkill extends Skill {
  */
 export function getSelectedScene(ctx: SkillContext): Scene | null {
   if (!ctx.project || !ctx.selectedSceneId) return null;
-  return ctx.project.scenes.find(s => s.id === ctx.selectedSceneId) ?? null;
+  return ctx.project.scenario.scenes.find(s => s.id === ctx.selectedSceneId) ?? null;
 }
 
 /**
@@ -159,7 +158,7 @@ export function getSelectedScene(ctx: SkillContext): Scene | null {
 export function getSelectedPanel(ctx: SkillContext): { scene: Scene; panel: Panel } | null {
   if (!ctx.project || !ctx.selectedPanelId) return null;
 
-  for (const scene of ctx.project.scenes) {
+  for (const scene of ctx.project.scenario.scenes) {
     const panel = scene.panels.find(p => p.id === ctx.selectedPanelId);
     if (panel) {
       return { scene, panel };
@@ -172,7 +171,7 @@ export function getSelectedPanel(ctx: SkillContext): { scene: Scene; panel: Pane
  * Helper to get panel by ID from project
  */
 export function getPanelById(project: Project, panelId: string): { scene: Scene; panel: Panel } | null {
-  for (const scene of project.scenes) {
+  for (const scene of project.scenario.scenes) {
     const panel = scene.panels.find(p => p.id === panelId);
     if (panel) {
       return { scene, panel };
@@ -185,12 +184,19 @@ export function getPanelById(project: Project, panelId: string): { scene: Scene;
  * Helper to get scene by ID from project
  */
 export function getSceneById(project: Project, sceneId: string): Scene | null {
-  return project.scenes.find(s => s.id === sceneId) ?? null;
+  return project.scenario.scenes.find(s => s.id === sceneId) ?? null;
 }
 
 /**
- * Helper to get scenario by ID from project
+ * Helper to get the single scenario from project
  */
-export function getScenarioById(project: Project, scenarioId: string): Scenario | null {
-  return project.scenarios.find(s => s.id === scenarioId) ?? null;
+export function getScenario(project: Project): Scenario | null {
+  return project.scenario ?? null;
+}
+
+/**
+ * @deprecated Use getScenario instead - we no longer have multiple scenarios
+ */
+export function getScenarioById(project: Project, _scenarioId: string): Scenario | null {
+  return project.scenario ?? null;
 }

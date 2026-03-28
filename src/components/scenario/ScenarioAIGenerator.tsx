@@ -10,7 +10,7 @@ interface ScenarioAIGeneratorProps {
 }
 
 export function ScenarioAIGenerator({ opened, onClose }: ScenarioAIGeneratorProps) {
-  const addScenario = useProjectStore(s => s.addScenario);
+  const updateScenario = useProjectStore(s => s.updateScenario);
   const addTask = useAIStore(s => s.addTask);
   const updateTask = useAIStore(s => s.updateTask);
 
@@ -49,11 +49,12 @@ export function ScenarioAIGenerator({ opened, onClose }: ScenarioAIGeneratorProp
       setProgress(70);
 
       if (result.success && result.scenario) {
-        // Create scenario in project
-        const title = result.scenario.title || 'Untitled Scenario';
-        addScenario(title);
-
-        // TODO: Parse acts/scenes from result.scenario and add to project
+        // Update the project scenario with generated content
+        const title = result.scenario.title || 'Generated Scenario';
+        updateScenario({
+          name: title,
+          content: result.scenario.content || `# ${title}\n\n`,
+        });
 
         updateTask(taskId, { status: 'completed', progress: 100 });
         setProgress(100);

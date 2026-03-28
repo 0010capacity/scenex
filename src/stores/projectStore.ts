@@ -8,6 +8,7 @@ import {
   createEmptyProject,
   createEmptyScene,
   createEmptyPanel,
+  migrateProject,
 } from '@/types';
 import { Scenario } from '@/types/scenario';
 import { invokeWrapper } from '@/utils/invokeWrapper';
@@ -17,7 +18,6 @@ interface ProjectState {
   project: Project | null;
   selectedSceneId: string | null;
   selectedPanelId: string | null;
-  selectedScenarioId: string | null;
   isDirty: boolean;
 
   // Project actions
@@ -46,10 +46,7 @@ interface ProjectState {
   reorderScriptLines: (sceneId: string, fromIndex: number, toIndex: number) => void;
 
   // Scenario actions
-  addScenario: (name: string) => string;
-  updateScenario: (id: string, updates: Partial<Scenario>) => void;
-  deleteScenario: (id: string) => void;
-  selectScenario: (scenarioId: string | null) => void;
+  updateScenario: (updates: Partial<Scenario>) => void;
 
   // Selection
   selectScene: (sceneId: string | null) => void;
@@ -67,23 +64,24 @@ export const useProjectStore = create<ProjectState>()(
       project: null,
       selectedSceneId: null,
       selectedPanelId: null,
-      selectedScenarioId: null,
       isDirty: false,
 
       newProject: (name) => {
         const project = createEmptyProject(name);
         set({
           project,
-          selectedSceneId: project.scenes[0]?.id ?? null,
+          selectedSceneId: project.scenario.scenes[0]?.id ?? null,
           selectedPanelId: null,
           isDirty: false,
         });
       },
 
       loadProject: (project) => {
+        // Apply migration if needed
+        const migratedProject = migrateProject(project);
         set({
-          project,
-          selectedSceneId: project.scenes[0]?.id ?? null,
+          project: migratedProject,
+          selectedSceneId: migratedProject.scenario.scenes[0]?.id ?? null,
           selectedPanelId: null,
           isDirty: false,
         });
@@ -102,15 +100,18 @@ export const useProjectStore = create<ProjectState>()(
         const state = get();
         if (!state.project) return;
 
-        const sceneNumber = state.project.scenes.length + 1;
+        const sceneNumber = state.project.scenario.scenes.length + 1;
         const newScene = createEmptyScene(name ?? `Scene ${sceneNumber}`);
 
         set((state) => ({
           project: state.project
             ? {
                 ...state.project,
-                scenes: [...state.project.scenes, newScene],
-                updatedAt: new Date().toISOString(),
+                scenario: {
+                  ...state.project.scenario,
+                  scenes: [...state.project.scenario.scenes, newScene],
+                  updatedAt: new Date().toISOString(),
+                },
               }
             : null,
           selectedSceneId: newScene.id,
@@ -147,10 +148,13 @@ export const useProjectStore = create<ProjectState>()(
           project: state.project
             ? {
                 ...state.project,
-                scenes: state.project.scenes.map((s) =>
-                  s.id === sceneId ? { ...s, ...updates } : s
-                ),
-                updatedAt: new Date().toISOString(),
+                scenario: {
+                  ...state.project.scenario,
+                  scenes: state.project.scenario.scenes.map((s) =>
+                    s.id === sceneId ? { ...s, ...updates } : s
+                  ),
+                  updatedAt: new Date().toISOString(),
+                },
               }
             : null,
           isDirty: true,
@@ -160,9 +164,9 @@ export const useProjectStore = create<ProjectState>()(
       deleteScene: (sceneId) => {
         set((state) => {
           if (!state.project) return state;
-          if (state.project.scenes.length <= 1) return state; // Keep at least one scene
+          if (state.project.scenario.scenes.length <= 1) return state; // Keep at least one scene
 
-          const newScenes = state.project.scenes.filter((s) => s.id !== sceneId);
+          const newScenes = state.project.scenario.scenes.filter((s) => s.id !== sceneId);
           const newSelectedSceneId =
             state.selectedSceneId === sceneId
               ? newScenes[0]?.id ?? null
@@ -171,8 +175,11 @@ export const useProjectStore = create<ProjectState>()(
           return {
             project: {
               ...state.project,
-              scenes: newScenes,
-              updatedAt: new Date().toISOString(),
+              scenario: {
+                ...state.project.scenario,
+                scenes: newScenes,
+                updatedAt: new Date().toISOString(),
+              },
             },
             selectedSceneId: newSelectedSceneId,
             selectedPanelId: null,
@@ -185,15 +192,18 @@ export const useProjectStore = create<ProjectState>()(
         set((state) => {
           if (!state.project) return state;
 
-          const scenes = [...state.project.scenes];
+          const scenes = [...state.project.scenario.scenes];
           const [removed] = scenes.splice(fromIndex, 1);
           scenes.splice(toIndex, 0, removed);
 
           return {
             project: {
               ...state.project,
-              scenes,
-              updatedAt: new Date().toISOString(),
+              scenario: {
+                ...state.project.scenario,
+                scenes,
+                updatedAt: new Date().toISOString(),
+              },
             },
             isDirty: true,
           };
@@ -204,7 +214,7 @@ export const useProjectStore = create<ProjectState>()(
         set((state) => {
           if (!state.project) return state;
 
-          const scene = state.project.scenes.find((s) => s.id === sceneId);
+          const scene = state.project.scenario.scenes.find((s) => s.id === sceneId);
           if (!scene) return state;
 
           const panelNumber = scene.panels.length + 1;
@@ -213,12 +223,15 @@ export const useProjectStore = create<ProjectState>()(
           return {
             project: {
               ...state.project,
-              scenes: state.project.scenes.map((s) =>
-                s.id === sceneId
-                  ? { ...s, panels: [...s.panels, newPanel] }
-                  : s
-              ),
-              updatedAt: new Date().toISOString(),
+              scenario: {
+                ...state.project.scenario,
+                scenes: state.project.scenario.scenes.map((s) =>
+                  s.id === sceneId
+                    ? { ...s, panels: [...s.panels, newPanel] }
+                    : s
+                ),
+                updatedAt: new Date().toISOString(),
+              },
             },
             selectedPanelId: newPanel.id,
             isDirty: true,
@@ -233,13 +246,16 @@ export const useProjectStore = create<ProjectState>()(
           return {
             project: {
               ...state.project,
-              scenes: state.project.scenes.map((s) => ({
-                ...s,
-                panels: s.panels.map((p) =>
-                  p.id === panelId ? { ...p, ...updates } : p
-                ),
-              })),
-              updatedAt: new Date().toISOString(),
+              scenario: {
+                ...state.project.scenario,
+                scenes: state.project.scenario.scenes.map((s) => ({
+                  ...s,
+                  panels: s.panels.map((p) =>
+                    p.id === panelId ? { ...p, ...updates } : p
+                  ),
+                })),
+                updatedAt: new Date().toISOString(),
+              },
             },
             isDirty: true,
           };
@@ -252,7 +268,7 @@ export const useProjectStore = create<ProjectState>()(
 
           let newSelectedPanelId = state.selectedPanelId;
 
-          const newScenes = state.project.scenes.map((s) => {
+          const newScenes = state.project.scenario.scenes.map((s) => {
             const filteredPanels = s.panels.filter((p) => p.id !== panelId);
             // Renumber panels
             const renumberedPanels = filteredPanels.map((p, i) => ({
@@ -270,8 +286,11 @@ export const useProjectStore = create<ProjectState>()(
           return {
             project: {
               ...state.project,
-              scenes: newScenes,
-              updatedAt: new Date().toISOString(),
+              scenario: {
+                ...state.project.scenario,
+                scenes: newScenes,
+                updatedAt: new Date().toISOString(),
+              },
             },
             selectedPanelId: newSelectedPanelId,
             isDirty: true,
@@ -286,7 +305,7 @@ export const useProjectStore = create<ProjectState>()(
           let movedPanel: Panel | null = null;
 
           // Find and remove panel from source scene
-          const scenesWithoutPanel = state.project.scenes.map((s) => {
+          const scenesWithoutPanel = state.project.scenario.scenes.map((s) => {
             const panel = s.panels.find((p) => p.id === panelId);
             if (panel) {
               movedPanel = panel;
@@ -317,8 +336,11 @@ export const useProjectStore = create<ProjectState>()(
           return {
             project: {
               ...state.project,
-              scenes: renumberedScenes,
-              updatedAt: new Date().toISOString(),
+              scenario: {
+                ...state.project.scenario,
+                scenes: renumberedScenes,
+                updatedAt: new Date().toISOString(),
+              },
             },
             isDirty: true,
           };
@@ -329,7 +351,7 @@ export const useProjectStore = create<ProjectState>()(
         set((state) => {
           if (!state.project) return state;
 
-          const newScenes = state.project.scenes.map((s) => {
+          const newScenes = state.project.scenario.scenes.map((s) => {
             if (s.id !== sceneId) return s;
 
             const panels = [...s.panels];
@@ -345,8 +367,11 @@ export const useProjectStore = create<ProjectState>()(
           return {
             project: {
               ...state.project,
-              scenes: newScenes,
-              updatedAt: new Date().toISOString(),
+              scenario: {
+                ...state.project.scenario,
+                scenes: newScenes,
+                updatedAt: new Date().toISOString(),
+              },
             },
             isDirty: true,
           };
@@ -358,17 +383,20 @@ export const useProjectStore = create<ProjectState>()(
           project: state.project
             ? {
                 ...state.project,
-                scenes: state.project.scenes.map((s) =>
-                  s.id === sceneId
-                    ? {
-                        ...s,
-                        scriptLines: s.scriptLines.map((l) =>
-                          l.id === lineId ? { ...l, ...updates } : l
-                        ),
-                      }
-                    : s
-                ),
-                updatedAt: new Date().toISOString(),
+                scenario: {
+                  ...state.project.scenario,
+                  scenes: state.project.scenario.scenes.map((s) =>
+                    s.id === sceneId
+                      ? {
+                          ...s,
+                          scriptLines: s.scriptLines.map((l) =>
+                            l.id === lineId ? { ...l, ...updates } : l
+                          ),
+                        }
+                      : s
+                  ),
+                  updatedAt: new Date().toISOString(),
+                },
               }
             : null,
           isDirty: true,
@@ -380,12 +408,15 @@ export const useProjectStore = create<ProjectState>()(
           project: state.project
             ? {
                 ...state.project,
-                scenes: state.project.scenes.map((s) =>
-                  s.id === sceneId
-                    ? { ...s, scriptLines: s.scriptLines.filter((l) => l.id !== lineId) }
-                    : s
-                ),
-                updatedAt: new Date().toISOString(),
+                scenario: {
+                  ...state.project.scenario,
+                  scenes: state.project.scenario.scenes.map((s) =>
+                    s.id === sceneId
+                      ? { ...s, scriptLines: s.scriptLines.filter((l) => l.id !== lineId) }
+                      : s
+                  ),
+                  updatedAt: new Date().toISOString(),
+                },
               }
             : null,
           isDirty: true,
@@ -396,7 +427,7 @@ export const useProjectStore = create<ProjectState>()(
         set((state) => {
           if (!state.project) return state;
 
-          const newScenes = state.project.scenes.map((s) => {
+          const newScenes = state.project.scenario.scenes.map((s) => {
             if (s.id !== sceneId) return s;
 
             const lines = [...s.scriptLines];
@@ -409,8 +440,11 @@ export const useProjectStore = create<ProjectState>()(
           return {
             project: {
               ...state.project,
-              scenes: newScenes,
-              updatedAt: new Date().toISOString(),
+              scenario: {
+                ...state.project.scenario,
+                scenes: newScenes,
+                updatedAt: new Date().toISOString(),
+              },
             },
             isDirty: true,
           };
@@ -418,65 +452,21 @@ export const useProjectStore = create<ProjectState>()(
       },
 
       // Scenario actions
-      addScenario: (name) => {
-        const id = crypto.randomUUID();
-        const scenario: Scenario = {
-          id,
-          name,
-          description: '',
-          content: `# ${name}\n\n## Act 1\n\n### Scene 1\n`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        set((state) => ({
-          project: state.project
-            ? { ...state.project, scenarios: [...state.project.scenarios, scenario] }
-            : null,
-          isDirty: true,
-        }));
-        return id;
-      },
-
-      updateScenario: (id, updates) => {
+      updateScenario: (updates) => {
         set((state) => {
           if (!state.project) return state;
           return {
             project: {
               ...state.project,
-              scenarios: state.project.scenarios.map((s) =>
-                s.id === id ? { ...s, ...updates, updatedAt: new Date().toISOString() } : s
-              ),
+              scenario: {
+                ...state.project.scenario,
+                ...updates,
+                updatedAt: new Date().toISOString(),
+              },
             },
             isDirty: true,
           };
         });
-      },
-
-      deleteScenario: (id) => {
-        set((state) => {
-          if (!state.project) return state;
-          if (state.project.scenarios.length <= 1) return state; // Keep at least one scenario
-
-          const newScenarios = state.project.scenarios.filter((s) => s.id !== id);
-          const newSelectedScenarioId =
-            state.selectedScenarioId === id
-              ? newScenarios[0]?.id ?? null
-              : state.selectedScenarioId;
-
-          return {
-            project: {
-              ...state.project,
-              scenarios: newScenarios,
-              updatedAt: new Date().toISOString(),
-            },
-            selectedScenarioId: newSelectedScenarioId,
-            isDirty: true,
-          };
-        });
-      },
-
-      selectScenario: (scenarioId) => {
-        set({ selectedScenarioId: scenarioId });
       },
 
       updatePanelVersion: (sceneId, panelId, updates) => {
@@ -485,23 +475,26 @@ export const useProjectStore = create<ProjectState>()(
           return {
             project: {
               ...state.project,
-              scenes: state.project.scenes.map((scene) =>
-                scene.id === sceneId
-                  ? {
-                      ...scene,
-                      panels: scene.panels.map((panel) =>
-                        panel.id === panelId
-                          ? {
-                              ...panel,
-                              ...updates,
-                              version: panel.version + 1,
-                              parentPanelId: panel.parentPanelId || panel.id,
-                            }
-                          : panel
-                      ),
-                    }
-                  : scene
-              ),
+              scenario: {
+                ...state.project.scenario,
+                scenes: state.project.scenario.scenes.map((scene) =>
+                  scene.id === sceneId
+                    ? {
+                        ...scene,
+                        panels: scene.panels.map((panel) =>
+                          panel.id === panelId
+                            ? {
+                                ...panel,
+                                ...updates,
+                                version: panel.version + 1,
+                                parentPanelId: panel.parentPanelId || panel.id,
+                              }
+                            : panel
+                        ),
+                      }
+                    : scene
+                ),
+              },
             },
             isDirty: true,
           };
@@ -528,7 +521,7 @@ export const useProjectStore = create<ProjectState>()(
         set((state) => {
           // Also select the scene containing this panel
           if (panelId && state.project) {
-            for (const scene of state.project.scenes) {
+            for (const scene of state.project.scenario.scenes) {
               if (scene.panels.some((p) => p.id === panelId)) {
                 return { selectedSceneId: scene.id, selectedPanelId: panelId };
               }
@@ -541,14 +534,14 @@ export const useProjectStore = create<ProjectState>()(
       getSelectedScene: () => {
         const state = get();
         if (!state.project || !state.selectedSceneId) return null;
-        return state.project.scenes.find((s) => s.id === state.selectedSceneId) ?? null;
+        return state.project.scenario.scenes.find((s) => s.id === state.selectedSceneId) ?? null;
       },
 
       getSelectedPanel: () => {
         const state = get();
         if (!state.project) return null;
 
-        for (const scene of state.project.scenes) {
+        for (const scene of state.project.scenario.scenes) {
           const panel = scene.panels.find((p) => p.id === state.selectedPanelId);
           if (panel) return panel;
         }
@@ -563,7 +556,6 @@ export const useProjectStore = create<ProjectState>()(
       name: 'scenex-project',
       partialize: (state) => ({
         selectedSceneId: state.selectedSceneId,
-        selectedScenarioId: state.selectedScenarioId,
       }),
     }
   )

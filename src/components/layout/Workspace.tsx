@@ -103,7 +103,6 @@ export function Workspace() {
       {copilotSidebarOpen && (
         <CopilotSidebar
           opened={copilotSidebarOpen}
-          onClose={toggleCopilotSidebar}
           width={copilotSidebarWidth}
         />
       )}

@@ -19,9 +19,11 @@ interface UIState {
   leftSidebarOpen: boolean;
   rightSidebarOpen: boolean;
   scenarioSidebarOpen: boolean;
+  copilotSidebarOpen: boolean;
   leftSidebarWidth: number;
   rightSidebarWidth: number;
   scenarioSidebarWidth: number;
+  copilotSidebarWidth: number;
 
   // View states
   editorMode: 'storyboard' | 'scenario';
@@ -45,10 +47,13 @@ interface UIState {
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
   toggleScenarioSidebar: () => void;
+  toggleCopilotSidebar: () => void;
   openRightSidebar: () => void;
+  openCopilotSidebar: () => void;
   setLeftSidebarWidth: (width: number) => void;
   setRightSidebarWidth: (width: number) => void;
   setScenarioSidebarWidth: (width: number) => void;
+  setCopilotSidebarWidth: (width: number) => void;
   setZoomLevel: (level: number) => void;
   setViewMode: (mode: 'grid' | 'list' | 'strip' | 'slide') => void;
   setEditorMode: (mode: 'storyboard' | 'scenario') => void;
@@ -70,9 +75,11 @@ export const useUIStore = create<UIState>()(
       leftSidebarOpen: true,
       rightSidebarOpen: true,
       scenarioSidebarOpen: false,
+      copilotSidebarOpen: true,
       leftSidebarWidth: DEFAULT_LEFT_SIDEBAR_WIDTH,
       rightSidebarWidth: DEFAULT_RIGHT_SIDEBAR_WIDTH,
       scenarioSidebarWidth: 320,
+      copilotSidebarWidth: 320,
       editorMode: 'storyboard',
       zoomLevel: DEFAULT_ZOOM_LEVEL,
       viewMode: 'grid',
@@ -87,10 +94,13 @@ export const useUIStore = create<UIState>()(
       toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
       toggleScenarioSidebar: () => set((state) => ({ scenarioSidebarOpen: !state.scenarioSidebarOpen })),
+      toggleCopilotSidebar: () => set((state) => ({ copilotSidebarOpen: !state.copilotSidebarOpen })),
       openRightSidebar: () => set({ rightSidebarOpen: true }),
+      openCopilotSidebar: () => set({ copilotSidebarOpen: true }),
       setLeftSidebarWidth: (width) => set({ leftSidebarWidth: width }),
       setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),
       setScenarioSidebarWidth: (width) => set({ scenarioSidebarWidth: width }),
+      setCopilotSidebarWidth: (width) => set({ copilotSidebarWidth: width }),
       setZoomLevel: (level) => set({ zoomLevel: Math.max(MIN_ZOOM_LEVEL, Math.min(MAX_ZOOM_LEVEL, level)) }),
       setViewMode: (mode) => set({ viewMode: mode }),
       setEditorMode: (mode) => set({ editorMode: mode }),

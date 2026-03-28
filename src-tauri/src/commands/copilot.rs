@@ -55,7 +55,12 @@ pub struct CopilotChatResponse {
 
 /// Build the copilot prompt with context
 fn build_prompt(message: &str, ctx: &CopilotContext) -> String {
-    let template = include_str!("../../prompts/copilot.md");
+    // Load mode-specific prompt
+    let template = match ctx.mode.as_str() {
+        "storyboard" => include_str!("../../prompts/copilot_storyboard.md"),
+        "scenario" => include_str!("../../prompts/copilot_scenario.md"),
+        _ => include_str!("../../prompts/copilot_scenario.md"), // default to scenario
+    };
 
     template
         .replace("{{mode}}", &ctx.mode)

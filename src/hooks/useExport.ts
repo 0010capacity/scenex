@@ -57,7 +57,7 @@ export function useExport() {
     if (!project) return null;
 
     const scenes = await Promise.all(
-      project.scenes.map(async (scene) => {
+      project.scenario.scenes.map(async (scene) => {
         const panels = await Promise.all(
           scene.panels.map(async (panel) => {
             let imageData = panel.imageData;

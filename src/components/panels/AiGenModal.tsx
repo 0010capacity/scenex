@@ -1,4 +1,4 @@
-import { Box, Text, Select, Loader, Progress, Button } from '@mantine/core';
+import { Box, Text, Select, Loader, Progress, Button, ActionIcon } from '@mantine/core';
 import { IconSparkles, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
@@ -83,12 +83,12 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
       if (response.success && response.panels) {
         setProgress(50);
 
-        const sceneNumber = project.scenes.length + 1;
+        const sceneNumber = project.scenario.scenes.length + 1;
         const newSceneName = `Scene ${sceneNumber}`;
 
         addScene(newSceneName);
 
-        const newScene = useProjectStore.getState().project?.scenes.find(
+        const newScene = useProjectStore.getState().project?.scenario.scenes.find(
           (s) => s.name === newSceneName
         );
 
@@ -147,14 +147,9 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
             <IconSparkles size={16} stroke={1.5} color="var(--accent)" />
             AI 일괄 생성
           </Text>
-          <button
-            className="ap-close"
-            onClick={handleClose}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text3)')}
-          >
+          <ActionIcon variant="subtle" onClick={handleClose}>
             <IconX size={16} stroke={1.5} />
-          </button>
+          </ActionIcon>
         </Box>
 
         {/* Mode toggle */}
@@ -336,18 +331,13 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
 
         {/* Footer */}
         <Box className="ap-footer">
-          <button className="btn-cancel" onClick={handleClose} disabled={isGenerating}>
+          <button className="btn btn-outline" onClick={handleClose} disabled={isGenerating}>
             취소
           </button>
           <button
-            className="btn-confirm"
+            className="btn btn-primary"
             onClick={handleGenerate}
             disabled={!sceneDescription.trim() || isGenerating}
-            style={
-              !sceneDescription.trim() || isGenerating
-                ? { background: 'var(--bg4)', color: 'var(--text3)', cursor: 'not-allowed' }
-                : {}
-            }
           >
             {isGenerating ? (
               <>

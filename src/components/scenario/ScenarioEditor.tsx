@@ -12,17 +12,13 @@ import { BadgeEditModal } from './BadgeEditModal';
 
 export function ScenarioEditor() {
   const project = useProjectStore(s => s.project);
-  const addScenario = useProjectStore(s => s.addScenario);
   const updateScenario = useProjectStore(s => s.updateScenario);
-  const selectedScenarioId = useProjectStore(s => s.selectedScenarioId);
-  const selectScenario = useProjectStore(s => s.selectScenario);
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [badgeModalOpened, setBadgeModalOpened] = useState(false);
   const [badgeInfo, setBadgeInfo] = useState<BadgeClickInfo | null>(null);
 
-  const scenarios = project?.scenarios || [];
-  const selectedScenario = scenarios.find((s) => s.id === selectedScenarioId);
+  const scenario = project?.scenario;
 
   // Handle badge click
   const handleBadgeClick = useCallback((info: BadgeClickInfo) => {
@@ -33,7 +29,7 @@ export function ScenarioEditor() {
   // Handle badge edit save
   const handleBadgeSave = useCallback(
     (info: BadgeClickInfo, newContent: string) => {
-      if (!viewRef.current || !selectedScenarioId) return;
+      if (!viewRef.current || !scenario) return;
 
       // Reconstruct the full line with prefix
       let fullLine: string;
@@ -58,34 +54,17 @@ export function ScenarioEditor() {
         },
       });
     },
-    [selectedScenarioId]
+    [scenario]
   );
-
-  // Auto-create scenario if none exists - runs when scenarios array is empty
-  useEffect(() => {
-    if (project && scenarios.length === 0) {
-      // Auto-create a default scenario with template content
-      const name = project.name || '시나리오';
-      const id = addScenario(name);
-      selectScenario(id);
-    }
-  }, [project, scenarios.length, addScenario, selectScenario]);
-
-  // Auto-select first scenario if none selected
-  useEffect(() => {
-    if (!selectedScenarioId && scenarios.length > 0) {
-      selectScenario(scenarios[0].id);
-    }
-  }, [selectedScenarioId, scenarios, selectScenario]);
 
   // Initialize CodeMirror editor
   useEffect(() => {
     if (!editorRef.current || viewRef.current) return;
 
     const updateListener = EditorView.updateListener.of((update) => {
-      if (update.docChanged && selectedScenarioId) {
+      if (update.docChanged && scenario) {
         const content = update.state.doc.toString();
-        updateScenario(selectedScenarioId, { content });
+        updateScenario({ content });
       }
     });
 
@@ -93,7 +72,7 @@ export function ScenarioEditor() {
     const badgeExtension = createScenarioBadgeExtension(handleBadgeClick);
 
     const state = EditorState.create({
-      doc: selectedScenario?.content || '',
+      doc: scenario?.content || '',
       extensions: [
         basicSetup,
         markdown({ base: markdownLanguage }),
@@ -151,13 +130,13 @@ export function ScenarioEditor() {
       view.destroy();
       viewRef.current = null;
     };
-  }, [selectedScenarioId]); // Re-create when scenario changes
+  }, [scenario?.id]); // Re-create when scenario changes
 
   // Update content when scenario changes externally
   useEffect(() => {
-    if (viewRef.current && selectedScenario) {
+    if (viewRef.current && scenario) {
       const currentContent = viewRef.current.state.doc.toString();
-      const newContent = selectedScenario.content || '';
+      const newContent = scenario.content || '';
       if (currentContent !== newContent) {
         viewRef.current.dispatch({
           changes: {
@@ -168,7 +147,7 @@ export function ScenarioEditor() {
         });
       }
     }
-  }, [selectedScenario?.content]);
+  }, [scenario?.content]);
 
   if (!project) {
     return (

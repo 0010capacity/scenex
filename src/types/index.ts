@@ -64,9 +64,7 @@ export interface Project {
   name: string;
   createdAt: string;
   updatedAt: string;
-  scenes: Scene[];
-  scenarios: Scenario[];
-  primaryScenarioId?: string;
+  scenario: Scenario; // Single scenario per project
 }
 
 export const SHOT_TYPE_OPTIONS: { value: ShotType; label: string; description: string }[] = [
@@ -141,12 +139,52 @@ export function createEmptyScene(name: string = 'Scene 1'): Scene {
 
 export function createEmptyProject(name: string = 'Untitled Project'): Project {
   const now = new Date().toISOString();
+  const scenarioId = crypto.randomUUID();
   return {
     id: crypto.randomUUID(),
     name,
     createdAt: now,
     updatedAt: now,
-    scenes: [createEmptyScene()],
-    scenarios: [],
+    scenario: {
+      id: scenarioId,
+      name: name || '시나리오',
+      description: '',
+      content: `# ${name || '시나리오'}\n\n## Act 1\n\n### Scene 1\n`,
+      scenes: [createEmptyScene()],
+      createdAt: now,
+      updatedAt: now,
+    },
+  };
+}
+
+/**
+ * Migrate legacy project (with project.scenes and project.scenarios) to new format
+ * Creates a single scenario from the first scenario or creates a default one
+ */
+export function migrateProject(project: Project & { scenes?: Scene[]; scenarios?: Scenario[]; primaryScenarioId?: string }): Project {
+  // Already migrated (has scenario with scenes)
+  if (project.scenario?.scenes) {
+    return project;
+  }
+
+  // Legacy migration
+  const now = new Date().toISOString();
+  const scenarioId = project.primaryScenarioId || project.scenarios?.[0]?.id || crypto.randomUUID();
+  const legacyScenario = project.scenarios?.find(s => s.id === scenarioId);
+
+  return {
+    id: project.id,
+    name: project.name,
+    createdAt: project.createdAt,
+    updatedAt: now,
+    scenario: {
+      id: scenarioId,
+      name: legacyScenario?.name || project.name || '시나리오',
+      description: legacyScenario?.description || '',
+      content: legacyScenario?.content || `# ${project.name || '시나리오'}\n\n`,
+      scenes: project.scenes || [createEmptyScene()],
+      createdAt: legacyScenario?.createdAt || now,
+      updatedAt: now,
+    },
   };
 }
