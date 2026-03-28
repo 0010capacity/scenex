@@ -102,6 +102,10 @@ pub async fn create_project(
     let project_dir = workspace.join(&project_name);
     let project_file = project_dir.join(format!("{}.scenex", project_name));
 
+    // Create workspace directory if it doesn't exist
+    fs::create_dir_all(&workspace)
+        .map_err(|e| format!("Failed to create workspace directory: {}", e))?;
+
     // Create project directory
     fs::create_dir_all(&project_dir)
         .map_err(|e| format!("Failed to create project directory: {}", e))?;
