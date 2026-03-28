@@ -102,9 +102,14 @@ pub async fn create_project(
     let project_dir = workspace.join(&project_name);
     let project_file = project_dir.join(format!("{}.scenex", project_name));
 
+    eprintln!("[DEBUG] create_project: workspace={}, project_name={}", workspace_path, project_name);
+    eprintln!("[DEBUG] create_project: project_dir={}", project_dir.display());
+    eprintln!("[DEBUG] create_project: project_file={}", project_file.display());
+
     // Create workspace directory if it doesn't exist
     fs::create_dir_all(&workspace)
         .map_err(|e| format!("Failed to create workspace directory: {}", e))?;
+    eprintln!("[DEBUG] create_project: workspace dir created/verified");
 
     // Create project directory
     fs::create_dir_all(&project_dir)
@@ -122,6 +127,7 @@ pub async fn create_project(
     let json = serde_json::to_string_pretty(&initial_project)
         .map_err(|e| format!("Failed to serialize project: {}", e))?;
     fs::write(&project_file, json).map_err(|e| format!("Failed to write project file: {}", e))?;
+    eprintln!("[DEBUG] create_project: file written, exists={}", project_file.exists());
 
     // Git add and commit
     let repo = Repository::discover(&workspace)
