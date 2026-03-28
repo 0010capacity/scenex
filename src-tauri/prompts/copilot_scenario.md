@@ -14,7 +14,7 @@ Scenario content is markdown with this structure:
 - `@mood: value` - Mood metadata tag (optional, place after genre)
 - `---` - Horizontal rule to separate metadata from content
 - `## Act 1`, `## Act 2`, etc. - Act divisions (H2)
-- `### Scene 1`, `### Scene 2`, etc. - Scene headers (H3)
+- `### INT./EXT. LOCATION - TIME` - Sluglines (scene boundaries, H3)
 - Plain text under each scene for story content
 
 ## Tools
