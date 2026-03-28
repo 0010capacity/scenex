@@ -359,12 +359,14 @@ git commit -m "feat(ai-chat): add ChatMessageList component"
 
 ---
 
-### Task 4: Create AIChatSidebar Component
+### Task 4: Create AIChatSidebar Component (Stub)
 
 **Files:**
 - Create: `src/components/scenario/AIChatSidebar.tsx`
 
-- [ ] **Step 1: Create AIChatSidebar component**
+**Note:** This task creates an initial stub with simulated responses. The full AI integration is completed in Task 7. The stub's `handleSend` will be replaced in Task 7.
+
+- [ ] **Step 1: Create AIChatSidebar component (stub)**
 
 ```tsx
 // src/components/scenario/AIChatSidebar.tsx
@@ -812,14 +814,15 @@ git commit -m "feat(ai-chat): integrate AIChatSidebar with toggle and resize"
 
 ```tsx
 // Update AIChatSidebar.tsx - full handleSend with checkpoint + AI integration
-import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useProjectStore } from '@/stores/projectStore';
 import { useAIChatStore } from '@/stores/aiChatStore';
+import { useUIStore } from '@/stores/uiStore';
 import { useClaude } from '@/hooks/useClaude';
 
 export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
   const { project, selectedScenarioId, updateScenario } = useProjectStore();
+  const { workspacePath } = useUIStore();
   const { generateDescriptionSuggestion } = useClaude();
   const {
     getMessages,
@@ -828,10 +831,6 @@ export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
     isLoading,
     setLoading,
   } = useAIChatStore();
-  // workspacePath: Get from project store or uiStore
-  // The project path structure is: {workspacePath}/{projectName}/{projectName}.scenex
-  // Use project.path from projectStore, or store workspacePath separately in uiStore
-  const workspacePath = project?.path ?? '';
 
   const messages = selectedScenarioId ? getMessages(selectedScenarioId) : [];
 
@@ -887,6 +886,11 @@ export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
 
 ```tsx
 // Add to AIChatSidebar component:
+import { useUIStore } from '@/stores/uiStore'; // already imported in existing code
+
+// Inside component:
+const { addNotification } = useUIStore();
+
 const handleUndo = async (checkpointId: string) => {
   if (!selectedScenarioId) return;
 
@@ -906,8 +910,8 @@ const handleUndo = async (checkpointId: string) => {
   }
 };
 
-// Pass handleUndo to ChatMessageList:
-// <ChatMessageList messages={messages} isLoading={isLoading} onUndo={handleUndo} />
+// In the return JSX, update ChatMessageList to pass onUndo:
+<ChatMessageList messages={messages} isLoading={isLoading} onUndo={handleUndo} />
 ```
 
 - [ ] **Step 3: Commit**
