@@ -34,13 +34,30 @@ pub async fn create_project(
     fs::create_dir_all(&project_dir)
         .map_err(|e| format!("Failed to create project directory: {}", e))?;
 
-    // Create initial project file with empty scenes
+    // Create initial project file with scenario structure
+    let now = chrono::Local::now().to_rfc3339();
+    let scenario_id = uuid::Uuid::new_v4().to_string();
     let initial_project = serde_json::json!({
         "id": uuid::Uuid::new_v4().to_string(),
         "name": project_name,
-        "created_at": chrono::Local::now().to_rfc3339(),
-        "updated_at": chrono::Local::now().to_rfc3339(),
-        "scenes": []
+        "createdAt": now,
+        "updatedAt": now,
+        "scenario": {
+            "id": scenario_id,
+            "name": project_name,
+            "description": "",
+            "content": format!("# {}\n\n## Act 1\n\n### INT. LOCATION - TIME\n", project_name),
+            "scenes": [{
+                "id": uuid::Uuid::new_v4().to_string(),
+                "name": "Scene 1",
+                "slugline": "INT. LOCATION - TIME",
+                "description": "",
+                "scriptLines": [],
+                "panels": []
+            }],
+            "createdAt": now,
+            "updatedAt": now
+        }
     });
 
     let json = serde_json::to_string_pretty(&initial_project)
