@@ -149,7 +149,7 @@ export function createEmptyProject(name: string = 'Untitled Project'): Project {
       id: scenarioId,
       name: name || '시나리오',
       description: '',
-      content: `# ${name || '시나리오'}\n\n## Act 1\n\n### Scene 1\n`,
+      content: `# ${name || '시나리오'}\n\n## Act 1\n\n### INT. LOCATION - TIME\n`,
       scenes: [createEmptyScene()],
       createdAt: now,
       updatedAt: now,
