@@ -7,6 +7,8 @@ import { useUIStore } from '@/stores/uiStore';
 export function Toolbar() {
   const project = useProjectStore(s => s.project);
   const addScene = useProjectStore(s => s.addScene);
+  const addPanel = useProjectStore(s => s.addPanel);
+  const selectedSceneId = useProjectStore(s => s.selectedSceneId);
   const updateScenario = useProjectStore(s => s.updateScenario);
 
   const editorMode = useUIStore(s => s.editorMode);
@@ -16,7 +18,6 @@ export function Toolbar() {
   const setZoomLevel = useUIStore(s => s.setZoomLevel);
   const viewMode = useUIStore(s => s.viewMode);
   const setViewMode = useUIStore(s => s.setViewMode);
-  const openAddPanelModal = useUIStore(s => s.openAddPanelModal);
   const toggleRightSidebar = useUIStore(s => s.toggleRightSidebar);
   const rightSidebarOpen = useUIStore(s => s.rightSidebarOpen);
   const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
@@ -139,8 +140,8 @@ export function Toolbar() {
         <button
           className="btn btn-ghost btn-sm"
           onClick={() => {
-            const sceneId = project?.scenario.scenes[0]?.id;
-            if (sceneId) openAddPanelModal(sceneId);
+            const sceneId = selectedSceneId || project?.scenario.scenes[0]?.id;
+            if (sceneId) addPanel(sceneId);
           }}
         >
           <IconPlus size={14} stroke={1.5} />

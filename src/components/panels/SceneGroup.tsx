@@ -2,7 +2,7 @@ import { Box, Group, Text } from '@mantine/core';
 import { Scene } from '@/types';
 import { PanelGrid } from './PanelGrid';
 import { calculateSceneDuration } from '@/utils/duration';
-import { useUIStore } from '@/stores/uiStore';
+import { useProjectStore } from '@/stores/projectStore';
 
 interface SceneGroupProps {
   scene: Scene;
@@ -10,7 +10,7 @@ interface SceneGroupProps {
 }
 
 export function SceneGroup({ scene, viewMode }: SceneGroupProps) {
-  const openAddPanelModal = useUIStore(s => s.openAddPanelModal);
+  const addPanel = useProjectStore(s => s.addPanel);
   const duration = calculateSceneDuration(scene.panels);
 
   // Scene index from 1
@@ -26,7 +26,7 @@ export function SceneGroup({ scene, viewMode }: SceneGroupProps) {
         <Box className="scene-line" />
         <button
           className="btn btn-ghost btn-sm"
-          onClick={() => openAddPanelModal(scene.id)}
+          onClick={() => addPanel(scene.id)}
         >
           + 패널
         </button>

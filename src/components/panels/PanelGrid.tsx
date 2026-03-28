@@ -28,7 +28,7 @@ interface PanelGridProps {
 
 export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
   const reorderPanels = useProjectStore(s => s.reorderPanels);
-  const openAddPanelModal = useUIStore(s => s.openAddPanelModal);
+  const addPanel = useProjectStore(s => s.addPanel);
   const openAiGenModal = useUIStore(s => s.openAiGenModal);
   const [slideIndex, setSlideIndex] = useState(0);
 
@@ -58,7 +58,7 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
         <Box className="panel-empty-actions">
           <button
             className="btn btn-outline btn-sm"
-            onClick={() => openAddPanelModal(sceneId)}
+            onClick={() => addPanel(sceneId)}
           >
             + 패널 추가
           </button>
@@ -155,7 +155,7 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
           {/* Add panel card */}
           <Box
             className="add-panel-card"
-            onClick={() => openAddPanelModal(sceneId)}
+            onClick={() => addPanel(sceneId)}
             style={
               viewMode === 'list'
                 ? { width: 600 }

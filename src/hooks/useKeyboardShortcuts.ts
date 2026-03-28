@@ -38,7 +38,6 @@ export function useKeyboardShortcuts() {
   const project = useProjectStore(s => s.project);
   const setZoomLevel = useUIStore(s => s.setZoomLevel);
   const zoomLevel = useUIStore(s => s.zoomLevel);
-  const openAddPanelModal = useUIStore(s => s.openAddPanelModal);
   const addNotification = useUIStore(s => s.addNotification);
   const { saveProjectWithAutoCommit, currentProjectPath } = useWorkspace();
 
@@ -126,7 +125,7 @@ export function useKeyboardShortcuts() {
           return;
         }
         e.preventDefault();
-        openAddPanelModal(targetSceneId);
+        addPanel(targetSceneId);
         return;
       }
 
@@ -181,7 +180,6 @@ export function useKeyboardShortcuts() {
       targetSceneId,
       saveProjectWithAutoCommit,
       currentProjectPath,
-      openAddPanelModal,
       setZoomLevel,
       zoomLevel,
       addPanel,
