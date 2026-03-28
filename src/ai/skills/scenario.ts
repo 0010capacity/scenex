@@ -25,21 +25,25 @@ const createScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
   // Create scenario with initial content
   const scenarioId = store.addScenario(name);
 
-  // If content/genre/mood provided, set initial content
+  // If content provided, use it directly
+  // If only genre/mood provided (no content), create header with them
   if (content || genre || mood) {
-    let initialContent = content || '';
+    let initialContent: string;
 
-    // Add metadata header if genre or mood provided
-    if (genre || mood) {
+    if (content) {
+      // Content provided - use as-is
+      initialContent = content;
+    } else {
+      // No content but genre/mood provided - create header
       let header = `# ${name}\n\n`;
       if (genre) {
-        header += `**장르:** ${genre}\n`;
+        header += `@genre: ${genre}\n`;
       }
       if (mood) {
-        header += `**분위기:** ${mood}\n`;
+        header += `@mood: ${mood}\n`;
       }
       header += `\n---\n\n`;
-      initialContent = header + initialContent;
+      initialContent = header;
     }
 
     if (initialContent.trim()) {

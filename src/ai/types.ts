@@ -85,6 +85,26 @@ export interface RegeneratePanelResponse {
   error: string | null;
 }
 
+export interface ScenarioToStoryboardPanel {
+  scene_index: number;
+  scene_name: string;
+  description: string;
+  shot_type: string;
+  duration: string;
+  mood: string;
+}
+
+export interface ScenarioToStoryboardRequest {
+  scenario_json: string;
+  panel_count?: number;
+}
+
+export interface ScenarioToStoryboardResponse {
+  success: boolean;
+  panels: ScenarioToStoryboardPanel[] | null;
+  error: string | null;
+}
+
 export interface ClaudeStatus {
   available: boolean;
   version: string | null;
@@ -116,6 +136,9 @@ export interface AIProvider {
 
   /** Regenerate a panel with user feedback */
   regeneratePanel(request: RegeneratePanelRequest): Promise<RegeneratePanelResponse>;
+
+  /** Convert scenario to storyboard panel specs */
+  scenarioToStoryboard(request: ScenarioToStoryboardRequest): Promise<ScenarioToStoryboardResponse>;
 }
 
 /**

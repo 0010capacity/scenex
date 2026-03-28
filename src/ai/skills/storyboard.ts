@@ -2,7 +2,7 @@
 // Provides add_panel, edit_panel, delete_panel, draw_svg, reorder_panels, batch_edit
 
 import type { Skill, SkillResult, ToolExecutor } from './types';
-import { getPanelById, getSceneById } from './types';
+import { getPanelById, getSceneById, getScenarioById } from './types';
 import { registerSkill } from './registry';
 import { useProjectStore } from '@/stores/projectStore';
 import { getAIProvider } from '@/ai';
@@ -336,6 +336,101 @@ function applyStyle(scene: ReturnType<typeof getSceneById>, style: string, store
 }
 
 /**
+ * Generate entire storyboard from a scenario
+ */
+const generateStoryboard: ToolExecutor = async (ctx, params) => {
+  const store = useProjectStore.getState();
+
+  const scenarioId = (params.scenario_id as string) || ctx.selectedScenarioId;
+  if (!scenarioId) {
+    return { success: false, error: 'No scenario specified and no scenario selected' };
+  }
+
+  const scenario = getScenarioById(store.project!, scenarioId);
+  if (!scenario) {
+    return { success: false, error: `Scenario not found: ${scenarioId}` };
+  }
+
+  const provider = getAIProvider();
+  const panelCount = (params.panel_count as number) || 16;
+
+  const result = await provider.scenarioToStoryboard({
+    scenario_json: scenario.content,
+    panel_count: panelCount,
+  });
+
+  if (!result.success || !result.panels) {
+    return { success: false, error: result.error || 'Failed to generate storyboard' };
+  }
+
+  const sceneMap = new Map<number, { name: string; panels: { description: string; shotType: ShotType; duration: string; moodTags: MoodTag[] }[] }>();
+
+  for (const panel of result.panels) {
+    const sceneIndex = panel.scene_index;
+    if (!sceneMap.has(sceneIndex)) {
+      sceneMap.set(sceneIndex, { name: panel.scene_name, panels: [] });
+    }
+    sceneMap.get(sceneIndex)!.panels.push({
+      description: panel.description,
+      shotType: panel.shot_type as ShotType,
+      duration: panel.duration,
+      moodTags: [panel.mood as MoodTag],
+    });
+  }
+
+  // Get initial scene count to know which scenes we added
+  const initialSceneCount = store.project!.scenes.length;
+
+  // Add all scenes first
+  for (const [, sceneData] of sceneMap) {
+    store.addScene(sceneData.name);
+  }
+
+  // Get IDs of newly added scenes (they're at the end of the array)
+  const newScenes = store.project!.scenes.slice(initialSceneCount);
+  const sceneIds = newScenes.map(s => s.id);
+
+  // Add panels to each scene
+  for (let i = 0; i < newScenes.length; i++) {
+    const sceneId = newScenes[i].id;
+    const sceneIndex = Array.from(sceneMap.keys())[i];
+    const sceneData = sceneMap.get(sceneIndex);
+    if (sceneData) {
+      for (const panelSpec of sceneData.panels) {
+        store.addPanel(sceneId, panelSpec);
+      }
+    }
+  }
+
+  // Collect all panels for SVG generation
+  const allPanels: { sceneId: string; panelId: string }[] = [];
+  for (const sceneId of sceneIds) {
+    const scene = getSceneById(store.project!, sceneId);
+    if (scene) {
+      for (const panel of scene.panels) {
+        allPanels.push({ sceneId, panelId: panel.id });
+      }
+    }
+  }
+
+  // Fire and forget SVG generation
+  for (const { sceneId, panelId } of allPanels) {
+    generateSVGForPanel(sceneId, panelId);
+  }
+
+  const firstSceneId = sceneIds[0];
+  if (firstSceneId) {
+    store.selectScene(firstSceneId);
+  }
+
+  return {
+    success: true,
+    data: { sceneCount: newScenes.length, panelCount: result.panels.length },
+    message: `스토리보드 생성 완료: ${newScenes.length}개 씬, ${result.panels.length}개 패널`,
+  };
+};
+
+/**
  * Generate SVG for a panel (async helper)
  */
 async function generateSVGForPanel(_sceneId: string, panelId: string, styleHint?: string): Promise<void> {
@@ -372,6 +467,14 @@ const storyboardSkill: Skill = {
   description: '스토리보드 패널 생성, 수정, 삭제, SVG 생성',
   modes: ['storyboard'],
   tools: [
+    {
+      name: 'generate_storyboard',
+      description: '시나리오에서 전체 스토리보드 생성',
+      parameters: {
+        scenario_id: { type: 'string', optional: true, description: '시나리오 ID (없으면 현재 선택된 시나리오)' },
+        panel_count: { type: 'number', optional: true, default: 16, description: '생성할 패널 수' },
+      },
+    },
     {
       name: 'add_panel',
       description: '새 패널 추가',
@@ -478,6 +581,7 @@ registerSkill(storyboardSkill, {
   draw_svg: drawSvg,
   reorder_panels: reorderPanels,
   batch_edit: batchEdit,
+  generate_storyboard: generateStoryboard,
 });
 
 export { storyboardSkill };

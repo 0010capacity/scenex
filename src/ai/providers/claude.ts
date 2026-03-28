@@ -18,6 +18,8 @@ import type {
   GenerateScenarioResponse,
   RegeneratePanelRequest,
   RegeneratePanelResponse,
+  ScenarioToStoryboardRequest,
+  ScenarioToStoryboardResponse,
   ClaudeStatus,
 } from '../types';
 
@@ -120,6 +122,23 @@ export class ClaudeProvider implements AIProvider {
     } catch (error) {
       return {
         success: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  async scenarioToStoryboard(
+    request: ScenarioToStoryboardRequest
+  ): Promise<ScenarioToStoryboardResponse> {
+    try {
+      const response = await invoke<ScenarioToStoryboardResponse>('scenario_to_storyboard', {
+        request,
+      });
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        panels: null,
         error: error instanceof Error ? error.message : String(error),
       };
     }

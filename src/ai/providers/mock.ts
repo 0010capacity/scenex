@@ -17,6 +17,8 @@ import type {
   GenerateScenarioResponse,
   RegeneratePanelRequest,
   RegeneratePanelResponse,
+  ScenarioToStoryboardRequest,
+  ScenarioToStoryboardResponse,
   ClaudeStatus,
   ScriptLineDto,
 } from '../types';
@@ -42,7 +44,6 @@ export class MockProvider implements AIProvider {
       svg_data: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
         <rect fill="#f0f0f0" width="400" height="300"/>
         <text x="200" y="150" text-anchor="middle" fill="#666">Mock Panel</text>
-        <text x="200" y="170" text-anchor="middle" fill="#999" font-size="12">${request.description.slice(0, 50)}</text>
       </svg>`,
       description: request.description,
       success: true,
@@ -111,6 +112,24 @@ export class MockProvider implements AIProvider {
       </svg>`,
       error: null,
     };
+  }
+
+  async scenarioToStoryboard(
+    request: ScenarioToStoryboardRequest
+  ): Promise<ScenarioToStoryboardResponse> {
+    await this.delay(1500);
+    const panelCount = request.panel_count ?? 16;
+
+    const mockPanels = Array.from({ length: panelCount }, (_, i) => ({
+      scene_index: i % 3,
+      scene_name: `Scene ${(i % 3) + 1}`,
+      description: `Mock panel ${i + 1} for scenario`,
+      shot_type: ['WS', 'MS', 'CU'][i % 3],
+      duration: '3s',
+      mood: 'neutral',
+    }));
+
+    return { success: true, panels: mockPanels, error: null };
   }
 
   private delay(ms: number): Promise<void> {
