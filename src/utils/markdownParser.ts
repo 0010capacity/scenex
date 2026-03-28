@@ -9,7 +9,7 @@ export function createEmptyScenario(name: string = '새 시나리오'): Scenario
     id: crypto.randomUUID(),
     name,
     description: '',
-    content: `# ${name}\n\n## Act 1\n\n### Scene 1\n`,
+    content: `# ${name}\n\n## Act 1\n\n### INT. LOCATION - TIME\n`,
     scenes: [],
     createdAt: now,
     updatedAt: now,
@@ -19,17 +19,17 @@ export function createEmptyScenario(name: string = '새 시나리오'): Scenario
 /**
  * Counts headings in markdown content
  */
-export function countMarkdownSections(content: string): { acts: number; scenes: number } {
+export function countMarkdownSections(content: string): { acts: number; slugs: number } {
   const lines = content.split('\n');
   let acts = 0;
-  let scenes = 0;
+  let slugs = 0;
 
   for (const line of lines) {
     if (line.startsWith('## ')) acts++;
-    if (line.startsWith('### ')) scenes++;
+    if (line.startsWith('### ')) slugs++;
   }
 
-  return { acts, scenes };
+  return { acts, slugs };
 }
 
 /**
