@@ -3,17 +3,9 @@ import { persist } from 'zustand/middleware';
 import { MAX_RECENT_PROJECTS } from '@/constants';
 
 export interface RecentProject {
-  workspacePath: string;
-  workspaceName: string;
-  projectPath: string;
-  projectName: string;
+  projectPath: string;    // "/Users/john/MyProject"
+  projectName: string;    // "MyProject"
   lastOpened?: string;
-}
-
-export interface WorkspaceInfo {
-  path: string;
-  name: string;
-  isGitRepo: boolean;
 }
 
 export interface ProjectInfo {
@@ -24,54 +16,30 @@ export interface ProjectInfo {
 }
 
 interface WorkspaceState {
-  // Current workspace and project paths
-  currentWorkspacePath: string | null;
-  currentWorkspaceName: string | null;
+  // Current project path
   currentProjectPath: string | null;
   currentProjectName: string | null;
 
   // Recent items
   recentProjects: RecentProject[];
 
-  // Computed
-  hasWorkspace: () => boolean;
-
   // Actions
-  setCurrentWorkspace: (path: string | null, name: string | null) => void;
   setCurrentProject: (path: string | null, name: string | null) => void;
   addRecentProject: (project: RecentProject) => void;
-  clearCurrentWorkspace: () => void;
   clearCurrentProject: () => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()(
   persist(
-    (set, get) => ({
-      currentWorkspacePath: null,
-      currentWorkspaceName: null,
+    (set) => ({
       currentProjectPath: null,
       currentProjectName: null,
       recentProjects: [],
 
-      hasWorkspace: () => {
-        return get().currentWorkspacePath !== null;
-      },
-
-      setCurrentWorkspace: (path, name) => {
-        set({
-          currentWorkspacePath: path,
-          currentWorkspaceName: name,
-        });
-      },
-
       setCurrentProject: (path, name) => {
-        const state = get();
-
         // Add to recent projects
-        if (path && name && state.currentWorkspacePath && state.currentWorkspaceName) {
+        if (path && name) {
           const recentProject: RecentProject = {
-            workspacePath: state.currentWorkspacePath,
-            workspaceName: state.currentWorkspaceName,
             projectPath: path,
             projectName: name,
             lastOpened: new Date().toISOString(),
@@ -115,15 +83,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         });
       },
 
-      clearCurrentWorkspace: () => {
-        set({
-          currentWorkspacePath: null,
-          currentWorkspaceName: null,
-          currentProjectPath: null,
-          currentProjectName: null,
-        });
-      },
-
       clearCurrentProject: () => {
         set({
           currentProjectPath: null,
@@ -134,8 +93,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     {
       name: 'scenex-workspace',
       partialize: (state) => ({
-        currentWorkspacePath: state.currentWorkspacePath,
-        currentWorkspaceName: state.currentWorkspaceName,
         currentProjectPath: state.currentProjectPath,
         currentProjectName: state.currentProjectName,
         recentProjects: state.recentProjects,

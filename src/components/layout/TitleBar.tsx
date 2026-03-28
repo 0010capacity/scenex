@@ -1,11 +1,10 @@
-import { Box, Group, Popover, Text } from '@mantine/core';
-import { IconFileText, IconUpload, IconSparkles, IconFile, IconPhoto, IconBrandApple, IconVideo, IconChevronDown, IconChevronRight } from '@tabler/icons-react';
+import { Box, Group, Text } from '@mantine/core';
+import { IconChevronDown } from '@tabler/icons-react';
 import { useState, useEffect, useRef } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { useClaude } from '@/hooks/useClaude';
-import { useExport } from '@/hooks/useExport';
 
 // Window API type definitions
 interface WindowApi {
@@ -58,17 +57,13 @@ const MODEL_OPTIONS = [
 ];
 
 export function TitleBar() {
-  const toggleLeftSidebar = useUIStore(s => s.toggleLeftSidebar);
   const claudeStatus = useUIStore(s => s.claudeStatus);
   const claudeModel = useUIStore(s => s.claudeModel);
   const setClaudeModel = useUIStore(s => s.setClaudeModel);
   const openProjectBrowser = useUIStore(s => s.openProjectBrowser);
-  const openAiGenModal = useUIStore(s => s.openAiGenModal);
   const isDirty = useProjectStore(s => s.isDirty);
-  const { currentWorkspaceName, currentProjectName } = useWorkspace();
+  const { currentProjectName } = useWorkspace();
   const { checkAvailability } = useClaude();
-  const { exportPDF, exportImages, exportFCPXML, exportPremiereXML } = useExport();
-  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
   const [claudeDropdownOpen, setClaudeDropdownOpen] = useState(false);
   const [claudeInfo, setClaudeInfo] = useState<{ version: string | null; path: string | null }>({ version: null, path: null });
   const [isChecking, setIsChecking] = useState(false);
@@ -101,28 +96,6 @@ export function TitleBar() {
   const statusColor =
     claudeStatus === 'available' ? 'var(--green)' :
     claudeStatus === 'unavailable' ? 'var(--red)' : 'var(--text3)';
-
-  const handleExport = async (type: 'pdf' | 'images' | 'fcp' | 'premiere') => {
-    setExportDropdownOpen(false);
-    try {
-      switch (type) {
-        case 'pdf':
-          await exportPDF();
-          break;
-        case 'images':
-          await exportImages();
-          break;
-        case 'fcp':
-          await exportFCPXML();
-          break;
-        case 'premiere':
-          await exportPremiereXML();
-          break;
-      }
-    } catch (error) {
-      console.error('Export failed:', error);
-    }
-  };
 
   return (
     <Box
@@ -192,23 +165,13 @@ export function TitleBar() {
               fontWeight: 500,
             }}
           >
-            {currentWorkspaceName && currentProjectName ? (
+            {currentProjectName ? (
               <>
-                {currentWorkspaceName}
-                <IconChevronRight size={10} stroke={2} style={{ margin: '0 2px', verticalAlign: 'middle' }} />
                 {currentProjectName}
                 {isDirty && <span style={{ color: 'var(--accent)', marginLeft: 4 }}>•</span>}
               </>
-            ) : currentWorkspaceName ? (
-              <>
-                {currentWorkspaceName}
-                <IconChevronRight size={10} stroke={2} style={{ margin: '0 2px', verticalAlign: 'middle' }} />
-                <span style={{ color: 'var(--text3)', fontWeight: 400 }}>Select project</span>
-              </>
             ) : (
-              <>
-                <span style={{ color: 'var(--text3)' }}>Select workspace</span>
-              </>
+              <span style={{ color: 'var(--text3)' }}>Select project</span>
             )}
           </Text>
           <IconChevronDown size={10} stroke={2} style={{ color: 'var(--text3)' }} />
@@ -346,123 +309,6 @@ export function TitleBar() {
             </Box>
           )}
         </Box>
-
-        <Box className="tb-divider" />
-
-        <button className="tb-btn" onClick={toggleLeftSidebar}>
-          <IconFileText size={14} stroke={1.5} />
-          시나리오
-        </button>
-
-        <Popover
-          opened={exportDropdownOpen}
-          onChange={setExportDropdownOpen}
-          position="bottom-end"
-          withArrow
-          shadow="md"
-        >
-          <Popover.Target>
-            <button className="tb-btn" onClick={() => setExportDropdownOpen((o) => !o)}>
-              <IconUpload size={14} stroke={1.5} />
-              내보내기
-            </button>
-          </Popover.Target>
-          <Popover.Dropdown style={{ padding: 4, minWidth: 180 }}>
-            <Box
-              onClick={() => handleExport('pdf')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 12px',
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 12,
-                color: 'var(--text)',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-            >
-              <IconFile size={16} stroke={1.5} />
-              <Box>
-                <Text size="xs" fw={500}>PDF 스토리보드</Text>
-                <Text size="xs" c="dimmed">인쇄용 문서</Text>
-              </Box>
-            </Box>
-            <Box
-              onClick={() => handleExport('images')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 12px',
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 12,
-                color: 'var(--text)',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-            >
-              <IconPhoto size={16} stroke={1.5} />
-              <Box>
-                <Text size="xs" fw={500}>이미지 ZIP</Text>
-                <Text size="xs" c="dimmed">이미지 패키지</Text>
-              </Box>
-            </Box>
-            <Box
-              onClick={() => handleExport('fcp')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 12px',
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 12,
-                color: 'var(--text)',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-            >
-              <IconBrandApple size={16} stroke={1.5} />
-              <Box>
-                <Text size="xs" fw={500}>Final Cut XML</Text>
-                <Text size="xs" c="dimmed">.fcpxml 파일</Text>
-              </Box>
-            </Box>
-            <Box
-              onClick={() => handleExport('premiere')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '8px 12px',
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 12,
-                color: 'var(--text)',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg2)')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-            >
-              <IconVideo size={16} stroke={1.5} />
-              <Box>
-                <Text size="xs" fw={500}>Premiere XML</Text>
-                <Text size="xs" c="dimmed">Adobe Premiere용</Text>
-              </Box>
-            </Box>
-          </Popover.Dropdown>
-        </Popover>
-
-        <button className="tb-btn accent" onClick={openAiGenModal}>
-          <IconSparkles size={14} stroke={1.5} />
-          AI 생성
-        </button>
       </Box>
     </Box>
   );

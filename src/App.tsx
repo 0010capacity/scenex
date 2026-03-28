@@ -8,8 +8,7 @@ import { TitleBar } from './components/layout/TitleBar';
 import { TabBar } from './components/layout/TabBar';
 import { Toolbar } from './components/layout/Toolbar';
 import { Workspace } from './components/layout/Workspace';
-import { WorkspaceOnboarding } from './components/onboarding/WorkspaceOnboarding';
-import { FirstProjectOnboarding } from './components/onboarding/FirstProjectOnboarding';
+import { ProjectOnboarding } from './components/onboarding/ProjectOnboarding';
 import { AITaskStatus } from './components/AITaskStatus';
 import { useClaude } from './hooks/useClaude';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -85,23 +84,33 @@ function App() {
   const projectBrowserOpen = useUIStore(s => s.projectBrowserOpen);
   const notifications = useUIStore(s => s.notifications);
   const removeNotification = useUIStore(s => s.removeNotification);
-  const currentWorkspacePath = useWorkspaceStore(s => s.currentWorkspacePath);
+  const currentProjectPath = useWorkspaceStore(s => s.currentProjectPath);
+  const currentProjectName = useWorkspaceStore(s => s.currentProjectName);
   const { checkAvailability } = useClaude();
-  const { currentProjectPath, saveProjectWithAutoCommit } = useWorkspace();
+  const { saveProjectWithAutoCommit, loadProjectFromFile } = useWorkspace();
   const autoSaveTimerRef = useRef<number | null>(null);
+  const projectLoadAttemptedRef = useRef(false);
 
-  const hasWorkspace = currentWorkspacePath !== null;
   const hasProject = project !== null;
+
+  // Auto-load last project on app start
+  useEffect(() => {
+    if (currentProjectPath && currentProjectName && !hasProject && !projectLoadAttemptedRef.current) {
+      projectLoadAttemptedRef.current = true;
+      const filePath = `${currentProjectPath}/${currentProjectName}.scenex`;
+      loadProjectFromFile(filePath).catch((error) => {
+        console.warn('[App] Failed to auto-load project:', error);
+      });
+    }
+  }, [currentProjectPath, currentProjectName, hasProject, loadProjectFromFile]);
 
   // Register keyboard shortcuts - always call
   useKeyboardShortcuts();
 
-  // Check Claude availability on mount - only when workspace exists
+  // Check Claude availability on mount
   useEffect(() => {
-    if (hasWorkspace) {
-      checkAvailability();
-    }
-  }, [hasWorkspace, checkAvailability]);
+    checkAvailability();
+  }, [checkAvailability]);
 
   // Auto-save every 30 seconds when dirty - only when project exists
   useEffect(() => {
@@ -124,20 +133,11 @@ function App() {
     };
   }, [hasProject, currentProjectPath, project, saveProjectWithAutoCommit]);
 
-  // Show onboarding #1 if no workspace
-  if (!hasWorkspace) {
-    return (
-      <div className="light-mode" style={{ height: '100vh' }}>
-        <WorkspaceOnboarding />
-      </div>
-    );
-  }
-
-  // Show onboarding #2 if workspace exists but no project
+  // Show onboarding if no project
   if (!hasProject) {
     return (
       <div className="light-mode" style={{ height: '100vh' }}>
-        <FirstProjectOnboarding />
+        <ProjectOnboarding />
       </div>
     );
   }

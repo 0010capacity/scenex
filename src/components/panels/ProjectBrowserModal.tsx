@@ -1,115 +1,38 @@
 import { Box, Text, Loader, TextInput } from '@mantine/core';
-import { IconPlus, IconFolder, IconChevronRight, IconClock, IconX } from '@tabler/icons-react';
-import { useState, useEffect } from 'react';
+import { IconFolder, IconClock, IconX, IconPlus } from '@tabler/icons-react';
+import { useState } from 'react';
 import { useUIStore } from '@/stores/uiStore';
-import { WorkspaceInfo, ProjectInfo } from '@/stores/workspaceStore';
 import { useWorkspace } from '@/hooks/useWorkspace';
 
 export function ProjectBrowserModal() {
   const projectBrowserOpen = useUIStore(s => s.projectBrowserOpen);
   const closeProjectBrowser = useUIStore(s => s.closeProjectBrowser);
-  const addNotification = useUIStore(s => s.addNotification);
   const {
-    currentWorkspacePath,
     currentProjectName,
     recentProjects,
-    getDefaultWorkspacesDir,
-    listWorkspaces,
-    listProjects,
-    createWorkspace,
-    selectWorkspace,
     createProject,
-    loadProjectFromFile,
     openRecentProject,
+    openProjectWithFilePicker,
     isLoading,
   } = useWorkspace();
 
-  const [workspaces, setWorkspaces] = useState<WorkspaceInfo[]>([]);
-  const [projects, setProjects] = useState<ProjectInfo[]>([]);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceInfo | null>(null);
   const [newProjectName, setNewProjectName] = useState('');
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
 
-  // Load workspaces on mount
-  useEffect(() => {
-    if (projectBrowserOpen) {
-      loadWorkspaces();
-    }
-  }, [projectBrowserOpen]);
-
-  // Load projects when workspace is selected
-  useEffect(() => {
-    if (selectedWorkspace) {
-      loadProjectsForWorkspace(selectedWorkspace.path);
-    }
-  }, [selectedWorkspace]);
-
-  const loadWorkspaces = async () => {
-    try {
-      const defaultDir = await getDefaultWorkspacesDir();
-      const workspaceList = await listWorkspaces(defaultDir);
-      setWorkspaces(workspaceList);
-
-      // Auto-select current workspace if set
-      if (currentWorkspacePath) {
-        const current = workspaceList.find((w) => w.path === currentWorkspacePath);
-        if (current) {
-          setSelectedWorkspace(current);
-        } else if (workspaceList.length > 0) {
-          setSelectedWorkspace(workspaceList[0]);
-        }
-      } else if (workspaceList.length > 0) {
-        setSelectedWorkspace(workspaceList[0]);
-      }
-    } catch (error) {
-      console.error('Failed to load workspaces:', error);
-      addNotification('error', `워크스페이스 로드 실패: ${error}`);
-    }
-  };
-
-  const loadProjectsForWorkspace = async (workspacePath: string) => {
-    try {
-      const projectList = await listProjects(workspacePath);
-      setProjects(projectList);
-    } catch (error) {
-      console.error('Failed to load projects:', error);
-      addNotification('error', `프로젝트 로드 실패: ${error}`);
-      setProjects([]);
-    }
-  };
-
-  const handleCreateWorkspace = async () => {
-    const workspace = await createWorkspace();
-    if (workspace) {
-      setWorkspaces((prev) => [...prev, workspace]);
-      setSelectedWorkspace(workspace);
-    }
-  };
-
-  const handleSelectWorkspace = (workspace: WorkspaceInfo) => {
-    selectWorkspace(workspace);
-    setSelectedWorkspace(workspace);
-  };
-
   const handleCreateProject = async () => {
-    if (!newProjectName.trim() || !selectedWorkspace) return;
+    if (!newProjectName.trim()) return;
 
     setIsCreatingProject(true);
     try {
       const project = await createProject(newProjectName.trim());
       if (project) {
-        setProjects((prev) => [...prev, project]);
         setNewProjectName('');
         setShowNewProjectInput(false);
       }
     } finally {
       setIsCreatingProject(false);
     }
-  };
-
-  const handleOpenProject = async (project: ProjectInfo) => {
-    await loadProjectFromFile(project.filePath);
   };
 
   const handleOpenRecent = async (recent: typeof recentProjects[0]) => {
@@ -126,8 +49,8 @@ export function ProjectBrowserModal() {
     <Box className="modal-backdrop open" onClick={handleBackdropClick}>
       <Box
         style={{
-          width: 720,
-          height: 480,
+          width: 560,
+          height: 420,
           background: 'var(--bg1)',
           border: '1px solid var(--border)',
           borderRadius: 'var(--r12)',
@@ -148,7 +71,7 @@ export function ProjectBrowserModal() {
           }}
         >
           <Text style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>
-            Project Browser
+            프로젝트 브라우저
           </Text>
           <button
             onClick={closeProjectBrowser}
@@ -172,7 +95,7 @@ export function ProjectBrowserModal() {
             overflow: 'hidden',
           }}
         >
-          {/* Left: Workspaces */}
+          {/* Left: Recent Projects */}
           <Box
             style={{
               width: 200,
@@ -184,11 +107,8 @@ export function ProjectBrowserModal() {
           >
             <Box
               style={{
-                padding: '8px 12px',
+                padding: '12px 16px',
                 borderBottom: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
               }}
             >
               <Text
@@ -200,64 +120,27 @@ export function ProjectBrowserModal() {
                   letterSpacing: '0.06em',
                 }}
               >
-                Workspaces
+                최근
               </Text>
-              <button
-                onClick={handleCreateWorkspace}
-                disabled={isLoading}
-                style={{
-                  background: 'none',
-                  border: '1px solid var(--border)',
-                  cursor: isLoading ? 'wait' : 'pointer',
-                  color: 'var(--text2)',
-                  padding: '3px 6px',
-                  borderRadius: 'var(--r4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.15s',
-                  minWidth: 24,
-                  minHeight: 24,
-                }}
-                title="New Workspace"
-                onMouseEnter={(e) => {
-                  if (!isLoading) {
-                    e.currentTarget.style.background = 'var(--bg2)';
-                    e.currentTarget.style.color = 'var(--text)';
-                    e.currentTarget.style.borderColor = 'var(--border2)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'none';
-                  e.currentTarget.style.color = 'var(--text2)';
-                  e.currentTarget.style.borderColor = 'var(--border)';
-                }}
-              >
-                {isLoading ? <Loader size={12} color="var(--gold)" /> : <IconPlus size={14} stroke={1.5} />}
-              </button>
             </Box>
-            <Box style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
-              {workspaces.map((workspace) => (
+            <Box style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
+              {recentProjects.map((recent) => (
                 <Box
-                  key={workspace.path}
-                  onClick={() => handleSelectWorkspace(workspace)}
+                  key={recent.projectPath}
+                  onClick={() => handleOpenRecent(recent)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
-                    padding: '8px 12px',
+                    padding: '10px 16px',
                     cursor: 'pointer',
                     background:
-                      selectedWorkspace?.path === workspace.path
+                      recent.projectName === currentProjectName
                         ? 'var(--bg2)'
                         : 'transparent',
-                    borderLeft:
-                      selectedWorkspace?.path === workspace.path
-                        ? '2px solid var(--accent)'
-                        : '2px solid transparent',
                   }}
                 >
-                  <IconFolder size={14} stroke={1.5} style={{ color: 'var(--text3)', flexShrink: 0 }} />
+                  <IconClock size={12} stroke={1.5} style={{ color: 'var(--text3)', flexShrink: 0 }} />
                   <Text
                     style={{
                       fontSize: 12,
@@ -267,81 +150,33 @@ export function ProjectBrowserModal() {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {workspace.name}
+                    {recent.projectName}
                   </Text>
-                  {workspace.path === currentWorkspacePath && (
-                    <Box
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        background: 'var(--accent)',
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
                 </Box>
               ))}
-              {workspaces.length === 0 && (
+              {recentProjects.length === 0 && (
                 <Text
                   style={{
                     fontSize: 11,
                     color: 'var(--text3)',
-                    padding: '12px',
+                    padding: '16px',
                     textAlign: 'center',
                   }}
                 >
-                  No workspaces yet
+                  최근 프로젝트 없음
                 </Text>
               )}
             </Box>
           </Box>
 
-          {/* Right: Projects */}
+          {/* Right: Actions */}
           <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <Box
-              style={{
-                padding: '8px 12px',
-                borderBottom: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: 'var(--text3)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}
-              >
-                {selectedWorkspace ? `Projects in "${selectedWorkspace.name}"` : 'Projects'}
-              </Text>
-              {selectedWorkspace && (
-                <button
-                  onClick={() => setShowNewProjectInput(true)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text3)',
-                    padding: 2,
-                  }}
-                  title="New Project"
-                >
-                  <IconPlus size={14} stroke={1.5} />
-                </button>
-              )}
-            </Box>
-
             {/* New Project Input */}
             {showNewProjectInput && (
-              <Box style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>
+              <Box style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
                 <Box style={{ display: 'flex', gap: 8 }}>
                   <TextInput
-                    placeholder="Project name"
+                    placeholder="프로젝트 이름"
                     value={newProjectName}
                     onChange={(e) => setNewProjectName(e.target.value)}
                     onKeyDown={(e) => {
@@ -369,146 +204,57 @@ export function ProjectBrowserModal() {
                       opacity: newProjectName.trim() ? 1 : 0.5,
                     }}
                   >
-                    {isCreatingProject ? <Loader size={10} color="white" /> : 'Create'}
+                    {isCreatingProject ? <Loader size={10} color="white" /> : '생성'}
                   </button>
                 </Box>
               </Box>
             )}
 
-            {/* Projects Grid */}
-            <Box style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
-              <Box
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                  gap: 12,
-                }}
-              >
-                {projects.map((project) => (
-                  <Box
-                    key={project.path}
-                    onClick={() => handleOpenProject(project)}
-                    style={{
-                      padding: 16,
-                      background: 'var(--bg2)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 'var(--r4)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 8,
-                      transition: 'all 0.15s ease',
-                      outline:
-                        project.name === currentProjectName
-                          ? '2px solid var(--accent)'
-                          : 'none',
-                    }}
-                  >
-                    <Box
-                      style={{
-                        width: 48,
-                        height: 48,
-                        background: 'var(--bg3)',
-                        borderRadius: 'var(--r4)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <IconFolder size={24} stroke={1.5} style={{ color: 'var(--text3)' }} />
-                    </Box>
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: 'var(--text)',
-                        textAlign: 'center',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: '100%',
-                      }}
-                    >
-                      {project.name}
-                    </Text>
-                  </Box>
-                ))}
-                {projects.length === 0 && selectedWorkspace && (
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--text3)',
-                      gridColumn: '1 / -1',
-                      textAlign: 'center',
-                      padding: 24,
-                    }}
-                  >
-                    No projects in this workspace
-                  </Text>
-                )}
-                {!selectedWorkspace && (
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--text3)',
-                      gridColumn: '1 / -1',
-                      textAlign: 'center',
-                      padding: 24,
-                    }}
-                  >
-                    Select a workspace to view projects
-                  </Text>
-                )}
-              </Box>
-            </Box>
-
-            {/* Recent Projects */}
-            {recentProjects.length > 0 && (
-              <Box
-                style={{
-                  borderTop: '1px solid var(--border)',
-                  padding: '8px 12px',
-                  maxHeight: 100,
-                  overflowY: 'auto',
-                }}
-              >
-                <Text
+            {/* Actions */}
+            <Box style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* New Project Button */}
+              {!showNewProjectInput && (
+                <button
+                  onClick={() => setShowNewProjectInput(true)}
                   style={{
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: 'var(--text3)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    marginBottom: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '14px 16px',
+                    background: 'var(--accent)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 'var(--r6)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
                   }}
                 >
-                  Recent
-                </Text>
-                {recentProjects.slice(0, 3).map((recent) => (
-                  <Box
-                    key={recent.projectPath}
-                    onClick={() => handleOpenRecent(recent)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '6px 8px',
-                      cursor: 'pointer',
-                      borderRadius: 'var(--r4)',
-                    }}
-                  >
-                    <IconClock size={12} stroke={1.5} style={{ color: 'var(--text3)' }} />
-                    <Text style={{ fontSize: 11, color: 'var(--text)' }}>
-                      {recent.projectName}
-                    </Text>
-                    <Text style={{ fontSize: 10, color: 'var(--text3)' }}>
-                      — {recent.workspaceName}
-                    </Text>
-                    <IconChevronRight size={10} stroke={1.5} style={{ color: 'var(--text3)', marginLeft: 'auto' }} />
-                  </Box>
-                ))}
-              </Box>
-            )}
+                  <IconPlus size={16} stroke={2} />
+                  <Text style={{ fontSize: 13, fontWeight: 500 }}>새 프로젝트</Text>
+                </button>
+              )}
+
+              {/* Open Existing Button */}
+              <button
+                onClick={openProjectWithFilePicker}
+                disabled={isLoading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '14px 16px',
+                  background: 'var(--bg2)',
+                  color: 'var(--text)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--r6)',
+                  cursor: isLoading ? 'wait' : 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <IconFolder size={16} stroke={1.5} style={{ color: 'var(--text3)' }} />
+                <Text style={{ fontSize: 13, fontWeight: 500 }}>.scenex 파일 열기</Text>
+              </button>
+            </Box>
           </Box>
         </Box>
 

@@ -18,7 +18,7 @@ interface AIChatSidebarProps {
 
 export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
   const { project, selectedScenarioId, updateScenario } = useProjectStore();
-  const { currentWorkspacePath: workspacePath } = useWorkspaceStore();
+  const { currentProjectPath: workspacePath } = useWorkspaceStore();
   const { addNotification } = useUIStore();
   const { generateDescriptionSuggestion } = useClaude();
   const {
