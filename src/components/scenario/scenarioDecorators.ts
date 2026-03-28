@@ -7,24 +7,18 @@ import {
 import { RangeSetBuilder } from '@codemirror/state';
 
 // Badge decoration types
-export type BadgeType = 'TITLE' | 'ACT' | 'SLUG' | 'SCENE' | 'NOTE' | 'GENRE' | 'MOOD';
+export type BadgeType = 'TITLE' | 'ACT' | 'SLUG' | 'NOTE' | 'GENRE' | 'MOOD';
 
 // Badge configuration - elegant styling with distinct colors per type
 const BADGE_CONFIG: Record<BadgeType, { text: string; bgColor: string; textColor: string; borderColor: string }> = {
   TITLE: { text: 'TITLE', bgColor: 'color-mix(in srgb, var(--gold) 12%, transparent)', textColor: 'var(--gold2)', borderColor: 'color-mix(in srgb, var(--gold) 30%, transparent)' },
   ACT: { text: 'ACT', bgColor: 'color-mix(in srgb, var(--purple) 12%, transparent)', textColor: 'var(--purple)', borderColor: 'color-mix(in srgb, var(--purple) 30%, transparent)' },
   SLUG: { text: 'SLUG', bgColor: 'color-mix(in srgb, var(--blue) 12%, transparent)', textColor: 'var(--blue)', borderColor: 'color-mix(in srgb, var(--blue) 30%, transparent)' },
-  SCENE: { text: 'SCENE', bgColor: 'color-mix(in srgb, var(--green) 12%, transparent)', textColor: 'var(--green)', borderColor: 'color-mix(in srgb, var(--green) 30%, transparent)' },
   NOTE: { text: 'NOTE', bgColor: 'color-mix(in srgb, var(--text3) 12%, transparent)', textColor: 'var(--text2)', borderColor: 'color-mix(in srgb, var(--text3) 30%, transparent)' },
   GENRE: { text: 'GENRE', bgColor: 'color-mix(in srgb, var(--accent) 15%, transparent)', textColor: 'var(--accent)', borderColor: 'color-mix(in srgb, var(--accent) 35%, transparent)' },
   MOOD: { text: 'MOOD', bgColor: 'color-mix(in srgb, var(--accent) 8%, transparent)', textColor: 'color-mix(in srgb, var(--accent) 90%, white)', borderColor: 'color-mix(in srgb, var(--accent) 25%, transparent)' },
 };
 
-// Detect if a line is a slugline (INT./EXT. pattern after ###)
-function isSlugline(text: string): boolean {
-  const sluglinePattern = /^(INT|EXT)\.\s*.+\s*[-—]\s*.+$/i;
-  return sluglinePattern.test(text.trim());
-}
 
 // Detect metadata tags (@genre:, @mood: patterns)
 function getMetadataType(text: string): 'GENRE' | 'MOOD' | null {
@@ -117,27 +111,15 @@ export function createScenarioBadgeExtension(onBadgeClick?: (info: BadgeClickInf
               })
             );
           } else if (lineText.startsWith('### ')) {
-            // Scene or Slugline
-            const contentAfterHeading = lineText.slice(4).trim();
-            if (isSlugline(contentAfterHeading)) {
-              builder.add(
-                line.from,
-                line.from,
-                Decoration.widget({
-                  widget: new BadgeWidget('SLUG'),
-                  side: 1,
-                })
-              );
-            } else {
-              builder.add(
-                line.from,
-                line.from,
-                Decoration.widget({
-                  widget: new BadgeWidget('SCENE'),
-                  side: 1,
-                })
-              );
-            }
+            // Slugline (scene boundary)
+            builder.add(
+              line.from,
+              line.from,
+              Decoration.widget({
+                widget: new BadgeWidget('SLUG'),
+                side: 1,
+              })
+            );
           } else if (lineText.startsWith('> ')) {
             // Note: > text
             builder.add(
@@ -180,8 +162,7 @@ export function createScenarioBadgeExtension(onBadgeClick?: (info: BadgeClickInf
         } else if (lineText.startsWith('## ')) {
           badgeType = 'ACT';
         } else if (lineText.startsWith('### ')) {
-          const contentAfterHeading = lineText.slice(4).trim();
-          badgeType = isSlugline(contentAfterHeading) ? 'SLUG' : 'SCENE';
+          badgeType = 'SLUG';
         } else if (lineText.startsWith('> ')) {
           badgeType = 'NOTE';
         } else {
