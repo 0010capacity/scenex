@@ -43,15 +43,23 @@ export type AITaskType =
   | 'scenario_to_storyboard'
   | 'script_generation';
 
+export type AITaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+export type AITaskPriority = 'low' | 'normal' | 'high';
+
 export interface AITask {
   id: string;
   type: AITaskType;
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: AITaskStatus;
   progress: number;
   message: string;
+  priority: AITaskPriority;
   parentTaskId?: string;
   previousVersionId?: string;
   promptVersion?: string;
+  timeout?: number;
+  startedAt?: number;
+  completedAt?: number;
   metadata?: {
     scenarioId?: string;
     actId?: string;

@@ -1,40 +1,16 @@
 import { create } from 'zustand';
-import type { AITaskType, AITaskVersion } from '@/types/ai';
+import type { AITask, AITaskVersion, AITaskStatus, AITaskPriority } from '@/types/ai';
+import { DEFAULT_MAX_CONCURRENT_TASKS, MAX_TASK_HISTORY_SIZE } from '@/constants';
 
-export type AITaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
-
-export type AITaskPriority = 'low' | 'normal' | 'high';
-
-export interface AITask {
-  id: string;
-  type: AITaskType;
-  status: AITaskStatus;
-  progress: number;
-  message: string;
-  priority: AITaskPriority;
-  parentTaskId?: string;
-  previousVersionId?: string;
-  promptVersion?: string;
-  timeout?: number; // ms, optional timeout for the task
-  startedAt?: number; // timestamp when task started running
-  completedAt?: number; // timestamp when task completed/failed/cancelled
-  metadata?: {
-    scenarioId?: string;
-    actId?: string;
-    sceneId?: string;
-    panelId?: string;
-    version?: number;
-  };
-}
-
-const DEFAULT_MAX_CONCURRENT = 3;
-const MAX_HISTORY_SIZE = 50;
+// Re-export for convenience
+export type { AITaskStatus, AITaskPriority } from '@/types/ai';
 
 interface AIState {
   tasks: AITask[];
   isProcessing: boolean;
   taskHistory: AITask[];
   maxConcurrent: number;
+  taskHistoryMap: Map<string, AITaskVersion[]>;
 
   // Core task management
   addTask: (task: Omit<AITask, 'id' | 'status' | 'progress' | 'priority'> & { status?: AITaskStatus; progress?: number; priority?: AITaskPriority }) => string;
@@ -69,7 +45,7 @@ export const useAIStore = create<AIState>((set, get) => ({
   tasks: [],
   isProcessing: false,
   taskHistory: [],
-  maxConcurrent: DEFAULT_MAX_CONCURRENT,
+  maxConcurrent: DEFAULT_MAX_CONCURRENT_TASKS,
   taskHistoryMap: new Map<string, AITaskVersion[]>(),
 
   addTask: (task) => {
@@ -91,7 +67,7 @@ export const useAIStore = create<AIState>((set, get) => ({
           taskHistory: [
             { ...original, completedAt: now },
             ...state.taskHistory,
-          ].slice(0, MAX_HISTORY_SIZE),
+          ].slice(0, MAX_TASK_HISTORY_SIZE),
         }));
       }
     }
@@ -140,7 +116,7 @@ export const useAIStore = create<AIState>((set, get) => ({
         taskHistory: [
           { ...task, completedAt: task.completedAt || Date.now() },
           ...state.taskHistory,
-        ].slice(0, MAX_HISTORY_SIZE),
+        ].slice(0, MAX_TASK_HISTORY_SIZE),
       }));
     }
 
@@ -164,7 +140,7 @@ export const useAIStore = create<AIState>((set, get) => ({
         taskHistory: [
           ...completed.map((t) => ({ ...t, completedAt: t.completedAt || Date.now() })),
           ...state.taskHistory,
-        ].slice(0, MAX_HISTORY_SIZE),
+        ].slice(0, MAX_TASK_HISTORY_SIZE),
       }));
     }
 
@@ -239,25 +215,20 @@ export const useAIStore = create<AIState>((set, get) => ({
   },
 
   addVersion: (taskId, version) => {
-    // versions stored in taskHistoryMap (internal, not exposed in state for serialization)
-    const state = get() as any;
-    const historyMap = state.taskHistoryMap || new Map<string, AITaskVersion[]>();
+    const historyMap = get().taskHistoryMap;
     const history = historyMap.get(taskId) || [];
     historyMap.set(taskId, [...history, version]);
-    set({ taskHistoryMap: historyMap } as any);
+    set({ taskHistoryMap: new Map(historyMap) });
   },
 
   getVersions: (taskId) => {
-    const state = get() as any;
-    const historyMap = state.taskHistoryMap || new Map<string, AITaskVersion[]>();
-    return historyMap.get(taskId) || [];
+    return get().taskHistoryMap.get(taskId) || [];
   },
 
   clearTaskHistory: (taskId) => {
-    const state = get() as any;
-    const historyMap = state.taskHistoryMap || new Map<string, AITaskVersion[]>();
+    const historyMap = get().taskHistoryMap;
     historyMap.delete(taskId);
-    set({ taskHistoryMap: historyMap } as any);
+    set({ taskHistoryMap: new Map(historyMap) });
   },
 
   getTaskById: (id) => {

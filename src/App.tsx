@@ -1,14 +1,13 @@
-import { useEffect, useRef } from 'react';
-import { Box, Text } from '@mantine/core';
+import { useEffect, useRef, lazy, Suspense } from 'react';
+import { Box, Text, Loader } from '@mantine/core';
 import { useProjectStore } from './stores/projectStore';
 import { useUIStore } from './stores/uiStore';
 import { useWorkspaceStore } from './stores/workspaceStore';
+import { AUTO_SAVE_INTERVAL_MS, NOTIFICATION_AUTO_DISMISS_MS } from './constants';
 import { TitleBar } from './components/layout/TitleBar';
+import { TabBar } from './components/layout/TabBar';
 import { Toolbar } from './components/layout/Toolbar';
 import { Workspace } from './components/layout/Workspace';
-import { AddPanelModal } from './components/panels/AddPanelModal';
-import { AiGenModal } from './components/panels/AiGenModal';
-import { ProjectBrowserModal } from './components/panels/ProjectBrowserModal';
 import { WorkspaceOnboarding } from './components/onboarding/WorkspaceOnboarding';
 import { FirstProjectOnboarding } from './components/onboarding/FirstProjectOnboarding';
 import { AITaskStatus } from './components/AITaskStatus';
@@ -17,13 +16,27 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useWorkspace } from './hooks/useWorkspace';
 import './styles/global.css';
 
+// Lazy load modals for code splitting
+const AddPanelModal = lazy(() => import('./components/panels/AddPanelModal').then(m => ({ default: m.AddPanelModal })));
+const AiGenModal = lazy(() => import('./components/panels/AiGenModal').then(m => ({ default: m.AiGenModal })));
+const ProjectBrowserModal = lazy(() => import('./components/panels/ProjectBrowserModal').then(m => ({ default: m.ProjectBrowserModal })));
+
+// Modal loading fallback
+function ModalLoader() {
+  return (
+    <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+      <Loader size="sm" color="var(--accent)" />
+    </Box>
+  );
+}
+
 function NotificationToast({ type, message, onDismiss }: { type: 'error' | 'warning' | 'info'; message: string; onDismiss: () => void }) {
   const bgColor = type === 'error' ? 'var(--red-dim)' : type === 'warning' ? 'var(--gold-dim)' : 'var(--blue-dim)';
   const borderColor = type === 'error' ? 'var(--red)' : type === 'warning' ? 'var(--gold)' : 'var(--blue)';
   const textColor = type === 'error' ? 'var(--red)' : type === 'warning' ? 'var(--gold)' : 'var(--blue)';
 
   useEffect(() => {
-    const timer = setTimeout(onDismiss, 4000);
+    const timer = setTimeout(onDismiss, NOTIFICATION_AUTO_DISMISS_MS);
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
@@ -63,9 +76,16 @@ function NotificationToast({ type, message, onDismiss }: { type: 'error' | 'warn
 }
 
 function App() {
-  const { project } = useProjectStore();
-  const { addPanelModalOpen, addPanelSceneId, closeAddPanelModal, aiGenModalOpen, closeAiGenModal, projectBrowserOpen, notifications, removeNotification } = useUIStore();
-  const { currentWorkspacePath } = useWorkspaceStore();
+  const project = useProjectStore(s => s.project);
+  const addPanelModalOpen = useUIStore(s => s.addPanelModalOpen);
+  const addPanelSceneId = useUIStore(s => s.addPanelSceneId);
+  const closeAddPanelModal = useUIStore(s => s.closeAddPanelModal);
+  const aiGenModalOpen = useUIStore(s => s.aiGenModalOpen);
+  const closeAiGenModal = useUIStore(s => s.closeAiGenModal);
+  const projectBrowserOpen = useUIStore(s => s.projectBrowserOpen);
+  const notifications = useUIStore(s => s.notifications);
+  const removeNotification = useUIStore(s => s.removeNotification);
+  const currentWorkspacePath = useWorkspaceStore(s => s.currentWorkspacePath);
   const { checkAvailability } = useClaude();
   const { currentProjectPath, saveProjectWithAutoCommit } = useWorkspace();
   const autoSaveTimerRef = useRef<number | null>(null);
@@ -95,7 +115,7 @@ function App() {
       if (project && currentProjectPath) {
         saveProjectWithAutoCommit();
       }
-    }, 30000);
+    }, AUTO_SAVE_INTERVAL_MS);
 
     return () => {
       if (autoSaveTimerRef.current) {
@@ -134,18 +154,29 @@ function App() {
       }}
     >
       <TitleBar />
+      <TabBar />
       <Toolbar />
       <Workspace />
-      <AddPanelModal
-        opened={addPanelModalOpen}
-        onClose={closeAddPanelModal}
-        sceneId={addPanelSceneId}
-      />
-      <AiGenModal
-        opened={aiGenModalOpen}
-        onClose={closeAiGenModal}
-      />
-      {projectBrowserOpen && <ProjectBrowserModal />}
+      <Suspense fallback={<ModalLoader />}>
+        {addPanelModalOpen && (
+          <AddPanelModal
+            opened={addPanelModalOpen}
+            onClose={closeAddPanelModal}
+            sceneId={addPanelSceneId}
+          />
+        )}
+      </Suspense>
+      <Suspense fallback={<ModalLoader />}>
+        {aiGenModalOpen && (
+          <AiGenModal
+            opened={aiGenModalOpen}
+            onClose={closeAiGenModal}
+          />
+        )}
+      </Suspense>
+      <Suspense fallback={<ModalLoader />}>
+        {projectBrowserOpen && <ProjectBrowserModal />}
+      </Suspense>
       <AITaskStatus />
       {/* Notifications */}
       {notifications.length > 0 && (
@@ -157,7 +188,7 @@ function App() {
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
-            zIndex: 9999,
+            zIndex: 'var(--z-toast)',
           }}
         >
           {notifications.map((notification) => (
