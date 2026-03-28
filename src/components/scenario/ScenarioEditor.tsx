@@ -7,12 +7,14 @@ import { keymap } from '@codemirror/view';
 import { indentWithTab } from '@codemirror/commands';
 import { codeFolding } from '@codemirror/language';
 import { useProjectStore } from '@/stores/projectStore';
+import { useUIStore } from '@/stores/uiStore';
 import { createScenarioBadgeExtension, BadgeClickInfo } from './scenarioDecorators';
 import { BadgeEditModal } from './BadgeEditModal';
 
 export function ScenarioEditor() {
   const project = useProjectStore(s => s.project);
   const updateScenario = useProjectStore(s => s.updateScenario);
+  const setInsertToScenario = useUIStore(s => s.setInsertToScenario);
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const [badgeModalOpened, setBadgeModalOpened] = useState(false);
@@ -25,6 +27,50 @@ export function ScenarioEditor() {
     setBadgeInfo(info);
     setBadgeModalOpened(true);
   }, []);
+
+  // Insert text at cursor position or at the end of document
+  const insertTextAtCursor = useCallback((text: string) => {
+    if (!viewRef.current) return;
+
+    const view = viewRef.current;
+    const { from, to } = view.state.selection.main;
+    const doc = view.state.doc;
+
+    // If cursor is at position 0 (no explicit cursor), insert at end
+    const insertPos = from === 0 && to === 0 ? doc.length : from;
+
+    // Add newline before if not at start of line or document
+    const line = doc.lineAt(insertPos);
+    const atLineStart = insertPos === line.from;
+    const atDocEnd = insertPos === doc.length;
+
+    let textToInsert = text;
+    if (!atLineStart && insertPos > 0) {
+      textToInsert = '\n\n' + text;
+    } else if (insertPos > 0) {
+      textToInsert = '\n' + text;
+    }
+    if (!atDocEnd && !text.endsWith('\n')) {
+      textToInsert += '\n';
+    }
+
+    view.dispatch({
+      changes: {
+        from: insertPos,
+        to: insertPos,
+        insert: textToInsert,
+      },
+      selection: { anchor: insertPos + textToInsert.length },
+    });
+
+    view.focus();
+  }, []);
+
+  // Register insert function to store
+  useEffect(() => {
+    setInsertToScenario(insertTextAtCursor);
+    return () => setInsertToScenario(null);
+  }, [setInsertToScenario, insertTextAtCursor]);
 
   // Handle badge edit save
   const handleBadgeSave = useCallback(
@@ -39,7 +85,7 @@ export function ScenarioEditor() {
         fullLine = `# ${newContent}`;
       } else if (info.badgeType === 'ACT') {
         fullLine = `## ${newContent}`;
-      } else if (info.badgeType === 'SLUG' || info.badgeType === 'SCENE') {
+      } else if (info.badgeType === 'SLUG') {
         fullLine = `### ${newContent}`;
       } else {
         fullLine = newContent;
