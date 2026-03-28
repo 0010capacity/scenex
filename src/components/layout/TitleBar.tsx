@@ -101,78 +101,69 @@ export function TitleBar() {
       className="titlebar"
       style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      {/* Left section: Traffic lights + Mode Segment Control */}
+      {/* Traffic lights - left */}
+      <Group gap={5} style={{ WebkitAppRegion: 'no-drag', alignSelf: 'center' }}>
+        <Box
+          component="span"
+          className="t-close"
+          style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
+          onClick={() => windowApi.close()}
+          role="button"
+          aria-label="창 닫기"
+        />
+        <Box
+          component="span"
+          className="t-min"
+          style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
+          onClick={() => windowApi.minimize()}
+          role="button"
+          aria-label="창 최소화"
+        />
+        <Box
+          component="span"
+          className="t-max"
+          style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
+          onClick={() => windowApi.maximize()}
+          role="button"
+          aria-label="창 최대화"
+        />
+      </Group>
+
+      {/* Mode Segment Control - center */}
       <Box
         style={{
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
           WebkitAppRegion: 'no-drag',
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
-          paddingTop: 12,
+          background: 'var(--bg2)',
+          borderRadius: 6,
+          padding: '3px 4px',
+          gap: 2,
         }}
       >
-        {/* Traffic lights */}
-        <Group gap={5}>
-          <Box
-            component="span"
-            className="t-close"
-            style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-            onClick={() => windowApi.close()}
-            role="button"
-            aria-label="창 닫기"
-          />
-          <Box
-            component="span"
-            className="t-min"
-            style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-            onClick={() => windowApi.minimize()}
-            role="button"
-            aria-label="창 최소화"
-          />
-          <Box
-            component="span"
-            className="t-max"
-            style={{ width: 11, height: 11, borderRadius: '50%', cursor: 'pointer' }}
-            onClick={() => windowApi.maximize()}
-            role="button"
-            aria-label="창 최대화"
-          />
-        </Group>
-
-        {/* Mode Segment Control */}
-        <Box
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginLeft: 64,
-            marginTop: -8,
-            background: 'var(--bg2)',
-            borderRadius: 6,
-            padding: '3px 4px',
-            gap: 2,
-          }}
-        >
-          {(['scenario', 'storyboard'] as EditorMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setEditorMode(mode)}
-              style={{
-                padding: '4px 10px',
-                fontSize: 11,
-                fontWeight: 500,
-                border: 'none',
-                borderRadius: 4,
-                cursor: 'pointer',
-                background: editorMode === mode ? 'var(--bg0)' : 'transparent',
-                color: editorMode === mode ? 'var(--text)' : 'var(--text3)',
-                boxShadow: editorMode === mode ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {mode === 'scenario' ? '시나리오' : '스토리보드'}
-            </button>
-          ))}
-        </Box>
+        {(['scenario', 'storyboard'] as EditorMode[]).map((mode) => (
+          <button
+            key={mode}
+            onClick={() => setEditorMode(mode)}
+            style={{
+              padding: '4px 10px',
+              fontSize: 11,
+              fontWeight: 500,
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+              background: editorMode === mode ? 'var(--bg0)' : 'transparent',
+              color: editorMode === mode ? 'var(--text)' : 'var(--text3)',
+              boxShadow: editorMode === mode ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {mode === 'scenario' ? '시나리오' : '스토리보드'}
+          </button>
+        ))}
       </Box>
 
       {/* Right controls */}
