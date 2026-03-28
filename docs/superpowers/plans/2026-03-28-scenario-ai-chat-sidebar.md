@@ -708,6 +708,10 @@ git commit -m "feat(checkpoints): add Git checkpoint commands for scenario AI"
 
 **Note:** The `Scenario` type extension with `chatHistory` is not needed since chat history is managed per-scenarioId in `aiChatStore` (in-memory). If persistence across sessions is required, the `aiChatStore` could be persisted via zustand middleware, but this is out of scope for initial implementation.
 
+**Chat History Persistence:** Deferred to future iteration. Initial implementation stores chat in memory only (lost on refresh). To persist, add zustand persist middleware to `aiChatStore`.
+
+**Rust Dependencies:** `chrono` and `git2` are already in `Cargo.toml` dependencies — no changes needed.
+
 ---
 
 ## Phase 4: Workspace Integration
@@ -824,11 +828,10 @@ export function AIChatSidebar({ opened, onClose, width }: AIChatSidebarProps) {
     isLoading,
     setLoading,
   } = useAIChatStore();
-  const [workspacePath] = useState(() => {
-    // TODO: Get from uiStore or workspace context
-    // For now, assume project.path is available or use a placeholder
-    return '/path/to/workspace'; // TODO: Replace with actual workspace path
-  });
+  // workspacePath: Get from project store or uiStore
+  // The project path structure is: {workspacePath}/{projectName}/{projectName}.scenex
+  // Use project.path from projectStore, or store workspacePath separately in uiStore
+  const workspacePath = project?.path ?? '';
 
   const messages = selectedScenarioId ? getMessages(selectedScenarioId) : [];
 
