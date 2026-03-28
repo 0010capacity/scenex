@@ -79,7 +79,7 @@ const expandScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
   switch (expansionType) {
     case 'scene':
       // Add a new scene
-      updatedContent = scenario.content.trimEnd() + `\n\n### New Scene\n\n${newContent}\n`;
+      updatedContent = scenario.content.trimEnd() + `\n\n### INT./EXT. LOCATION - TIME\n\n${newContent}\n`;
       break;
     case 'subplot':
       // Add a subplot section
