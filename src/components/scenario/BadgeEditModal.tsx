@@ -29,7 +29,6 @@ function getModalTitle(type: BadgeType): string {
     TITLE: '제목 수정',
     ACT: '대단원 수정',
     SLUG: '장면 위치 수정',
-    SCENE: '소단위 수정',
     NOTE: '노트 수정',
     GENRE: '장르 수정',
     MOOD: '분위기 수정',
@@ -151,13 +150,11 @@ export function BadgeEditModal({ opened, onClose, badgeInfo, onSave }: BadgeEdit
                     ? '시나리오 제목'
                     : badgeInfo.badgeType === 'ACT'
                       ? '대단원 이름'
-                      : badgeInfo.badgeType === 'SCENE'
-                        ? '소단위 이름'
-                        : badgeInfo.badgeType === 'GENRE'
-                          ? '장르 (예: fantasy, thriller)'
-                          : badgeInfo.badgeType === 'MOOD'
-                            ? '분위기 (예: dark, bright)'
-                            : '노트 내용'
+                      : badgeInfo.badgeType === 'GENRE'
+                        ? '장르 (예: fantasy, thriller)'
+                        : badgeInfo.badgeType === 'MOOD'
+                          ? '분위기 (예: dark, bright)'
+                          : '노트 내용'
                 }
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
