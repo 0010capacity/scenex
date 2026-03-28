@@ -1,5 +1,5 @@
-import { Box, Text, Menu, Badge } from '@mantine/core';
-import { IconPlayerPlay, IconArrowMoveRight, IconSparkles, IconHistory } from '@tabler/icons-react';
+import { Box, Text, Menu, Badge, ActionIcon } from '@mantine/core';
+import { IconPlayerPlay, IconArrowMoveRight, IconSparkles, IconHistory, IconTrash } from '@tabler/icons-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useDisclosure } from '@mantine/hooks';
@@ -38,6 +38,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
   const selectPanel = useProjectStore(s => s.selectPanel);
   const project = useProjectStore(s => s.project);
   const movePanel = useProjectStore(s => s.movePanel);
+  const deletePanel = useProjectStore(s => s.deletePanel);
   const openRightSidebar = useUIStore(s => s.openRightSidebar);
 
   const {
@@ -47,7 +48,10 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: panel.id });
+  } = useSortable({
+    id: panel.id,
+    data: { sceneId },
+  });
 
   const isSelected = selectedPanelId === panel.id;
   const height = width * (9 / 16);
@@ -238,8 +242,9 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
             left: 6,
             fontFamily: 'var(--mono)',
             fontSize: 9,
-            color: 'var(--text3)',
-            background: 'rgba(0, 0, 0, 0.5)',
+            fontWeight: 500,
+            color: '#fff',
+            background: 'rgba(0, 0, 0, 0.6)',
             padding: '1px 5px',
             borderRadius: 2,
           }}
@@ -296,7 +301,7 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
               )}
             </>
           )}
-          {panel.sourceType !== 'ai' && (
+          {panel.sourceType !== 'ai' && panel.sourceType !== 'empty' && (
             <Badge
               size="xs"
               variant="light"
@@ -319,6 +324,24 @@ export function PanelCard({ panel, sceneId, width, variant = 'grid' }: PanelCard
           >
             편집
           </button>
+          <ActionIcon
+            variant="filled"
+            color="red"
+            size="sm"
+            style={{
+              position: 'absolute',
+              top: 5,
+              right: 5,
+              opacity: 0,
+              transition: 'opacity 0.15s',
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              deletePanel(panel.id);
+            }}
+          >
+            <IconTrash size={14} stroke={1.5} />
+          </ActionIcon>
         </Box>
       </Box>
 

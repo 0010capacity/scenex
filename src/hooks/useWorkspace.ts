@@ -85,15 +85,19 @@ export function useWorkspace() {
 
   // Load a project from file
   const loadProjectFromFile = useCallback(async (filePath: string): Promise<boolean> => {
+    console.log('[Workspace] loadProjectFromFile called with:', filePath);
     try {
       setIsLoading(true);
+      console.log('[Workspace] Invoking load_project...');
       const response = await invoke<{ success: boolean; data: { project: ProjectData } }>('load_project', { path: filePath });
+      console.log('[Workspace] load_project response:', response);
 
       if (!response.success || !response.data?.project) {
         throw new Error('Failed to load project: invalid response');
       }
 
       const data = response.data.project;
+      console.log('[Workspace] Project data loaded:', data);
 
       // Migrate legacy format to new single-scenario format
       const migratedProject = migrateProject({
@@ -106,7 +110,9 @@ export function useWorkspace() {
         scenarios: data.scenarios,
       } as any);
 
+      console.log('[Workspace] Migrated project:', migratedProject);
       loadProject(migratedProject);
+      console.log('[Workspace] loadProject called');
 
       // Extract project name and path from file path
       const pathParts = filePath.split('/');

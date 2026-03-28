@@ -1,4 +1,16 @@
 import { Box, Text, Center } from '@mantine/core';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 import { SceneGroup } from '@/components/panels/SceneGroup';
@@ -7,6 +19,40 @@ export function PanelCanvas() {
   const project = useProjectStore(s => s.project);
   const zoomLevel = useUIStore(s => s.zoomLevel);
   const viewMode = useUIStore(s => s.viewMode);
+  const reorderPanels = useProjectStore(s => s.reorderPanels);
+  const movePanel = useProjectStore(s => s.movePanel);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const fromSceneId = active.data.current?.sceneId as string | undefined;
+    const toSceneId = over.data.current?.sceneId as string | undefined;
+
+    if (!fromSceneId || !toSceneId) return;
+
+    // Cross-scene move
+    if (fromSceneId !== toSceneId) {
+      movePanel(active.id as string, toSceneId);
+      return;
+    }
+
+    // Same-scene reorder
+    const scene = project?.scenario.scenes.find(s => s.id === fromSceneId);
+    if (!scene) return;
+
+    const oldIndex = scene.panels.findIndex(p => p.id === active.id);
+    const newIndex = scene.panels.findIndex(p => p.id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      reorderPanels(fromSceneId, oldIndex, newIndex);
+    }
+  };
 
   if (!project) {
     return (
@@ -38,13 +84,15 @@ export function PanelCanvas() {
         transformOrigin: 'top left',
       }}
     >
-      {scenesToShow.map((scene) => (
-        <SceneGroup
-          key={scene.id}
-          scene={scene}
-          viewMode={viewMode}
-        />
-      ))}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        {scenesToShow.map((scene) => (
+          <SceneGroup
+            key={scene.id}
+            scene={scene}
+            viewMode={viewMode}
+          />
+        ))}
+      </DndContext>
     </Box>
   );
 }

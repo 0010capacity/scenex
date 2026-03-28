@@ -1,5 +1,5 @@
 import { Box, Text, Select, TextInput, Textarea, Loader, ActionIcon } from '@mantine/core';
-import { IconX, IconSquare, IconSparkles } from '@tabler/icons-react';
+import { IconX, IconSquare, IconSparkles, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -15,6 +15,7 @@ import {
 export function InspectorPanel() {
   const getSelectedPanel = useProjectStore(s => s.getSelectedPanel);
   const updatePanel = useProjectStore(s => s.updatePanel);
+  const deletePanel = useProjectStore(s => s.deletePanel);
   const toggleRightSidebar = useUIStore(s => s.toggleRightSidebar);
   const addNotification = useUIStore(s => s.addNotification);
   const { generatePanel, generateDescriptionSuggestion } = useClaude();
@@ -131,10 +132,19 @@ export function InspectorPanel() {
         ) : (
           <>
             {/* Panel number header */}
-            <Box mb={16}>
+            <Box mb={16} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>
                 Panel {panel.number}
               </Text>
+              <ActionIcon
+                variant="subtle"
+                color="red"
+                size="sm"
+                onClick={() => deletePanel(panel.id)}
+                title="패널 삭제"
+              >
+                <IconTrash size={14} stroke={1.5} />
+              </ActionIcon>
             </Box>
 
             {/* Shot Settings */}

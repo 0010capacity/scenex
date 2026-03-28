@@ -40,6 +40,9 @@ interface UIState {
   claudeStatus: 'checking' | 'available' | 'unavailable';
   claudeModel: 'haiku' | 'sonnet' | 'opus';
 
+  // Scenario editor insert function
+  insertToScenario: ((text: string) => void) | null;
+
   // Notifications
   notifications: Notification[];
 
@@ -65,6 +68,7 @@ interface UIState {
   closeProjectBrowser: () => void;
   setClaudeStatus: (status: 'checking' | 'available' | 'unavailable') => void;
   setClaudeModel: (model: 'haiku' | 'sonnet' | 'opus') => void;
+  setInsertToScenario: (fn: ((text: string) => void) | null) => void;
   addNotification: (type: Notification['type'], message: string) => void;
   removeNotification: (id: string) => void;
 }
@@ -89,6 +93,7 @@ export const useUIStore = create<UIState>()(
       projectBrowserOpen: false,
       claudeStatus: 'checking',
       claudeModel: 'sonnet',
+      insertToScenario: null,
       notifications: [],
 
       toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
@@ -112,6 +117,7 @@ export const useUIStore = create<UIState>()(
       closeProjectBrowser: () => set({ projectBrowserOpen: false }),
       setClaudeStatus: (status) => set({ claudeStatus: status }),
       setClaudeModel: (model) => set({ claudeModel: model }),
+      setInsertToScenario: (fn) => set({ insertToScenario: fn }),
       addNotification: (type, message) =>
         set((state) => ({
           notifications: [

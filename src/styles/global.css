@@ -821,6 +821,10 @@ select option {
   opacity: 1;
 }
 
+.panel-card:hover .frame-overlay .mantine-ActionIcon-root {
+  opacity: 1;
+}
+
 .panel-num {
   position: absolute;
   top: 5px;

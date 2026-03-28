@@ -1,17 +1,7 @@
 import { Box, ActionIcon, Text } from '@mantine/core';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
   SortableContext,
-  sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { useState } from 'react';
@@ -27,26 +17,9 @@ interface PanelGridProps {
 }
 
 export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
-  const reorderPanels = useProjectStore(s => s.reorderPanels);
   const addPanel = useProjectStore(s => s.addPanel);
   const openAiGenModal = useUIStore(s => s.openAiGenModal);
   const [slideIndex, setSlideIndex] = useState(0);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = panels.findIndex((p) => p.id === active.id);
-      const newIndex = panels.findIndex((p) => p.id === over.id);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        reorderPanels(sceneId, oldIndex, newIndex);
-      }
-    }
-  };
 
   // Empty state
   if (panels.length === 0) {
@@ -128,45 +101,43 @@ export function PanelGrid({ panels, sceneId, viewMode }: PanelGridProps) {
   const minSize = viewMode === 'strip' ? 140 : 200;
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={panels.map((p) => p.id)} strategy={rectSortingStrategy}>
+    <SortableContext items={panels.map((p) => p.id)} strategy={rectSortingStrategy}>
+      <Box
+        className={gridClass}
+        style={
+          viewMode === 'list'
+            ? { display: 'flex', flexDirection: 'column', gap: 12 }
+            : {
+                display: 'grid',
+                gridTemplateColumns: `repeat(auto-fill, minmax(${minSize}px, 1fr))`,
+                gap: viewMode === 'strip' ? 10 : 14,
+              }
+        }
+      >
+        {panels.map((panel) => (
+          <PanelCard
+            key={panel.id}
+            panel={panel}
+            sceneId={sceneId}
+            width={viewMode === 'list' ? 600 : minSize}
+            variant={viewMode === 'list' ? 'list' : 'grid'}
+          />
+        ))}
+
+        {/* Add panel card */}
         <Box
-          className={gridClass}
+          className="add-panel-card"
+          onClick={() => addPanel(sceneId)}
           style={
             viewMode === 'list'
-              ? { display: 'flex', flexDirection: 'column', gap: 12 }
-              : {
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(auto-fill, minmax(${minSize}px, 1fr))`,
-                  gap: viewMode === 'strip' ? 10 : 14,
-                }
+              ? { width: 600 }
+              : {}
           }
         >
-          {panels.map((panel) => (
-            <PanelCard
-              key={panel.id}
-              panel={panel}
-              sceneId={sceneId}
-              width={viewMode === 'list' ? 600 : minSize}
-              variant={viewMode === 'list' ? 'list' : 'grid'}
-            />
-          ))}
-
-          {/* Add panel card */}
-          <Box
-            className="add-panel-card"
-            onClick={() => addPanel(sceneId)}
-            style={
-              viewMode === 'list'
-                ? { width: 600 }
-                : {}
-            }
-          >
-            <Box className="add-panel-icon">+</Box>
-            <Box className="add-panel-label">패널 추가</Box>
-          </Box>
+          <Box className="add-panel-icon">+</Box>
+          <Box className="add-panel-label">패널 추가</Box>
         </Box>
-      </SortableContext>
-    </DndContext>
+      </Box>
+    </SortableContext>
   );
 }

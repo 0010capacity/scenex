@@ -1,5 +1,5 @@
 import { Box, ActionIcon } from '@mantine/core';
-import { IconPlus, IconMinus, IconPencil, IconSparkles } from '@tabler/icons-react';
+import { IconPlus, IconMinus, IconSparkles } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -9,7 +9,6 @@ export function Toolbar() {
   const addScene = useProjectStore(s => s.addScene);
   const addPanel = useProjectStore(s => s.addPanel);
   const selectedSceneId = useProjectStore(s => s.selectedSceneId);
-  const updateScenario = useProjectStore(s => s.updateScenario);
 
   const editorMode = useUIStore(s => s.editorMode);
   const copilotSidebarOpen = useUIStore(s => s.copilotSidebarOpen);
@@ -22,8 +21,6 @@ export function Toolbar() {
   const rightSidebarOpen = useUIStore(s => s.rightSidebarOpen);
   const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
   const [newSceneName, setNewSceneName] = useState('');
-  const [renameScenarioModalOpen, setRenameScenarioModalOpen] = useState(false);
-  const [renameValue, setRenameValue] = useState('');
 
   const viewModes = [
     { key: 'grid', label: '그리드' },
@@ -33,22 +30,27 @@ export function Toolbar() {
 
   // Scenario Toolbar - simplified
   if (editorMode === 'scenario') {
+    const insertToScenario = useUIStore(s => s.insertToScenario);
+
+    const insertAct = () => {
+      insertToScenario?.('## 액트 이름\n\n');
+    };
+
+    const insertScene = () => {
+      insertToScenario?.('### INT./EXT. 장소 - 시간\n\n');
+    };
+
     return (
       <Box className="toolbar">
-        {/* Rename scenario */}
+        {/* Add act / scene */}
         <Box className="tool-group">
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => {
-              if (project?.scenario) {
-                setRenameValue(project.scenario.name);
-                setRenameScenarioModalOpen(true);
-              }
-            }}
-            disabled={!project?.scenario}
-          >
-            <IconPencil size={14} stroke={1.5} />
-            시나리오 이름 변경
+          <button className="btn btn-ghost btn-sm" onClick={insertAct}>
+            <IconPlus size={14} stroke={1.5} />
+            액트 추가
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={insertScene}>
+            <IconPlus size={14} stroke={1.5} />
+            씬 추가
           </button>
         </Box>
 
@@ -64,66 +66,6 @@ export function Toolbar() {
           <IconSparkles size={14} stroke={1.5} />
           AI
         </button>
-
-        {/* Rename Scenario Modal */}
-        {renameScenarioModalOpen && (
-          <div className="modal-backdrop open" onClick={() => { setRenameScenarioModalOpen(false); setRenameValue(''); }}>
-            <div className="ap-modal" style={{ width: 360 }} onClick={(e) => e.stopPropagation()}>
-              <div className="ap-header">
-                <span style={{ fontSize: 14, fontWeight: 500 }}>시나리오 이름 변경</span>
-                <ActionIcon variant="subtle" onClick={() => { setRenameScenarioModalOpen(false); setRenameValue(''); }}><IconPlus size={16} style={{ transform: 'rotate(45deg)' }} /></ActionIcon>
-              </div>
-              <div className="ap-body">
-                <div className="bo-field">
-                  <input
-                    type="text"
-                    placeholder="새 이름"
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && renameValue.trim()) {
-                        updateScenario({ name: renameValue.trim() });
-                        setRenameScenarioModalOpen(false);
-                        setRenameValue('');
-                      }
-                    }}
-                    autoFocus
-                    style={{
-                      width: '100%',
-                      background: 'var(--bg2)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text)',
-                      padding: '8px 12px',
-                      borderRadius: 'var(--r4)',
-                      fontSize: 13,
-                      fontFamily: 'var(--sans)',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="ap-footer">
-                <button className="btn btn-outline" onClick={() => { setRenameScenarioModalOpen(false); setRenameValue(''); }}>
-                  취소
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    if (renameValue.trim()) {
-                      updateScenario({ name: renameValue.trim() });
-                      setRenameScenarioModalOpen(false);
-                      setRenameValue('');
-                    }
-                  }}
-                  disabled={!renameValue.trim()}
-                  style={!renameValue.trim() ? { background: 'var(--bg4)', color: 'var(--text3)', cursor: 'not-allowed' } : {}}
-                >
-                  변경
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </Box>
     );
   }
