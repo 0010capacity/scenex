@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useProjectStore } from '../projectStore';
-import { createEmptyProject, createEmptyScene, createEmptyPanel } from '@/types';
+import { createEmptyProject, createEmptyPanel } from '@/types';
 
 // Mock the invokeWrapper to prevent Tauri calls during tests
 vi.mock('@/utils/invokeWrapper', () => ({
