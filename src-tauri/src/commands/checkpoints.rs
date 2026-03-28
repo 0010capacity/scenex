@@ -99,9 +99,7 @@ pub async fn restore_scenario_checkpoint(
     scenario_id: String,
 ) -> Result<RestoredContent, String> {
     let project_path = PathBuf::from(&project_path);
-    let backup_dir = project_path.join(".scenex-ai-backup").join(&scenario_id);
 
-    // Find the backup file matching this checkpoint
     let commit_oid = Oid::from_str(&checkpoint_id)
         .map_err(|e| format!("Invalid checkpoint ID: {}", e))?;
 
@@ -114,27 +112,31 @@ pub async fn restore_scenario_checkpoint(
     let tree = commit.tree()
         .map_err(|e| format!("Failed to get tree: {}", e))?;
 
-    // Find the backup file in the tree
-    let backup_pattern = format!(".scenex-ai-backup/{}/", scenario_id);
+    // Find the backup file in the tree - look for .scenex-ai-backup/{scenario_id}/*.md
+    let prefix = format!(".scenex-ai-backup/{}/", scenario_id);
 
-    let mut content = String::new();
-    let mut found_file = false;
+    let mut content: Option<String> = None;
 
-    for entry in tree.iter() {
-        if let Some(name) = entry.name() {
-            if name.starts_with(&backup_pattern) && name.ends_with(".md") {
-                let blob = repo.find_blob(entry.id())
-                    .map_err(|e| format!("Failed to find blob: {}", e))?;
-                content = String::from_utf8_lossy(blob.content()).to_string();
-                found_file = true;
-                break;
+    // Get the subtree for .scenex-ai-backup/{scenario_id}/
+    if let Ok(subtree_entry) = tree.get_path(std::path::Path::new(&prefix)) {
+        // subtree_entry is a TreeEntry pointing to a Tree (directory)
+        let subtree_id = subtree_entry.id();
+        if let Ok(subtree) = repo.find_tree(subtree_id) {
+            // subtree is a Tree containing the .md files
+            for entry in subtree.iter() {
+                if let Some(name) = entry.name() {
+                    if name.ends_with(".md") {
+                        let blob = repo.find_blob(entry.id())
+                            .map_err(|e| format!("Failed to find blob: {}", e))?;
+                        content = Some(String::from_utf8_lossy(blob.content()).to_string());
+                        break;
+                    }
+                }
             }
         }
     }
 
-    if !found_file {
-        return Err("Backup file not found in checkpoint".to_string());
-    }
+    let content = content.ok_or_else(|| "Backup file not found in checkpoint".to_string())?;
 
     Ok(RestoredContent {
         content,
@@ -167,7 +169,7 @@ pub async fn list_scenario_checkpoints(
         .map_err(|e| format!("Failed to push head: {}", e))?;
 
     let mut checkpoints = Vec::new();
-    let backup_pattern = format!(".scenex-ai-backup/{}/", scenario_id);
+    let prefix = format!(".scenex-ai-backup/{}/", scenario_id);
 
     for (count, oid_result) in revwalk.enumerate() {
         if count >= limit as usize {
@@ -184,13 +186,21 @@ pub async fn list_scenario_checkpoints(
 
         // Only include AI edit checkpoints for this scenario
         if message.starts_with("ai-edit(scenario):") {
-            checkpoints.push(CheckpointInfo {
-                id: oid.to_string(),
-                message,
-                timestamp: chrono::DateTime::from_timestamp(commit.time().seconds(), 0)
-                    .map(|dt| dt.to_rfc3339())
-                    .unwrap_or_default(),
-            });
+            let tree = commit.tree()
+                .map_err(|e| format!("Failed to get tree: {}", e))?;
+
+            // Check if this commit has a file for our scenario
+            let has_scenario_file = tree.get_path(std::path::Path::new(&prefix)).is_ok();
+
+            if has_scenario_file {
+                checkpoints.push(CheckpointInfo {
+                    id: oid.to_string(),
+                    message,
+                    timestamp: chrono::DateTime::from_timestamp(commit.time().seconds(), 0)
+                        .map(|dt| dt.to_rfc3339())
+                        .unwrap_or_default(),
+                });
+            }
         }
     }
 
