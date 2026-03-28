@@ -1,259 +1,175 @@
-import { invoke } from '@tauri-apps/api/core';
+import { useCallback } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { useAIStore } from '@/stores/aiStore';
-import { invokeWrapper } from '@/utils/invokeWrapper';
-
-interface ClaudeStatus {
-  available: boolean;
-  version: string | null;
-  path: string | null;
-}
-
-interface GeneratePanelRequest {
-  description: string;
-  shot_type?: string;
-  mood_tags: string[];
-}
-
-interface GeneratePanelResponse {
-  svg_data: string | null;
-  description: string;
-  success: boolean;
-  error: string | null;
-}
-
-interface ScriptLineDto {
-  line_type: string;
-  text: string;
-  character: string | null;
-}
-
-interface GenerateScriptLinesResponse {
-  script_lines: ScriptLineDto[];
-  success: boolean;
-  error: string | null;
-}
-
-interface GenerateDescriptionSuggestionResponse {
-  suggestion: string | null;
-  success: boolean;
-  error: string | null;
-}
-
-interface BatchGeneratePanel {
-  description: string;
-  shot_type: string;
-  duration: string;
-  svg_data: string | null;
-}
-
-interface BatchGenerateResponse {
-  panels: BatchGeneratePanel[];
-  success: boolean;
-  error: string | null;
-}
-
-interface GenerateScenarioResponse {
-  success: boolean;
-  scenario?: any;
-  error?: string | null;
-}
-
-interface RegeneratePanelResponse {
-  success: boolean;
-  svg_data?: string | null;
-  error?: string | null;
-}
+import { getAIProvider } from '@/ai';
+import type {
+  GeneratePanelRequest,
+  GeneratePanelResponse,
+  GenerateScriptLinesRequest,
+  GenerateScriptLinesResponse,
+  GenerateDescriptionSuggestionRequest,
+  GenerateDescriptionSuggestionResponse,
+  BatchGenerateRequest,
+  BatchGenerateResponse,
+  GenerateScenarioRequest,
+  GenerateScenarioResponse,
+  RegeneratePanelRequest,
+  RegeneratePanelResponse,
+  ClaudeStatus,
+} from '@/ai/types';
 
 export function useClaude() {
   const { setClaudeStatus } = useUIStore();
   const { addTask, updateTask } = useAIStore();
+  const provider = getAIProvider();
 
-  const checkAvailability = async (): Promise<ClaudeStatus> => {
+  const checkAvailability = useCallback(async (): Promise<ClaudeStatus> => {
     try {
-      const status = await invokeWrapper<ClaudeStatus>('check_claude_available');
-      if (status) {
-        setClaudeStatus(status.available ? 'available' : 'unavailable');
-        return status;
-      }
-      setClaudeStatus('unavailable');
-      return { available: false, version: null, path: null };
+      const status = await provider.checkAvailability();
+      setClaudeStatus(status.available ? 'available' : 'unavailable');
+      return status;
     } catch (error) {
       console.error('Failed to check Claude availability:', error);
       setClaudeStatus('unavailable');
       return { available: false, version: null, path: null };
     }
-  };
+  }, [provider, setClaudeStatus]);
 
-  const generatePanel = async (
-    description: string,
-    shotType?: string,
-    moodTags: string[] = []
-  ): Promise<GeneratePanelResponse> => {
-    const request: GeneratePanelRequest = {
-      description,
-      shot_type: shotType,
-      mood_tags: moodTags,
-    };
-
-    try {
-      const response = await invoke<GeneratePanelResponse>('generate_panel', {
-        request,
-      });
-      return response;
-    } catch (error) {
-      return {
-        svg_data: null,
+  const generatePanel = useCallback(
+    async (
+      description: string,
+      shotType?: string,
+      moodTags: string[] = []
+    ): Promise<GeneratePanelResponse> => {
+      const request: GeneratePanelRequest = {
         description,
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
+        shot_type: shotType,
+        mood_tags: moodTags,
       };
-    }
-  };
+      return provider.generatePanel(request);
+    },
+    [provider]
+  );
 
-  const generateScriptLines = async (
-    slugline: string
-  ): Promise<GenerateScriptLinesResponse> => {
-    try {
-      const response = await invoke<GenerateScriptLinesResponse>('generate_script_lines', {
-        request: { slugline },
-      });
-      return response;
-    } catch (error) {
-      return {
-        script_lines: [],
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
+  const generateScriptLines = useCallback(
+    async (slugline: string): Promise<GenerateScriptLinesResponse> => {
+      const request: GenerateScriptLinesRequest = { slugline };
+      return provider.generateScriptLines(request);
+    },
+    [provider]
+  );
+
+  const generateDescriptionSuggestion = useCallback(
+    async (currentDescription: string): Promise<GenerateDescriptionSuggestionResponse> => {
+      const request: GenerateDescriptionSuggestionRequest = {
+        current_description: currentDescription,
       };
-    }
-  };
+      return provider.generateDescriptionSuggestion(request);
+    },
+    [provider]
+  );
 
-  const generateDescriptionSuggestion = async (
-    currentDescription: string
-  ): Promise<GenerateDescriptionSuggestionResponse> => {
-    try {
-      const response = await invoke<GenerateDescriptionSuggestionResponse>(
-        'generate_description_suggestion',
-        { request: { current_description: currentDescription } }
-      );
-      return response;
-    } catch (error) {
-      return {
-        suggestion: null,
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
+  const batchGeneratePanels = useCallback(
+    async (
+      sceneDescription: string,
+      panelCount: number,
+      shotTypeHint?: string,
+      moodTags?: string[]
+    ): Promise<BatchGenerateResponse> => {
+      const request: BatchGenerateRequest = {
+        scene_description: sceneDescription,
+        panel_count: panelCount,
+        shot_type_hint: shotTypeHint,
+        mood_tags: moodTags || [],
       };
-    }
-  };
+      return provider.batchGeneratePanels(request);
+    },
+    [provider]
+  );
 
-  const batchGeneratePanels = async (
-    sceneDescription: string,
-    panelCount: number,
-    shotTypeHint?: string,
-    moodTags?: string[]
-  ): Promise<BatchGenerateResponse> => {
-    try {
-      const response = await invoke<BatchGenerateResponse>('batch_generate_panels', {
-        request: {
-          scene_description: sceneDescription,
-          panel_count: panelCount,
-          shot_type_hint: shotTypeHint,
-          mood_tags: moodTags || [],
-        },
-      });
-      return response;
-    } catch (error) {
-      return {
-        panels: [],
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-  };
-
-  const generateScenario = async (
-    concept: string,
-    genre?: string,
-    mood?: string
-  ): Promise<GenerateScenarioResponse> => {
-    const taskId = addTask({
-      type: 'generate_scenario',
-      status: 'running',
-      progress: 0,
-      message: 'Generating scenario...',
-    });
-
-    try {
-      const response = await invoke<GenerateScenarioResponse>('generate_scenario', {
-        request: { concept, genre, mood },
+  const generateScenario = useCallback(
+    async (concept: string, genre?: string, mood?: string): Promise<GenerateScenarioResponse> => {
+      const taskId = addTask({
+        type: 'generate_scenario',
+        status: 'running',
+        progress: 0,
+        message: 'Generating scenario...',
       });
 
-      if (response.success) {
-        updateTask(taskId, { status: 'completed', progress: 100 });
-      } else {
+      try {
+        const request: GenerateScenarioRequest = { concept, genre, mood };
+        const response = await provider.generateScenario(request);
+
+        if (response.success) {
+          updateTask(taskId, { status: 'completed', progress: 100 });
+        } else {
+          updateTask(taskId, {
+            status: 'failed',
+            message: response.error || 'Generation failed',
+          });
+        }
+
+        return response;
+      } catch (error) {
         updateTask(taskId, {
           status: 'failed',
-          message: response.error || 'Generation failed',
+          message: error instanceof Error ? error.message : String(error),
         });
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
       }
+    },
+    [provider, addTask, updateTask]
+  );
 
-      return response;
-    } catch (error) {
-      updateTask(taskId, {
-        status: 'failed',
-        message: error instanceof Error ? error.message : String(error),
+  const regeneratePanel = useCallback(
+    async (
+      previousSvg: string,
+      previousDescription: string,
+      userFeedback: string,
+      sceneContext?: string
+    ): Promise<RegeneratePanelResponse> => {
+      const taskId = addTask({
+        type: 'regenerate_panel',
+        status: 'running',
+        progress: 0,
+        message: 'Regenerating panel...',
       });
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-  };
 
-  const regeneratePanel = async (
-    previousSvg: string,
-    previousDescription: string,
-    userFeedback: string,
-    sceneContext?: string
-  ): Promise<RegeneratePanelResponse> => {
-    const taskId = addTask({
-      type: 'regenerate_panel',
-      status: 'running',
-      progress: 0,
-      message: 'Regenerating panel...',
-    });
-
-    try {
-      const response = await invoke<RegeneratePanelResponse>('regenerate_panel', {
-        request: {
+      try {
+        const request: RegeneratePanelRequest = {
           previous_svg: previousSvg,
           previous_description: previousDescription,
           user_feedback: userFeedback,
           scene_context: sceneContext,
-        },
-      });
+        };
+        const response = await provider.regeneratePanel(request);
 
-      if (response.success) {
-        updateTask(taskId, { status: 'completed', progress: 100 });
-      } else {
+        if (response.success) {
+          updateTask(taskId, { status: 'completed', progress: 100 });
+        } else {
+          updateTask(taskId, {
+            status: 'failed',
+            message: response.error || 'Regeneration failed',
+          });
+        }
+
+        return response;
+      } catch (error) {
         updateTask(taskId, {
           status: 'failed',
-          message: response.error || 'Regeneration failed',
+          message: error instanceof Error ? error.message : String(error),
         });
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
       }
-
-      return response;
-    } catch (error) {
-      updateTask(taskId, {
-        status: 'failed',
-        message: error instanceof Error ? error.message : String(error),
-      });
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
-  };
+    },
+    [provider, addTask, updateTask]
+  );
 
   return {
     checkAvailability,

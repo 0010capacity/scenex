@@ -1,12 +1,15 @@
 // SceneX Data Types
-// Note: Scenario/Act/Scene hierarchy types are in ./scenario.ts
+// Note: Scenario is a simplified single-markdown document type (no hierarchy)
 // Flat project types (Scene, Panel, ScriptLine) are defined here for project.scenes compatibility
 
 export type * from './ai';
-export type { Scenario, Act, ScenarioScene } from './scenario';
+export type { Scenario } from './scenario';
 
 // Also export the interface types from ai for implementation
 export type { GenerationMetadata, PanelVersion, AITaskVersion } from './ai';
+
+// Constants
+import { DEFAULT_PANEL_DURATION } from '@/constants';
 
 // Shot types for storyboard panels
 export type ShotType = 'EWS' | 'WS' | 'MS' | 'CU' | 'ECU' | 'OTS' | 'POV';
@@ -111,7 +114,7 @@ export function createEmptyPanel(number: number): Panel {
     id: crypto.randomUUID(),
     number,
     shotType: null,
-    duration: '3s',
+    duration: DEFAULT_PANEL_DURATION,
     cameraMovement: null,
     description: '',
     dialogue: '',

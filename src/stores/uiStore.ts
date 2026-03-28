@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import {
+  DEFAULT_LEFT_SIDEBAR_WIDTH,
+  DEFAULT_RIGHT_SIDEBAR_WIDTH,
+  DEFAULT_ZOOM_LEVEL,
+  MIN_ZOOM_LEVEL,
+  MAX_ZOOM_LEVEL,
+} from '@/constants';
 
 interface Notification {
   id: string;
@@ -35,6 +42,7 @@ interface UIState {
   // Actions
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
+  openRightSidebar: () => void;
   setLeftSidebarWidth: (width: number) => void;
   setRightSidebarWidth: (width: number) => void;
   setZoomLevel: (level: number) => void;
@@ -57,10 +65,10 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       leftSidebarOpen: true,
       rightSidebarOpen: true,
-      leftSidebarWidth: 280,
-      rightSidebarWidth: 320,
+      leftSidebarWidth: DEFAULT_LEFT_SIDEBAR_WIDTH,
+      rightSidebarWidth: DEFAULT_RIGHT_SIDEBAR_WIDTH,
       editorMode: 'storyboard',
-      zoomLevel: 100,
+      zoomLevel: DEFAULT_ZOOM_LEVEL,
       viewMode: 'grid',
       addPanelModalOpen: false,
       addPanelSceneId: null,
@@ -72,9 +80,10 @@ export const useUIStore = create<UIState>()(
 
       toggleLeftSidebar: () => set((state) => ({ leftSidebarOpen: !state.leftSidebarOpen })),
       toggleRightSidebar: () => set((state) => ({ rightSidebarOpen: !state.rightSidebarOpen })),
+      openRightSidebar: () => set({ rightSidebarOpen: true }),
       setLeftSidebarWidth: (width) => set({ leftSidebarWidth: width }),
       setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),
-      setZoomLevel: (level) => set({ zoomLevel: Math.max(50, Math.min(200, level)) }),
+      setZoomLevel: (level) => set({ zoomLevel: Math.max(MIN_ZOOM_LEVEL, Math.min(MAX_ZOOM_LEVEL, level)) }),
       setViewMode: (mode) => set({ viewMode: mode }),
       setEditorMode: (mode) => set({ editorMode: mode }),
       openAddPanelModal: (sceneId) => set({ addPanelModalOpen: true, addPanelSceneId: sceneId }),

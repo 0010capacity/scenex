@@ -3,6 +3,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
+import { EXPORT_IMAGE_WIDTH, EXPORT_IMAGE_HEIGHT } from '@/constants';
 
 interface ExportPanel {
   number: number;
@@ -31,9 +32,8 @@ async function rasterizeSvgToPng(svgData: string): Promise<string> {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      // Use a fixed size for consistency (16:9 aspect ratio)
-      canvas.width = 1920;
-      canvas.height = 1080;
+      canvas.width = EXPORT_IMAGE_WIDTH;
+      canvas.height = EXPORT_IMAGE_HEIGHT;
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         reject(new Error('Failed to get canvas context'));
