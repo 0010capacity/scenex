@@ -19,6 +19,7 @@ export function Toolbar() {
   const setViewMode = useUIStore(s => s.setViewMode);
   const toggleRightSidebar = useUIStore(s => s.toggleRightSidebar);
   const rightSidebarOpen = useUIStore(s => s.rightSidebarOpen);
+  const insertToScenario = useUIStore(s => s.insertToScenario);
   const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
   const [newSceneName, setNewSceneName] = useState('');
 
@@ -30,8 +31,6 @@ export function Toolbar() {
 
   // Scenario Toolbar - simplified
   if (editorMode === 'scenario') {
-    const insertToScenario = useUIStore(s => s.insertToScenario);
-
     const insertAct = () => {
       insertToScenario?.('## 액트 이름\n\n');
     };

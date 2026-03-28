@@ -9,8 +9,16 @@ use super::result::CommandResult;
 pub struct ProjectData {
     pub id: String,
     pub name: String,
+    #[serde(rename = "createdAt", alias = "created_at")]
     pub created_at: String,
+    #[serde(rename = "updatedAt", alias = "updated_at")]
     pub updated_at: String,
+    pub scenario: ScenarioData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScenarioData {
+    pub content: String,
     pub scenes: serde_json::Value,
 }
 
