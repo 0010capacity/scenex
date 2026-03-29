@@ -1,5 +1,5 @@
-import { Box, Text, Select, TextInput, Textarea, Loader, ActionIcon, NumberInput, Tooltip } from '@mantine/core';
-import { IconX, IconSquare, IconSparkles, IconTrash, IconUpload } from '@tabler/icons-react';
+import { Box, Text, Select, TextInput, Textarea, Loader, ActionIcon, NumberInput, Tooltip, Menu } from '@mantine/core';
+import { IconX, IconSquare, IconSparkles, IconTrash, IconUpload, IconPlus } from '@tabler/icons-react';
 import { useState } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import { readFile, writeFile, mkdir, exists } from '@tauri-apps/plugin-fs';
@@ -22,52 +22,94 @@ export function InspectorPanel() {
   const toggleRightSidebar = useUIStore(s => s.toggleRightSidebar);
   const addNotification = useUIStore(s => s.addNotification);
   const currentProjectPath = useWorkspaceStore(s => s.currentProjectPath);
-  const { generatePanel, generateDescriptionSuggestion } = useClaude();
-  const [isRegenerating, setIsRegenerating] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const { generatePanel } = useClaude();
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const panel = getSelectedPanel();
 
-  const handleRegenerate = async () => {
-    if (!panel?.description.trim()) return;
-    setIsRegenerating(true);
+  const handleGenerateWithAI = async () => {
+    if (!panel) return;
+    if (!panel.description.trim()) {
+      addNotification('error', '장면 설명을 입력해주세요');
+      return;
+    }
+    setIsGenerating(true);
     try {
       const result = await generatePanel(panel.description, panel.shotType ?? undefined, panel.moodTags);
       if (result.success && result.svg_data) {
-        updatePanel(panel.id, { svgData: result.svg_data });
-        addNotification('info', '패널이 AI로 재생성되었습니다');
+        updatePanel(panel.id, { svgData: result.svg_data, imageData: null, imagePath: null });
+        addNotification('info', 'AI가 이미지를 생성했습니다');
       } else if (result.error) {
-        console.error('AI regeneration failed:', result.error);
-        addNotification('error', `AI 재생성 실패: ${result.error}`);
+        addNotification('error', `AI 생성 실패: ${result.error}`);
       }
     } catch (error) {
-      console.error('AI regeneration failed:', error);
-      addNotification('error', `AI 재생성 실패: ${error}`);
+      addNotification('error', `AI 생성 실패: ${error}`);
     } finally {
-      setIsRegenerating(false);
+      setIsGenerating(false);
     }
   };
 
-  const handleAutoEnhance = async () => {
-    if (!panel?.description.trim()) return;
-    setIsEnhancing(true);
-    try {
-      const result = await generateDescriptionSuggestion(panel.description);
-      if (result.success && result.suggestion) {
-        updatePanel(panel.id, { description: result.suggestion });
-        addNotification('info', '설명이 자동 완성되었습니다');
-      } else if (result.error) {
-        console.error('Auto-enhance failed:', result.error);
-        addNotification('error', `설명 자동 완성 실패: ${result.error}`);
+  const handleFileUpload = async () => {
+    if (!panel) return;
+    if (!currentProjectPath) {
+      addNotification('error', '프로젝트를 먼저 저장해주세요');
+      return;
+    }
+
+    const selected = await open({
+      multiple: false,
+      filters: [{ name: 'Images', extensions: ['svg', 'png', 'jpg', 'jpeg', 'gif', 'webp'] }],
+    });
+
+    if (selected && typeof selected === 'string') {
+      try {
+        const fileData = await readFile(selected);
+        const fileName = selected.split('/').pop() || 'image';
+        const ext = fileName.split('.').pop()?.toLowerCase() || 'bin';
+
+        const assetsPath = `${currentProjectPath}/assets`;
+        const assetsExists = await exists(assetsPath);
+        if (!assetsExists) {
+          await mkdir(assetsPath, { recursive: true });
+        }
+
+        const timestamp = Date.now();
+        const uniqueName = `panel-${panel.number}-${timestamp}.${ext}`;
+        const destPath = `${assetsPath}/${uniqueName}`;
+
+        await writeFile(destPath, fileData);
+
+        if (ext === 'svg') {
+          const decoder = new TextDecoder();
+          const svgContent = decoder.decode(fileData);
+          updatePanel(panel.id, {
+            svgData: svgContent,
+            imagePath: `assets/${uniqueName}`,
+            imageData: null,
+          });
+        } else {
+          const mimeType = ext === 'png' ? 'image/png'
+            : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg'
+            : ext === 'gif' ? 'image/gif'
+            : ext === 'webp' ? 'image/webp'
+            : 'application/octet-stream';
+          const base64 = btoa(String.fromCharCode(...fileData));
+          const dataUrl = `data:${mimeType};base64,${base64}`;
+          updatePanel(panel.id, {
+            imageData: dataUrl,
+            imagePath: `assets/${uniqueName}`,
+            svgData: null,
+          });
+        }
+
+        addNotification('info', '이미지가 추가되었습니다');
+      } catch (err) {
+        addNotification('error', '이미지 업로드 실패');
       }
-    } catch (error) {
-      console.error('Auto-enhance failed:', error);
-      addNotification('error', `설명 자동 완성 실패: ${error}`);
-    } finally {
-      setIsEnhancing(false);
     }
   };
+
+  const hasImage = panel && (panel.svgData || panel.imageData);
 
   return (
     <Box
@@ -136,6 +178,116 @@ export function InspectorPanel() {
           </Box>
         ) : (
           <>
+            {/* Image Area - Top of panel */}
+            <Box
+              mb={16}
+              style={{
+                borderRadius: 4,
+                overflow: 'hidden',
+                background: 'var(--bg2)',
+                aspectRatio: '16/9',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px dashed var(--border)',
+                cursor: 'pointer',
+                position: 'relative',
+              }}
+              onClick={() => {
+                if (hasImage) {
+                  // Show menu with options
+                }
+              }}
+            >
+              {hasImage ? (
+                <>
+                  {panel.svgData ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: panel.svgData }}
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                  ) : (
+                    <img
+                      src={panel.imageData!}
+                      alt="Panel preview"
+                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                    />
+                  )}
+                  {/* Overlay with actions */}
+                  <Menu position="bottom-end" withArrow>
+                    <Menu.Target>
+                      <Box
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          position: 'absolute',
+                          top: 6,
+                          right: 6,
+                          background: 'rgba(0,0,0,0.6)',
+                          borderRadius: 4,
+                          padding: '2px 6px',
+                          display: 'flex',
+                          gap: 4,
+                        }}
+                      >
+                        <ActionIcon
+                          size="xs"
+                          variant="subtle"
+                          style={{ color: 'white' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFileUpload();
+                          }}
+                          title="파일에서 불러오기"
+                        >
+                          <IconUpload size={12} stroke={1.5} />
+                        </ActionIcon>
+                        <ActionIcon
+                          size="xs"
+                          variant="subtle"
+                          style={{ color: 'white' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGenerateWithAI();
+                          }}
+                          disabled={isGenerating}
+                          title="AI로 생성"
+                        >
+                          {isGenerating ? <Loader size={10} color="white" /> : <IconSparkles size={12} stroke={1.5} />}
+                        </ActionIcon>
+                        <ActionIcon
+                          size="xs"
+                          variant="subtle"
+                          style={{ color: '#ff6b6b' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updatePanel(panel.id, { svgData: null, imageData: null, imagePath: null });
+                          }}
+                          title="삭제"
+                        >
+                          <IconTrash size={12} stroke={1.5} />
+                        </ActionIcon>
+                      </Box>
+                    </Menu.Target>
+                  </Menu>
+                </>
+              ) : (
+                <Box
+                  onClick={handleFileUpload}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 8,
+                    color: 'var(--text3)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <IconPlus size={24} stroke={1.5} />
+                  <Text size="xs">이미지 추가</Text>
+                </Box>
+              )}
+            </Box>
+
             {/* Panel number header */}
             <Box mb={16} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontSize: 14, fontWeight: 500, color: 'var(--text)' }}>
@@ -313,173 +465,6 @@ export function InspectorPanel() {
                   size="sm"
                 />
               </Box>
-            </Box>
-
-            {/* Image */}
-            <Box className="insp-section">
-              <Text className="insp-sec-label">이미지</Text>
-
-              {/* Preview */}
-              {(panel.svgData || panel.imageData) && (
-                <Box
-                  style={{
-                    marginBottom: 8,
-                    borderRadius: 4,
-                    overflow: 'hidden',
-                    background: 'var(--bg2)',
-                    aspectRatio: '16/9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {panel.svgData ? (
-                    <div
-                      dangerouslySetInnerHTML={{ __html: panel.svgData }}
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  ) : (
-                    <img
-                      src={panel.imageData!}
-                      alt="Panel preview"
-                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
-                    />
-                  )}
-                </Box>
-              )}
-
-              <Box className="insp-field">
-                <Box style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    className="btn btn-outline btn-sm"
-                    onClick={async () => {
-                      if (!currentProjectPath) {
-                        addNotification('error', '프로젝트를 먼저 저장해주세요');
-                        return;
-                      }
-
-                      const selected = await open({
-                        multiple: false,
-                        filters: [{ name: 'Images', extensions: ['svg', 'png', 'jpg', 'jpeg', 'gif', 'webp'] }],
-                      });
-
-                      if (selected && typeof selected === 'string') {
-                        setIsUploading(true);
-                        try {
-                          const fileData = await readFile(selected);
-                          const fileName = selected.split('/').pop() || 'image';
-                          const ext = fileName.split('.').pop()?.toLowerCase() || 'bin';
-
-                          // Ensure assets folder exists
-                          const assetsPath = `${currentProjectPath}/assets`;
-                          const assetsExists = await exists(assetsPath);
-                          if (!assetsExists) {
-                            await mkdir(assetsPath, { recursive: true });
-                          }
-
-                          // Generate unique filename
-                          const timestamp = Date.now();
-                          const uniqueName = `panel-${panel.number}-${timestamp}.${ext}`;
-                          const destPath = `${assetsPath}/${uniqueName}`;
-
-                          // Copy file to assets folder
-                          await writeFile(destPath, fileData);
-
-                          // Determine how to store based on file type
-                          if (ext === 'svg') {
-                            const decoder = new TextDecoder();
-                            const svgContent = decoder.decode(fileData);
-                            updatePanel(panel.id, {
-                              svgData: svgContent,
-                              imagePath: `assets/${uniqueName}`,
-                              imageData: null,
-                            });
-                          } else {
-                            // For raster images, create base64 data URL
-                            const mimeType = ext === 'png' ? 'image/png'
-                              : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg'
-                              : ext === 'gif' ? 'image/gif'
-                              : ext === 'webp' ? 'image/webp'
-                              : 'application/octet-stream';
-                            const base64 = btoa(String.fromCharCode(...fileData));
-                            const dataUrl = `data:${mimeType};base64,${base64}`;
-                            updatePanel(panel.id, {
-                              imageData: dataUrl,
-                              imagePath: `assets/${uniqueName}`,
-                              svgData: null,
-                            });
-                          }
-
-                          addNotification('info', '이미지가 추가되었습니다');
-                        } catch (err) {
-                          console.error('Failed to upload image:', err);
-                          addNotification('error', '이미지 업로드 실패');
-                        } finally {
-                          setIsUploading(false);
-                        }
-                      }
-                    }}
-                    disabled={isUploading}
-                    style={{ flex: 1, justifyContent: 'center' }}
-                  >
-                    {isUploading ? (
-                      <Loader size={12} color="var(--accent)" />
-                    ) : (
-                      <>
-                        <IconUpload size={12} stroke={1.5} />
-                        파일에서 불러오기
-                      </>
-                    )}
-                  </button>
-
-                  {(panel.svgData || panel.imageData) && (
-                    <button
-                      className="btn btn-outline btn-sm"
-                      onClick={() => {
-                        updatePanel(panel.id, { svgData: null, imageData: null, imagePath: null });
-                      }}
-                      title="이미지 삭제"
-                    >
-                      <IconTrash size={12} stroke={1.5} />
-                    </button>
-                  )}
-                </Box>
-              </Box>
-            </Box>
-
-            {/* AI */}
-            <Box className="insp-section">
-              <Text className="insp-sec-label">AI</Text>
-              <button
-                className="btn btn-accent"
-                onClick={handleRegenerate}
-                disabled={!panel.description.trim() || isRegenerating}
-                style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
-              >
-                {isRegenerating ? (
-                  <Loader size={12} color="var(--accent)" />
-                ) : (
-                  <>
-                    <IconSparkles size={12} stroke={1.5} />
-                    이 패널 AI 재생성
-                  </>
-                )}
-              </button>
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={handleAutoEnhance}
-                disabled={!panel.description.trim() || isEnhancing}
-                style={{ width: '100%', justifyContent: 'center', marginTop: 6 }}
-              >
-                {isEnhancing ? (
-                  <Loader size={12} color="var(--accent)" />
-                ) : (
-                  <>
-                    <IconSparkles size={12} stroke={1.5} />
-                    설명 자동 완성
-                  </>
-                )}
-              </button>
             </Box>
           </>
         )}
