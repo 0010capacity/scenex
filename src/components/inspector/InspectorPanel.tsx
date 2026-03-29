@@ -1,8 +1,11 @@
 import { Box, Text, Select, TextInput, Textarea, Loader, ActionIcon, NumberInput, Tooltip } from '@mantine/core';
-import { IconX, IconSquare, IconSparkles, IconTrash } from '@tabler/icons-react';
+import { IconX, IconSquare, IconSparkles, IconTrash, IconUpload } from '@tabler/icons-react';
 import { useState } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readFile, writeFile, mkdir, exists } from '@tauri-apps/plugin-fs';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useClaude } from '@/hooks/useClaude';
 import {
   SHOT_TYPE_OPTIONS,
@@ -18,9 +21,11 @@ export function InspectorPanel() {
   const deletePanel = useProjectStore(s => s.deletePanel);
   const toggleRightSidebar = useUIStore(s => s.toggleRightSidebar);
   const addNotification = useUIStore(s => s.addNotification);
+  const currentProjectPath = useWorkspaceStore(s => s.currentProjectPath);
   const { generatePanel, generateDescriptionSuggestion } = useClaude();
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const panel = getSelectedPanel();
 
@@ -307,6 +312,138 @@ export function InspectorPanel() {
                   }))}
                   size="sm"
                 />
+              </Box>
+            </Box>
+
+            {/* Image */}
+            <Box className="insp-section">
+              <Text className="insp-sec-label">이미지</Text>
+
+              {/* Preview */}
+              {(panel.svgData || panel.imageData) && (
+                <Box
+                  style={{
+                    marginBottom: 8,
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    background: 'var(--bg2)',
+                    aspectRatio: '16/9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {panel.svgData ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: panel.svgData }}
+                      style={{ width: '100%', height: '100%' }}
+                    />
+                  ) : (
+                    <img
+                      src={panel.imageData!}
+                      alt="Panel preview"
+                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                    />
+                  )}
+                </Box>
+              )}
+
+              <Box className="insp-field">
+                <Box style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={async () => {
+                      if (!currentProjectPath) {
+                        addNotification('error', '프로젝트를 먼저 저장해주세요');
+                        return;
+                      }
+
+                      const selected = await open({
+                        multiple: false,
+                        filters: [{ name: 'Images', extensions: ['svg', 'png', 'jpg', 'jpeg', 'gif', 'webp'] }],
+                      });
+
+                      if (selected && typeof selected === 'string') {
+                        setIsUploading(true);
+                        try {
+                          const fileData = await readFile(selected);
+                          const fileName = selected.split('/').pop() || 'image';
+                          const ext = fileName.split('.').pop()?.toLowerCase() || 'bin';
+
+                          // Ensure assets folder exists
+                          const assetsPath = `${currentProjectPath}/assets`;
+                          const assetsExists = await exists(assetsPath);
+                          if (!assetsExists) {
+                            await mkdir(assetsPath, { recursive: true });
+                          }
+
+                          // Generate unique filename
+                          const timestamp = Date.now();
+                          const uniqueName = `panel-${panel.number}-${timestamp}.${ext}`;
+                          const destPath = `${assetsPath}/${uniqueName}`;
+
+                          // Copy file to assets folder
+                          await writeFile(destPath, fileData);
+
+                          // Determine how to store based on file type
+                          if (ext === 'svg') {
+                            const decoder = new TextDecoder();
+                            const svgContent = decoder.decode(fileData);
+                            updatePanel(panel.id, {
+                              svgData: svgContent,
+                              imagePath: `assets/${uniqueName}`,
+                              imageData: null,
+                            });
+                          } else {
+                            // For raster images, create base64 data URL
+                            const mimeType = ext === 'png' ? 'image/png'
+                              : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg'
+                              : ext === 'gif' ? 'image/gif'
+                              : ext === 'webp' ? 'image/webp'
+                              : 'application/octet-stream';
+                            const base64 = btoa(String.fromCharCode(...fileData));
+                            const dataUrl = `data:${mimeType};base64,${base64}`;
+                            updatePanel(panel.id, {
+                              imageData: dataUrl,
+                              imagePath: `assets/${uniqueName}`,
+                              svgData: null,
+                            });
+                          }
+
+                          addNotification('info', '이미지가 추가되었습니다');
+                        } catch (err) {
+                          console.error('Failed to upload image:', err);
+                          addNotification('error', '이미지 업로드 실패');
+                        } finally {
+                          setIsUploading(false);
+                        }
+                      }
+                    }}
+                    disabled={isUploading}
+                    style={{ flex: 1, justifyContent: 'center' }}
+                  >
+                    {isUploading ? (
+                      <Loader size={12} color="var(--accent)" />
+                    ) : (
+                      <>
+                        <IconUpload size={12} stroke={1.5} />
+                        파일에서 불러오기
+                      </>
+                    )}
+                  </button>
+
+                  {(panel.svgData || panel.imageData) && (
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => {
+                        updatePanel(panel.id, { svgData: null, imageData: null, imagePath: null });
+                      }}
+                      title="이미지 삭제"
+                    >
+                      <IconTrash size={12} stroke={1.5} />
+                    </button>
+                  )}
+                </Box>
               </Box>
             </Box>
 

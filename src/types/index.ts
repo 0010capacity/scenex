@@ -42,7 +42,8 @@ export interface Panel {
   sound: string;
   moodTags: MoodTag[];
   transition: Transition;
-  imageData: string | null;
+  imageData: string | null; // base64 encoded for preview
+  imagePath: string | null; // relative path in assets folder
   svgData: string | null;
   sourceType: SourceType;
   version: number;
@@ -120,6 +121,7 @@ export function createEmptyPanel(number: number): Panel {
     moodTags: [],
     transition: 'cut',
     imageData: null,
+    imagePath: null,
     svgData: null,
     sourceType: 'empty',
     version: 1,
