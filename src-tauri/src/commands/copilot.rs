@@ -20,6 +20,8 @@ pub struct CopilotContext {
     pub selected_scenario_name: Option<String>,
     pub scenario_description: Option<String>,
     pub scenario_content: Option<String>,
+    // User context
+    pub user_language: Option<String>,
 }
 
 /// Chat message for history
@@ -102,6 +104,8 @@ fn build_prompt(message: &str, ctx: &CopilotContext, history: &[ChatMessage]) ->
         .replace("{{selected_scenario_name}}", ctx.selected_scenario_name.as_deref().unwrap_or("none"))
         .replace("{{scenario_description}}", ctx.scenario_description.as_deref().unwrap_or("empty"))
         .replace("{{scenario_content}}", ctx.scenario_content.as_deref().unwrap_or("(시나리오 내용이 없습니다)"))
+        // User context
+        .replace("{{user_language}}", ctx.user_language.as_deref().unwrap_or("ko"))
         .replace("{{conversation_history}}", &history_section)
         .replace("{{user_message}}", message)
 }

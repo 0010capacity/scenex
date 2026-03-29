@@ -67,6 +67,8 @@ export function useCopilot() {
       selectedScenarioName: scenario?.name ?? null,
       scenarioDescription: scenario?.description || null,
       scenarioContent: scenario?.content || null,
+      // User context
+      userLanguage: 'ko', // TODO: get from user settings when available
     };
   }, [editorMode, selectedSceneId, selectedPanelId, project, getSelectedScene, findSelectedPanel]);
 

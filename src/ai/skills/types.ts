@@ -106,6 +106,8 @@ export interface CopilotContext {
   selectedScenarioName: string | null;
   scenarioDescription: string | null;
   scenarioContent: string | null;
+  // User context
+  userLanguage: string;
 }
 
 /**
