@@ -3,52 +3,98 @@
 
 import type { Skill, SkillResult, ToolExecutor } from './types';
 import { getPanelById, getSceneById } from './types';
-import { registerSkill } from './registry';
+import { registerSkill, validateParams, formatValidationErrors } from './registry';
+import { skillLogger } from './logger';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
 import { getAIProvider } from '@/ai';
 import type { ShotType, MoodTag } from '@/types';
+import {
+  AddPanelParamsSchema,
+  EditPanelParamsSchema,
+  DeletePanelParamsSchema,
+  DrawSvgParamsSchema,
+  ReorderPanelsParamsSchema,
+  BatchEditParamsSchema,
+  GenerateStoryboardParamsSchema,
+} from './schemas';
 
 /**
  * Add a new panel to a scene
  */
 const addPanel: ToolExecutor<{ panelId: string; sceneId: string }> = (ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate parameters
+  const validation = validateParams(AddPanelParamsSchema, params);
+  if (!validation.success) {
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'add_panel',
+      params,
+      result: 'validation_error',
+      error: formatValidationErrors(validation.errors),
+      duration: Date.now() - startTime,
+    });
+    return { success: false, error: formatValidationErrors(validation.errors) };
+  }
+
+  const data = validation.data;
   const store = useProjectStore.getState();
 
   // Determine target scene
-  const sceneId = (params.scene_id as string) || ctx.selectedSceneId;
+  const sceneId = data.scene_id || ctx.selectedSceneId;
   if (!sceneId) {
-    return { success: false, error: 'No scene specified and no scene selected' };
+    const result = { success: false, error: 'No scene specified and no scene selected' };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'add_panel',
+      params,
+      result: 'failed',
+      message: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const scene = getSceneById(store.project!, sceneId);
   if (!scene) {
-    return { success: false, error: `Scene not found: ${sceneId}` };
+    const result = { success: false, error: `Scene not found: ${sceneId}` };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'add_panel',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   // Create panel with provided parameters
   const panelData: Record<string, unknown> = {};
 
-  if (params.shot_type) {
-    panelData.shotType = params.shot_type as ShotType;
+  if (data.shot_type) {
+    panelData.shotType = data.shot_type as ShotType;
   }
-  if (params.description) {
-    panelData.description = params.description as string;
+  if (data.description) {
+    panelData.description = data.description as string;
   }
-  if (params.dialogue) {
-    panelData.dialogue = params.dialogue as string;
+  if (data.dialogue) {
+    panelData.dialogue = data.dialogue as string;
   }
-  if (params.sound) {
-    panelData.sound = params.sound as string;
+  if (data.sound) {
+    panelData.sound = data.sound as string;
   }
-  if (params.mood_tags) {
-    panelData.moodTags = params.mood_tags as MoodTag[];
+  if (data.mood_tags) {
+    panelData.moodTags = data.mood_tags as MoodTag[];
   }
+  // duration and camera_movement are not in AddPanelParamsSchema but may be passed via raw params
   if (params.duration) {
     panelData.duration = params.duration as string;
   }
   if (params.camera_movement) {
-    panelData.cameraMovement = params.camera_movement;
+    panelData.cameraMovement = params.camera_movement as string;
   }
 
   store.addPanel(sceneId, panelData);
@@ -67,10 +113,20 @@ const addPanel: ToolExecutor<{ panelId: string; sceneId: string }> = (ctx, param
   };
 
   // Optionally generate SVG
-  if (params.generate_svg === true && newPanel) {
+  // Note: style_hint is not in AddPanelParamsSchema but may be passed via raw params
+  if (data.generate_svg === true && newPanel) {
     // Fire and forget SVG generation
     generateSVGForPanel(sceneId, newPanel.id, params.style_hint as string | undefined);
   }
+
+  skillLogger.log({
+    skill: 'storyboard',
+    tool: 'add_panel',
+    params,
+    result: 'success',
+    message: result.message,
+    duration: Date.now() - startTime,
+  });
 
   return result;
 };
@@ -79,74 +135,164 @@ const addPanel: ToolExecutor<{ panelId: string; sceneId: string }> = (ctx, param
  * Edit an existing panel
  */
 const editPanel: ToolExecutor<{ panelId: string }> = (ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate parameters
+  const validation = validateParams(EditPanelParamsSchema, params);
+  if (!validation.success) {
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'edit_panel',
+      params,
+      result: 'validation_error',
+      error: formatValidationErrors(validation.errors),
+      duration: Date.now() - startTime,
+    });
+    return { success: false, error: formatValidationErrors(validation.errors) };
+  }
+
+  const data = validation.data;
   const store = useProjectStore.getState();
 
   // Determine target panel
-  const panelId = (params.panel_id as string) || ctx.selectedPanelId;
+  const panelId = data.panel_id || ctx.selectedPanelId;
   if (!panelId) {
-    return { success: false, error: 'No panel specified and no panel selected' };
+    const result = { success: false, error: 'No panel specified and no panel selected' };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'edit_panel',
+      params,
+      result: 'failed',
+      message: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const panelInfo = getPanelById(store.project!, panelId);
   if (!panelInfo) {
-    return { success: false, error: `Panel not found: ${panelId}` };
+    const result = { success: false, error: `Panel not found: ${panelId}` };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'edit_panel',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   // Build updates
   const updates: Record<string, unknown> = {};
 
-  if (params.shot_type !== undefined) {
-    updates.shotType = params.shot_type;
+  if (data.shot_type !== undefined) {
+    updates.shotType = data.shot_type;
   }
-  if (params.description !== undefined) {
-    updates.description = params.description;
+  if (data.description !== undefined) {
+    updates.description = data.description;
   }
-  if (params.dialogue !== undefined) {
-    updates.dialogue = params.dialogue;
+  if (data.dialogue !== undefined) {
+    updates.dialogue = data.dialogue;
   }
-  if (params.sound !== undefined) {
-    updates.sound = params.sound;
+  if (data.sound !== undefined) {
+    updates.sound = data.sound;
   }
-  if (params.mood_tags !== undefined) {
-    updates.moodTags = params.mood_tags;
+  if (data.mood_tags !== undefined) {
+    updates.moodTags = data.mood_tags;
   }
-  if (params.camera_movement !== undefined) {
-    updates.cameraMovement = params.camera_movement;
+  if (data.camera_movement !== undefined) {
+    updates.cameraMovement = data.camera_movement;
   }
-  if (params.duration !== undefined) {
-    updates.duration = params.duration;
+  if (data.duration !== undefined) {
+    updates.duration = data.duration;
   }
-  if (params.transition !== undefined) {
-    updates.transition = params.transition;
+  if (data.transition !== undefined) {
+    updates.transition = data.transition;
   }
 
   if (Object.keys(updates).length === 0) {
-    return { success: false, error: 'No updates provided' };
+    const result = { success: false, error: 'No updates provided' };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'edit_panel',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   store.updatePanel(panelId, updates);
 
-  return {
+  const result: SkillResult<{ panelId: string }> = {
     success: true,
     data: { panelId },
     message: `Updated panel ${panelInfo.panel.number} in scene "${panelInfo.scene.name}"`,
   };
+
+  skillLogger.log({
+    skill: 'storyboard',
+    tool: 'edit_panel',
+    params,
+    result: 'success',
+    message: result.message,
+    duration: Date.now() - startTime,
+  });
+
+  return result;
 };
 
 /**
  * Delete a panel
  */
 const deletePanel: ToolExecutor = (ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate parameters
+  const validation = validateParams(DeletePanelParamsSchema, params);
+  if (!validation.success) {
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'delete_panel',
+      params,
+      result: 'validation_error',
+      error: formatValidationErrors(validation.errors),
+      duration: Date.now() - startTime,
+    });
+    return { success: false, error: formatValidationErrors(validation.errors) };
+  }
+
+  const data = validation.data;
   const store = useProjectStore.getState();
 
-  const panelId = (params.panel_id as string) || ctx.selectedPanelId;
+  const panelId = data.panel_id || ctx.selectedPanelId;
   if (!panelId) {
-    return { success: false, error: 'No panel specified and no panel selected' };
+    const result = { success: false, error: 'No panel specified and no panel selected' };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'delete_panel',
+      params,
+      result: 'failed',
+      message: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const panelInfo = getPanelById(store.project!, panelId);
   if (!panelInfo) {
-    return { success: false, error: `Panel not found: ${panelId}` };
+    const result = { success: false, error: `Panel not found: ${panelId}` };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'delete_panel',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const panelNumber = panelInfo.panel.number;
@@ -154,26 +300,72 @@ const deletePanel: ToolExecutor = (ctx, params) => {
 
   store.deletePanel(panelId);
 
-  return {
+  const result: SkillResult = {
     success: true,
     message: `Deleted panel ${panelNumber} from scene "${sceneName}"`,
   };
+
+  skillLogger.log({
+    skill: 'storyboard',
+    tool: 'delete_panel',
+    params,
+    result: 'success',
+    message: result.message,
+    duration: Date.now() - startTime,
+  });
+
+  return result;
 };
 
 /**
  * Generate SVG for a panel
  */
 const drawSvg: ToolExecutor<{ panelId: string; svgData: string }> = async (ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate parameters
+  const validation = validateParams(DrawSvgParamsSchema, params);
+  if (!validation.success) {
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'draw_svg',
+      params,
+      result: 'validation_error',
+      error: formatValidationErrors(validation.errors),
+      duration: Date.now() - startTime,
+    });
+    return { success: false, error: formatValidationErrors(validation.errors) };
+  }
+
+  const data = validation.data;
   const store = useProjectStore.getState();
 
-  const panelId = (params.panel_id as string) || ctx.selectedPanelId;
+  const panelId = data.panel_id || ctx.selectedPanelId;
   if (!panelId) {
-    return { success: false, error: 'No panel specified and no panel selected' };
+    const result = { success: false, error: 'No panel specified and no panel selected' };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'draw_svg',
+      params,
+      result: 'failed',
+      message: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const panelInfo = getPanelById(store.project!, panelId);
   if (!panelInfo) {
-    return { success: false, error: `Panel not found: ${panelId}` };
+    const result = { success: false, error: `Panel not found: ${panelId}` };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'draw_svg',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const panel = panelInfo.panel;
@@ -182,7 +374,7 @@ const drawSvg: ToolExecutor<{ panelId: string; svgData: string }> = async (ctx, 
   try {
     const provider = getAIProvider();
     const response = await provider.generatePanel({
-      description: params.description as string || panel.description,
+      description: data.description as string || panel.description,
       shot_type: panel.shotType ?? undefined,
       mood_tags: panel.moodTags,
     });
@@ -193,22 +385,48 @@ const drawSvg: ToolExecutor<{ panelId: string; svgData: string }> = async (ctx, 
         sourceType: 'ai',
       });
 
-      return {
+      const result: SkillResult<{ panelId: string; svgData: string }> = {
         success: true,
         data: { panelId, svgData: response.svg_data },
         message: `Generated SVG for panel ${panel.number}`,
       };
+
+      skillLogger.log({
+        skill: 'storyboard',
+        tool: 'draw_svg',
+        params,
+        result: 'success',
+        message: result.message,
+        duration: Date.now() - startTime,
+      });
+
+      return result;
     } else {
-      return {
-        success: false,
-        error: response.error || 'SVG generation failed',
-      };
+      const result = { success: false, error: response.error || 'SVG generation failed' };
+      skillLogger.log({
+        skill: 'storyboard',
+        tool: 'draw_svg',
+        params,
+        result: 'failed',
+        error: result.error,
+        duration: Date.now() - startTime,
+      });
+      return result;
     }
   } catch (error) {
-    return {
+    const result = {
       success: false,
       error: error instanceof Error ? error.message : String(error),
     };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'draw_svg',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 };
 
@@ -216,28 +434,68 @@ const drawSvg: ToolExecutor<{ panelId: string; svgData: string }> = async (ctx, 
  * Reorder panels within a scene
  */
 const reorderPanels: ToolExecutor = (ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate parameters
+  const validation = validateParams(ReorderPanelsParamsSchema, params);
+  if (!validation.success) {
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'reorder_panels',
+      params,
+      result: 'validation_error',
+      error: formatValidationErrors(validation.errors),
+      duration: Date.now() - startTime,
+    });
+    return { success: false, error: formatValidationErrors(validation.errors) };
+  }
+
+  const data = validation.data;
   const store = useProjectStore.getState();
 
-  const sceneId = (params.scene_id as string) || ctx.selectedSceneId;
+  const sceneId = data.scene_id || ctx.selectedSceneId;
   if (!sceneId) {
-    return { success: false, error: 'No scene specified and no scene selected' };
+    const result = { success: false, error: 'No scene specified and no scene selected' };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'reorder_panels',
+      params,
+      result: 'failed',
+      message: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
-  const panelIds = params.panel_ids as string[] | undefined;
-  if (!panelIds || !Array.isArray(panelIds)) {
-    return { success: false, error: 'panel_ids must be an array of panel IDs' };
-  }
-
+  const panelIds = data.panel_ids;
   const scene = getSceneById(store.project!, sceneId);
   if (!scene) {
-    return { success: false, error: `Scene not found: ${sceneId}` };
+    const result = { success: false, error: `Scene not found: ${sceneId}` };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'reorder_panels',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   // Validate all panel IDs exist in scene
   const existingIds = new Set(scene.panels.map(p => p.id));
   for (const id of panelIds) {
     if (!existingIds.has(id)) {
-      return { success: false, error: `Panel ${id} not found in scene` };
+      const result = { success: false, error: `Panel ${id} not found in scene` };
+      skillLogger.log({
+        skill: 'storyboard',
+        tool: 'reorder_panels',
+        params,
+        result: 'failed',
+        error: result.error,
+        duration: Date.now() - startTime,
+      });
+      return result;
     }
   }
 
@@ -257,41 +515,87 @@ const reorderPanels: ToolExecutor = (ctx, params) => {
     }
   });
 
-  return {
+  const result: SkillResult = {
     success: true,
     message: `Reordered ${panelIds.length} panels in scene "${scene.name}"`,
   };
+
+  skillLogger.log({
+    skill: 'storyboard',
+    tool: 'reorder_panels',
+    params,
+    result: 'success',
+    message: result.message,
+    duration: Date.now() - startTime,
+  });
+
+  return result;
 };
 
 /**
  * Batch edit all panels in a scene
  */
 const batchEdit: ToolExecutor<{ updatedCount: number }> = (ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate parameters
+  const validation = validateParams(BatchEditParamsSchema, params);
+  if (!validation.success) {
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'batch_edit',
+      params,
+      result: 'validation_error',
+      error: formatValidationErrors(validation.errors),
+      duration: Date.now() - startTime,
+    });
+    return { success: false, error: formatValidationErrors(validation.errors) };
+  }
+
+  const data = validation.data;
   const store = useProjectStore.getState();
 
-  const sceneId = (params.scene_id as string) || ctx.selectedSceneId;
+  const sceneId = data.scene_id || ctx.selectedSceneId;
   if (!sceneId) {
-    return { success: false, error: 'No scene specified and no scene selected' };
+    const result = { success: false, error: 'No scene specified and no scene selected' };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'batch_edit',
+      params,
+      result: 'failed',
+      message: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const scene = getSceneById(store.project!, sceneId);
   if (!scene) {
-    return { success: false, error: `Scene not found: ${sceneId}` };
+    const result = { success: false, error: `Scene not found: ${sceneId}` };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'batch_edit',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const updates: Partial<Record<string, unknown>> = {};
   let styleApplied = false;
 
-  if (params.style) {
-    styleApplied = applyStyle(scene, params.style as string, store);
+  if (data.style) {
+    styleApplied = applyStyle(scene, data.style as string, store);
   }
 
-  if (params.mood_tags) {
-    updates.moodTags = params.mood_tags;
+  if (data.mood_tags) {
+    updates.moodTags = data.mood_tags;
   }
 
-  if (params.default_duration) {
-    updates.duration = params.default_duration;
+  if (data.default_duration) {
+    updates.duration = data.default_duration;
   }
 
   // Apply common updates to all panels
@@ -305,11 +609,22 @@ const batchEdit: ToolExecutor<{ updatedCount: number }> = (ctx, params) => {
     updatedCount = scene.panels.length;
   }
 
-  return {
+  const result: SkillResult<{ updatedCount: number }> = {
     success: true,
     data: { updatedCount },
     message: `Updated ${updatedCount} panels in scene "${scene.name}"`,
   };
+
+  skillLogger.log({
+    skill: 'storyboard',
+    tool: 'batch_edit',
+    params,
+    result: 'success',
+    message: result.message,
+    duration: Date.now() - startTime,
+  });
+
+  return result;
 };
 
 /**
@@ -340,15 +655,41 @@ function applyStyle(scene: ReturnType<typeof getSceneById>, style: string, store
  * Generate entire storyboard from a scenario
  */
 const generateStoryboard: ToolExecutor = async (_ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate parameters
+  const validation = validateParams(GenerateStoryboardParamsSchema, params);
+  if (!validation.success) {
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'generate_storyboard',
+      params,
+      result: 'validation_error',
+      error: formatValidationErrors(validation.errors),
+      duration: Date.now() - startTime,
+    });
+    return { success: false, error: formatValidationErrors(validation.errors) };
+  }
+
+  const data = validation.data;
   const store = useProjectStore.getState();
 
   const scenario = store.project?.scenario;
   if (!scenario) {
-    return { success: false, error: 'No scenario found' };
+    const result = { success: false, error: 'No scenario found' };
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'generate_storyboard',
+      params,
+      result: 'failed',
+      error: result.error,
+      duration: Date.now() - startTime,
+    });
+    return result;
   }
 
   const provider = getAIProvider();
-  const panelCount = (params.panel_count as number) || 16;
+  const panelCount = data.panel_count;
 
   const result = await provider.scenarioToStoryboard({
     scenario_json: scenario.content,
@@ -356,7 +697,16 @@ const generateStoryboard: ToolExecutor = async (_ctx, params) => {
   });
 
   if (!result.success || !result.panels) {
-    return { success: false, error: result.error || 'Failed to generate storyboard' };
+    const err = result.error || 'Failed to generate storyboard';
+    skillLogger.log({
+      skill: 'storyboard',
+      tool: 'generate_storyboard',
+      params,
+      result: 'failed',
+      error: err,
+      duration: Date.now() - startTime,
+    });
+    return { success: false, error: err };
   }
 
   const sceneMap = new Map<number, { name: string; panels: { description: string; shotType: ShotType; duration: string; moodTags: MoodTag[] }[] }>();
@@ -416,11 +766,22 @@ const generateStoryboard: ToolExecutor = async (_ctx, params) => {
     await Promise.all(batch.map(({ sceneId, panelId }) => generateSVGForPanel(sceneId, panelId)));
   }
 
-  return {
+  const successResult: SkillResult = {
     success: true,
     data: { sceneCount: newScenes.length, panelCount: result.panels.length },
     message: `스토리보드 생성 완료: ${newScenes.length}개 씬, ${result.panels.length}개 패널`,
   };
+
+  skillLogger.log({
+    skill: 'storyboard',
+    tool: 'generate_storyboard',
+    params,
+    result: 'success',
+    message: successResult.message,
+    duration: Date.now() - startTime,
+  });
+
+  return successResult;
 };
 
 /**
