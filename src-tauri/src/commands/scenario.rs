@@ -6,14 +6,14 @@ use tauri::command;
 
 use super::prompts;
 
-/// Run Claude CLI with --output-format json and return the parsed JSON string
+/// Run Claude CLI and return the output
+/// Note: Does NOT use --output-format json because that triggers tool-use mode
+/// which causes the model to return skill_calls instead of direct JSON.
 fn run_claude_json(prompt: &str) -> Result<String, String> {
     let claude_path = which::which("claude").map_err(|_| "Claude CLI not found".to_string())?;
 
     let output = Command::new(&claude_path)
         .arg("--print")
-        .arg("--output-format")
-        .arg("json")
         .arg(prompt)
         .output()
         .map_err(|e| format!("Failed to execute: {}", e))?;
@@ -23,55 +23,19 @@ fn run_claude_json(prompt: &str) -> Result<String, String> {
     }
 
     let response = String::from_utf8_lossy(&output.stdout).to_string();
-
-    // Parse the API response to extract the inner JSON
-    #[derive(Debug, Deserialize)]
-    struct ApiResponse {
-        #[serde(alias = "result")]
-        result: Option<String>,
-        #[serde(default)]
-        error: Option<String>,
-    }
-
-    if let Ok(api_resp) = serde_json::from_str::<ApiResponse>(&response) {
-        if let Some(error) = api_resp.error {
-            return Err(format!("API error: {}", error));
-        }
-        if let Some(result_str) = api_resp.result {
-            // The result is a string containing the actual JSON, possibly wrapped in ```json ... ```
-            let inner = result_str.trim();
-            // Try to extract JSON from markdown code fence
-            if let Some(json_start) = inner.find("```json") {
-                let after_fence = &inner[json_start + 7..];
-                if let Some(end_marker) = after_fence.find("```") {
-                    return Ok(after_fence[..end_marker].trim().to_string());
-                }
-            }
-            // Try generic ``` ... ```
-            if let Some(code_start) = inner.find("```") {
-                let after_fence = &inner[code_start + 3..];
-                if let Some(end_marker) = after_fence.find("```") {
-                    let content = after_fence[..end_marker].trim();
-                    if content.starts_with('{') || content.starts_with('[') {
-                        return Ok(content.to_string());
-                    }
-                }
-            }
-            // Otherwise return as-is if it looks like JSON
-            if inner.starts_with('{') || inner.starts_with('[') {
-                return Ok(inner.to_string());
-            }
-            return Err(format!("Response doesn't contain valid JSON: {}", &inner[..inner.len().min(100)]));
-        }
-    }
-
-    // Fallback: try direct parse
     let trimmed = response.trim();
+
+    // Try to extract JSON from markdown code fence
+    if let Some(json_str) = extract_json(trimmed) {
+        return Ok(json_str);
+    }
+
+    // Fallback: if response itself looks like JSON
     if trimmed.starts_with('{') || trimmed.starts_with('[') {
         return Ok(trimmed.to_string());
     }
 
-    Err(format!("Failed to parse Claude response. Snippet: {}", &response[..response.len().min(200)]))
+    Err(format!("Failed to find JSON in response. Snippet: {}", &trimmed[..trimmed.len().min(200)]))
 }
 
 /// Extract JSON from text that may be wrapped in markdown code fences
