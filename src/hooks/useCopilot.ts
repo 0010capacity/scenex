@@ -51,6 +51,15 @@ export function useCopilot() {
     const selectedPanel = findSelectedPanel();
     const scenario = project?.scenario;
 
+    // DEBUG: Log scenario content for debugging
+    console.debug('[Copilot] buildContext:', {
+      hasProject: !!project,
+      hasScenario: !!scenario,
+      scenarioName: scenario?.name,
+      contentLength: scenario?.content?.length ?? 0,
+      contentPreview: scenario?.content?.slice(0, 100) ?? 'EMPTY',
+    });
+
     return {
       mode: editorMode,
       selectedSceneId,
@@ -64,7 +73,7 @@ export function useCopilot() {
       panelMoodTags: selectedPanel?.moodTags?.length ? selectedPanel.moodTags : null,
       // Scenario context
       selectedScenarioId: scenario?.id ?? null,
-      selectedScenarioName: scenario?.name ?? null,
+      selectedScenarioName: project?.name ?? null, // Use project name instead of scenario name
       scenarioDescription: scenario?.description || null,
       scenarioContent: scenario?.content || null,
       // User context
@@ -79,6 +88,12 @@ export function useCopilot() {
     skillCalls: SkillCall[]
   ): Promise<SkillResult[]> => {
     const results: SkillResult[] = [];
+
+    // DEBUG: Log what's being passed to skill executor
+    const store = useProjectStore.getState();
+    console.debug('[executeSkillCalls] Current project:', !!store.project);
+    console.debug('[executeSkillCalls] Current scenario:', !!store.project?.scenario);
+    console.debug('[executeSkillCalls] Passed project:', !!project);
 
     for (const call of skillCalls) {
       const result = await skillsRegistry.execute(

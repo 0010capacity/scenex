@@ -7,7 +7,7 @@ pub fn create_menu<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<tauri
     // Submenu: App Menu (SceneX)
     let app_menu = SubmenuBuilder::new(app, "SceneX")
         .item(&MenuItemBuilder::with_id("about", "About SceneX").build(app)?)
-        .item(&MenuItemBuilder::with_id("preferences", "Preferences..."). accelerator("CmdOrCtrl+,").build(app)?)
+        .item(&MenuItemBuilder::with_id("preferences", "Preferences...").accelerator("CmdOrCtrl+,").build(app)?)
         .separator()
         .item(&PredefinedMenuItem::hide(app, Some("Hide SceneX"))?)
         .item(&PredefinedMenuItem::hide_others(app, Some("Hide Others"))?)
@@ -18,14 +18,14 @@ pub fn create_menu<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<tauri
 
     // Submenu: File Menu
     let file_menu = SubmenuBuilder::new(app, "File")
-        .item(&MenuItemBuilder::with_id("new-project", "New Project"). accelerator("CmdOrCtrl+N").build(app)?)
-        .item(&MenuItemBuilder::with_id("open", "Open..."). accelerator("CmdOrCtrl+O").build(app)?)
+        .item(&MenuItemBuilder::with_id("new-project", "New Project").accelerator("CmdOrCtrl+N").build(app)?)
+        .item(&MenuItemBuilder::with_id("open", "Open...").accelerator("CmdOrCtrl+O").build(app)?)
         .item(&SubmenuBuilder::new(app, "Open Recent")
             .item(&MenuItemBuilder::with_id("open-recent-clear", "Clear Menu").build(app)?)
             .build()?)
         .separator()
-        .item(&MenuItemBuilder::with_id("save", "Save"). accelerator("CmdOrCtrl+S").build(app)?)
-        .item(&MenuItemBuilder::with_id("save-as", "Save As..."). accelerator("CmdOrCtrl+Shift+S").build(app)?)
+        .item(&MenuItemBuilder::with_id("save", "Save").accelerator("CmdOrCtrl+S").build(app)?)
+        .item(&MenuItemBuilder::with_id("save-as", "Save As...").accelerator("CmdOrCtrl+Shift+S").build(app)?)
         .separator()
         .item(&SubmenuBuilder::new(app, "Export")
             .item(&MenuItemBuilder::with_id("export-pdf", "PDF...").build(app)?)
@@ -34,7 +34,7 @@ pub fn create_menu<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<tauri
             .item(&MenuItemBuilder::with_id("export-premiere-xml", "Premiere Pro XML...").build(app)?)
             .build()?)
         .separator()
-        .item(&MenuItemBuilder::with_id("close-project", "Close Project"). accelerator("CmdOrCtrl+W").build(app)?)
+        .item(&MenuItemBuilder::with_id("close-project", "Close Project").accelerator("CmdOrCtrl+W").build(app)?)
         .build()?;
 
     // Submenu: Edit Menu
@@ -48,27 +48,27 @@ pub fn create_menu<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<tauri
         .separator()
         .item(&PredefinedMenuItem::select_all(app, Some("Select All"))?)
         .separator()
-        .item(&MenuItemBuilder::with_id("find-in-scenario", "Find in Scenario..."). accelerator("CmdOrCtrl+F").build(app)?)
+        .item(&MenuItemBuilder::with_id("find-in-scenario", "Find in Scenario...").accelerator("CmdOrCtrl+F").build(app)?)
         .build()?;
 
     // Submenu: View Menu
     let view_menu = SubmenuBuilder::new(app, "View")
         .item(&SubmenuBuilder::new(app, "Workspace Mode")
-            .item(&MenuItemBuilder::with_id("view-workspace-scenario", "Scenario"). accelerator("CmdOrCtrl+1").build(app)?)
-            .item(&MenuItemBuilder::with_id("view-workspace-storyboard", "Storyboard"). accelerator("CmdOrCtrl+2").build(app)?)
+            .item(&MenuItemBuilder::with_id("view-workspace-scenario", "Scenario").accelerator("CmdOrCtrl+1").build(app)?)
+            .item(&MenuItemBuilder::with_id("view-workspace-storyboard", "Storyboard").accelerator("CmdOrCtrl+2").build(app)?)
             .build()?)
         .item(&SubmenuBuilder::new(app, "Panel View")
-            .item(&MenuItemBuilder::with_id("view-panel-grid", "Grid"). accelerator("CmdOrCtrl+Shift+G").build(app)?)
-            .item(&MenuItemBuilder::with_id("view-panel-strip", "Strip"). accelerator("CmdOrCtrl+Shift+T").build(app)?)
-            .item(&MenuItemBuilder::with_id("view-panel-slide", "Slide"). accelerator("CmdOrCtrl+Shift+L").build(app)?)
+            .item(&MenuItemBuilder::with_id("view-panel-grid", "Grid").accelerator("CmdOrCtrl+Shift+G").build(app)?)
+            .item(&MenuItemBuilder::with_id("view-panel-strip", "Strip").accelerator("CmdOrCtrl+Shift+T").build(app)?)
+            .item(&MenuItemBuilder::with_id("view-panel-slide", "Slide").accelerator("CmdOrCtrl+Shift+L").build(app)?)
             .build()?)
         .separator()
-        .item(&MenuItemBuilder::with_id("zoom-in", "Zoom In"). accelerator("CmdOrCtrl+=").build(app)?)
-        .item(&MenuItemBuilder::with_id("zoom-out", "Zoom Out"). accelerator("CmdOrCtrl+-").build(app)?)
-        .item(&MenuItemBuilder::with_id("zoom-reset", "Reset Zoom"). accelerator("CmdOrCtrl+0").build(app)?)
+        .item(&MenuItemBuilder::with_id("zoom-in", "Zoom In").accelerator("CmdOrCtrl+=").build(app)?)
+        .item(&MenuItemBuilder::with_id("zoom-out", "Zoom Out").accelerator("CmdOrCtrl+-").build(app)?)
+        .item(&MenuItemBuilder::with_id("zoom-reset", "Reset Zoom").accelerator("CmdOrCtrl+0").build(app)?)
         .separator()
-        .item(&MenuItemBuilder::with_id("toggle-inspector", "Toggle Inspector"). accelerator("CmdOrCtrl+I").build(app)?)
-        .item(&MenuItemBuilder::with_id("toggle-copilot", "Toggle AI Copilot"). accelerator("CmdOrCtrl+Shift+C").build(app)?)
+        .item(&MenuItemBuilder::with_id("toggle-inspector", "Toggle Inspector").accelerator("CmdOrCtrl+I").build(app)?)
+        .item(&MenuItemBuilder::with_id("toggle-copilot", "Toggle AI Copilot").accelerator("CmdOrCtrl+Shift+C").build(app)?)
         .build()?;
 
     // Submenu: Window Menu

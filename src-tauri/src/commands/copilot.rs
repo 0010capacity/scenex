@@ -4,6 +4,7 @@ use tauri::command;
 
 /// Context information sent from frontend
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CopilotContext {
     pub mode: String,
     pub selected_scene_id: Option<String>,

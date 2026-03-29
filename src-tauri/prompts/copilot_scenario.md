@@ -59,10 +59,7 @@ Improve the flow and expression of the scenario.
 
 ## Context
 
-- Current Scenario: {{selected_scenario_name}}
-- Description: {{scenario_description}}
-
-### Current Content
+### Current Scenario Content
 {{scenario_content}}
 {{conversation_history}}
 

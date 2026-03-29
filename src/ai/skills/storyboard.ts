@@ -675,6 +675,12 @@ const generateStoryboard: ToolExecutor = async (_ctx, params) => {
   const store = useProjectStore.getState();
 
   const scenario = store.project?.scenario;
+  console.debug('[generateStoryboard] Called with params:', params);
+  console.debug('[generateStoryboard] Project exists:', !!store.project);
+  console.debug('[generateStoryboard] Scenario exists:', !!scenario);
+  console.debug('[generateStoryboard] Scenario content length:', scenario?.content?.length ?? 0);
+  console.debug('[generateStoryboard] Scenario content preview:', scenario?.content?.slice(0, 200) ?? 'EMPTY');
+
   if (!scenario) {
     const result = { success: false, error: 'No scenario found' };
     skillLogger.log({

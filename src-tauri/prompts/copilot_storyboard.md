@@ -90,14 +90,12 @@ Static, Pan, Tilt, Dolly, Pullback
 - Description: {{panel_description}}
 - Duration: {{panel_duration}}
 - Mood Tags: {{panel_mood_tags}}
-- Current Scenario: {{selected_scenario_name}}
-- Scenario Description: {{scenario_description}}
 
 ### Current Scenario Content
 {{scenario_content}}
 {{conversation_history}}
 
-**When a scenario is selected:** If user requests to "generate storyboard", "create panels", or similar, use the `generate_storyboard` tool.
+**IMPORTANT:** When the scenario content above is not empty (i.e., contains actual scenario text), the scenario IS available for storyboard generation. If user requests to "generate storyboard", "create panels from scenario", or similar, ALWAYS use the `generate_storyboard` tool with `panel_count` parameter (default: 16).
 
 ## Response Format
 
