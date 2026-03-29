@@ -1,8 +1,8 @@
 // CopilotSidebar - AI Copilot sidebar for storyboard and scenario modes
 // Integrated copilot with Skills Framework
 
-import { Box, Text, Loader } from '@mantine/core';
-import { IconSparkles, IconCheck, IconAlertCircle, IconMessageCircle } from '@tabler/icons-react';
+import { Box, Text, ActionIcon, Tooltip } from '@mantine/core';
+import { IconSparkles, IconCheck, IconAlertCircle, IconMessageCircle, IconTrash } from '@tabler/icons-react';
 import { useEffect, useRef } from 'react';
 import { ChatInput } from '@/components/scenario/ChatInput';
 import { useCopilotStore } from '@/stores/copilotStore';
@@ -19,12 +19,16 @@ interface CopilotSidebarProps {
 export function CopilotSidebar({ opened, width }: CopilotSidebarProps) {
   const project = useProjectStore(s => s.project);
   const editorMode = useUIStore(s => s.editorMode);
-  const { messages, isLoading, lastSkillResults } = useCopilotStore();
+  const { messages, isLoading, lastSkillResults, clearMessages } = useCopilotStore();
   const { sendMessage } = useCopilot();
 
   const handleSend = async (content: string) => {
     if (!project) return;
     await sendMessage(content);
+  };
+
+  const handleClear = () => {
+    clearMessages();
   };
 
   if (!opened) return null;
@@ -41,6 +45,37 @@ export function CopilotSidebar({ opened, width }: CopilotSidebarProps) {
         flexShrink: 0,
       }}
     >
+      {/* Header */}
+      <Box
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 12px',
+          borderBottom: '1px solid var(--border)',
+          flexShrink: 0,
+        }}
+      >
+        <Box style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <IconSparkles size={16} color="var(--accent)" stroke={2} />
+          <Text size="sm" fw={600} style={{ color: 'var(--text)' }}>
+            Copilot
+          </Text>
+        </Box>
+        {messages.length > 0 && (
+          <Tooltip label="세션 초기화" position="left">
+            <ActionIcon
+              variant="subtle"
+              size="sm"
+              onClick={handleClear}
+              disabled={isLoading}
+            >
+              <IconTrash size={14} stroke={1.5} />
+            </ActionIcon>
+          </Tooltip>
+        )}
+      </Box>
+
       {/* Messages */}
       <CopilotMessageList messages={messages} isLoading={isLoading} skillResults={lastSkillResults} />
 
@@ -52,6 +87,40 @@ export function CopilotSidebar({ opened, width }: CopilotSidebarProps) {
           ? "패널을 수정하거나 SVG를 생성해주세요..."
           : "시나리오를 수정해주세요..."}
       />
+    </Box>
+  );
+}
+
+/**
+ * Animated dots for loading state
+ */
+function AnimatedDots() {
+  return (
+    <Box style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+      {[0, 1, 2].map((i) => (
+        <Box
+          key={i}
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: '50%',
+            background: 'var(--accent)',
+            animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes pulse {
+          0%, 60%, 100% {
+            opacity: 0.3;
+            transform: scale(0.85);
+          }
+          30% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
     </Box>
   );
 }
@@ -137,12 +206,12 @@ function CopilotMessageList({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            gap: 10,
             padding: '10px 14px',
             alignSelf: 'flex-start',
           }}
         >
-          <Loader size="xs" />
+          <AnimatedDots />
           <Text size="xs" c="dimmed">AI가 응답 중...</Text>
         </Box>
       )}

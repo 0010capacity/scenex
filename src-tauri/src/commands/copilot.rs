@@ -19,6 +19,14 @@ pub struct CopilotContext {
     pub selected_scenario_id: Option<String>,
     pub selected_scenario_name: Option<String>,
     pub scenario_description: Option<String>,
+    pub scenario_content: Option<String>,
+}
+
+/// Chat message for history
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatMessage {
+    pub role: String,
+    pub content: String,
 }
 
 /// Request to copilot chat
@@ -26,6 +34,8 @@ pub struct CopilotContext {
 pub struct CopilotChatRequest {
     pub message: String,
     pub context: CopilotContext,
+    #[serde(default)]
+    pub history: Vec<ChatMessage>,
 }
 
 /// Copilot response with skill calls
@@ -40,8 +50,11 @@ pub struct CopilotSkillCall {
 /// Copilot response
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CopilotResponse {
+    #[serde(default)]
     pub thinking: String,
+    #[serde(default)]
     pub skill_calls: Vec<CopilotSkillCall>,
+    #[serde(default)]
     pub message: String,
 }
 
@@ -53,13 +66,24 @@ pub struct CopilotChatResponse {
     pub error: Option<String>,
 }
 
-/// Build the copilot prompt with context
-fn build_prompt(message: &str, ctx: &CopilotContext) -> String {
+/// Build the copilot prompt with context and history
+fn build_prompt(message: &str, ctx: &CopilotContext, history: &[ChatMessage]) -> String {
     // Load mode-specific prompt
     let template = match ctx.mode.as_str() {
         "storyboard" => include_str!("../../prompts/copilot_storyboard.md"),
         "scenario" => include_str!("../../prompts/copilot_scenario.md"),
         _ => include_str!("../../prompts/copilot_scenario.md"), // default to scenario
+    };
+
+    // Build conversation history section
+    let history_section = if history.is_empty() {
+        String::new()
+    } else {
+        let history_lines: Vec<String> = history
+            .iter()
+            .map(|msg| format!("- [{}]: {}", msg.role, msg.content))
+            .collect();
+        format!("\n## Previous Conversation\n{}\n", history_lines.join("\n"))
     };
 
     template
@@ -77,16 +101,26 @@ fn build_prompt(message: &str, ctx: &CopilotContext) -> String {
         .replace("{{selected_scenario_id}}", ctx.selected_scenario_id.as_deref().unwrap_or("none"))
         .replace("{{selected_scenario_name}}", ctx.selected_scenario_name.as_deref().unwrap_or("none"))
         .replace("{{scenario_description}}", ctx.scenario_description.as_deref().unwrap_or("empty"))
+        .replace("{{scenario_content}}", ctx.scenario_content.as_deref().unwrap_or("(시나리오 내용이 없습니다)"))
+        .replace("{{conversation_history}}", &history_section)
         .replace("{{user_message}}", message)
 }
 
 /// Parse copilot response from JSON
 fn parse_response(text: &str) -> Result<CopilotResponse, String> {
     // Try to find JSON object in response
-    let json_str = extract_json_object(text).ok_or("Failed to find JSON in response")?;
+    let json_str = extract_json_object(text)
+        .ok_or_else(|| {
+            // Include a snippet of the raw response for debugging
+            let snippet = text.chars().take(200).collect::<String>();
+            format!("Failed to find JSON object in response. Snippet: {}", snippet)
+        })?;
 
     let response: CopilotResponse = serde_json::from_str(&json_str)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+        .map_err(|e| {
+            let snippet = json_str.chars().take(100).collect::<String>();
+            format!("JSON parse error: {}. Snippet: {}", e, snippet)
+        })?;
 
     Ok(response)
 }
@@ -160,14 +194,16 @@ fn extract_with_brace_matching(text: &str) -> Option<String> {
 /// Copilot chat command
 #[command]
 pub async fn copilot_chat(request: CopilotChatRequest) -> CopilotChatResponse {
-    // Build prompt with context
-    let prompt = build_prompt(&request.message, &request.context);
+    // Build prompt with context and history
+    let prompt = build_prompt(&request.message, &request.context, &request.history);
 
     // Try to run Claude CLI
     match which::which("claude") {
         Ok(claude_path) => {
             let output = Command::new(&claude_path)
                 .arg("--print")
+                .arg("--output-format")
+                .arg("json")
                 .arg(&prompt)
                 .output();
 

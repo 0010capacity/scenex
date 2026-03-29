@@ -5,6 +5,7 @@ import type { Skill, SkillResult, ToolExecutor } from './types';
 import { getPanelById, getSceneById } from './types';
 import { registerSkill } from './registry';
 import { useProjectStore } from '@/stores/projectStore';
+import { useUIStore } from '@/stores/uiStore';
 import { getAIProvider } from '@/ai';
 import type { ShotType, MoodTag } from '@/types';
 
@@ -408,9 +409,11 @@ const generateStoryboard: ToolExecutor = async (_ctx, params) => {
     }
   }
 
-  // Fire and forget SVG generation
-  for (const { sceneId, panelId } of allPanels) {
-    generateSVGForPanel(sceneId, panelId);
+  // Fire and forget SVG generation with concurrency limit (3 at a time)
+  const CONCURRENCY_LIMIT = 3;
+  for (let i = 0; i < allPanels.length; i += CONCURRENCY_LIMIT) {
+    const batch = allPanels.slice(i, i + CONCURRENCY_LIMIT);
+    await Promise.all(batch.map(({ sceneId, panelId }) => generateSVGForPanel(sceneId, panelId)));
   }
 
   return {
@@ -424,16 +427,21 @@ const generateStoryboard: ToolExecutor = async (_ctx, params) => {
  * Generate SVG for a panel (async helper)
  */
 async function generateSVGForPanel(_sceneId: string, panelId: string, styleHint?: string): Promise<void> {
+  const store = useProjectStore.getState();
+  const uiStore = useUIStore.getState();
+  const panelInfo = getPanelById(store.project!, panelId);
+
+  if (!panelInfo) {
+    uiStore.addNotification('error', 'SVG 생성 실패: 패널을 찾을 수 없습니다.');
+    return;
+  }
+
+  const provider = getAIProvider();
+  const description = styleHint
+    ? `${panelInfo.panel.description} (Style: ${styleHint})`
+    : panelInfo.panel.description;
+
   try {
-    const store = useProjectStore.getState();
-    const panelInfo = getPanelById(store.project!, panelId);
-    if (!panelInfo) return;
-
-    const provider = getAIProvider();
-    const description = styleHint
-      ? `${panelInfo.panel.description} (Style: ${styleHint})`
-      : panelInfo.panel.description;
-
     const response = await provider.generatePanel({
       description,
       shot_type: panelInfo.panel.shotType ?? undefined,
@@ -441,13 +449,18 @@ async function generateSVGForPanel(_sceneId: string, panelId: string, styleHint?
     });
 
     if (response.success && response.svg_data) {
-      useProjectStore.getState().updatePanel(panelId, {
+      store.updatePanel(panelId, {
         svgData: response.svg_data,
         sourceType: 'ai',
       });
+      uiStore.addNotification('info', `패널 ${panelInfo.panel.number}의 SVG가 생성되었습니다.`);
+    } else {
+      const errorMsg = response.error || 'SVG 생성에 실패했습니다.';
+      uiStore.addNotification('error', `패널 ${panelInfo.panel.number}: ${errorMsg}`);
     }
   } catch (error) {
-    console.error('Failed to generate SVG:', error);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    uiStore.addNotification('error', `패널 ${panelInfo.panel.number} SVG 생성 오류: ${errorMsg}`);
   }
 }
 

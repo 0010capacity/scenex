@@ -237,6 +237,10 @@ export function AiGenModal({ opened, onClose }: AiGenModalProps) {
                       { value: '4', label: '4개' },
                       { value: '6', label: '6개' },
                       { value: '8', label: '8개' },
+                      { value: '10', label: '10개' },
+                      { value: '12', label: '12개' },
+                      { value: '14', label: '14개' },
+                      { value: '16', label: '16개' },
                     ]}
                     size="sm"
                   />

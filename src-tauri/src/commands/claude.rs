@@ -329,7 +329,7 @@ pub struct BatchGenerateResponse {
 /// Batch generate multiple panels for a scene using Claude CLI
 #[command]
 pub async fn batch_generate_panels(request: BatchGenerateRequest) -> BatchGenerateResponse {
-    let panel_count = request.panel_count.clamp(2, 8);
+    let panel_count = request.panel_count.clamp(2, 16);
 
     // Build prompt using template
     let prompt = prompts::batch_panels::build(
