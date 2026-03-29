@@ -3,13 +3,32 @@
 
 import type { Skill, ToolExecutor } from './types';
 import { registerSkill } from './registry';
+import { validateParams, formatValidationErrors } from './registry';
+import { skillLogger } from './logger';
 import { useProjectStore } from '@/stores/projectStore';
 import type { Scenario } from '@/types/scenario';
+import {
+  EditScenarioParamsSchema,
+  ExpandScenarioParamsSchema,
+  CondenseScenarioParamsSchema,
+  PolishScenarioParamsSchema,
+} from './schemas';
 
 /**
  * Edit the project scenario
  */
 const editScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate params
+  const validation = validateParams(EditScenarioParamsSchema, params);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: `Invalid params:\n${formatValidationErrors(validation.errors)}`,
+    };
+  }
+
   const store = useProjectStore.getState();
 
   if (!store.project) {
@@ -23,20 +42,20 @@ const editScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
 
   const updates: Partial<Scenario> = {};
 
-  if (params.name !== undefined) {
-    updates.name = params.name as string;
+  if (validation.data.name !== undefined) {
+    updates.name = validation.data.name;
   }
-  if (params.description !== undefined) {
-    updates.description = params.description as string;
+  if (validation.data.description !== undefined) {
+    updates.description = validation.data.description;
   }
-  if (params.content !== undefined) {
-    updates.content = params.content as string;
+  if (validation.data.content !== undefined) {
+    updates.content = validation.data.content;
   }
-  if (params.append_content !== undefined) {
-    updates.content = scenario.content + '\n\n' + (params.append_content as string);
+  if (validation.data.append_content !== undefined) {
+    updates.content = scenario.content + '\n\n' + validation.data.append_content;
   }
-  if (params.prepend_content !== undefined) {
-    updates.content = (params.prepend_content as string) + '\n\n' + scenario.content;
+  if (validation.data.prepend_content !== undefined) {
+    updates.content = validation.data.prepend_content + '\n\n' + scenario.content;
   }
 
   if (Object.keys(updates).length === 0) {
@@ -44,6 +63,15 @@ const editScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
   }
 
   store.updateScenario(updates);
+
+  skillLogger.log({
+    skill: 'scenario',
+    tool: 'edit_scenario',
+    params,
+    result: 'success',
+    message: `시나리오 "${scenario.name}"을(를) 수정했습니다.`,
+    duration: Date.now() - startTime,
+  });
 
   return {
     success: true,
@@ -56,6 +84,17 @@ const editScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
  * Expand scenario with more content
  */
 const expandScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate params
+  const validation = validateParams(ExpandScenarioParamsSchema, params);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: `Invalid params:\n${formatValidationErrors(validation.errors)}`,
+    };
+  }
+
   const store = useProjectStore.getState();
 
   if (!store.project) {
@@ -67,12 +106,8 @@ const expandScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
     return { success: false, error: 'No scenario found' };
   }
 
-  const expansionType = params.expansion_type as string || 'scene';
-  const newContent = params.content as string | undefined;
-
-  if (!newContent) {
-    return { success: false, error: 'No content provided for expansion' };
-  }
+  const expansionType = validation.data.expansion_type || 'scene';
+  const newContent = validation.data.content;
 
   let updatedContent = scenario.content;
 
@@ -99,6 +134,15 @@ const expandScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
 
   store.updateScenario({ content: updatedContent });
 
+  skillLogger.log({
+    skill: 'scenario',
+    tool: 'expand_scenario',
+    params,
+    result: 'success',
+    message: `시나리오 "${scenario.name}"에 새로운 내용을 추가했습니다.`,
+    duration: Date.now() - startTime,
+  });
+
   return {
     success: true,
     data: { scenarioId: scenario.id },
@@ -110,6 +154,17 @@ const expandScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
  * Condense scenario to core beats
  */
 const condenseScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate params
+  const validation = validateParams(CondenseScenarioParamsSchema, params);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: `Invalid params:\n${formatValidationErrors(validation.errors)}`,
+    };
+  }
+
   const store = useProjectStore.getState();
 
   if (!store.project) {
@@ -121,13 +176,16 @@ const condenseScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) =>
     return { success: false, error: 'No scenario found' };
   }
 
-  const condensedContent = params.content as string | undefined;
+  store.updateScenario({ content: validation.data.content });
 
-  if (!condensedContent) {
-    return { success: false, error: 'No condensed content provided' };
-  }
-
-  store.updateScenario({ content: condensedContent });
+  skillLogger.log({
+    skill: 'scenario',
+    tool: 'condense_scenario',
+    params,
+    result: 'success',
+    message: `시나리오 "${scenario.name}"을(를) 요약했습니다.`,
+    duration: Date.now() - startTime,
+  });
 
   return {
     success: true,
@@ -140,6 +198,17 @@ const condenseScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) =>
  * Polish scenario for better flow
  */
 const polishScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
+  const startTime = Date.now();
+
+  // Validate params
+  const validation = validateParams(PolishScenarioParamsSchema, params);
+  if (!validation.success) {
+    return {
+      success: false,
+      error: `Invalid params:\n${formatValidationErrors(validation.errors)}`,
+    };
+  }
+
   const store = useProjectStore.getState();
 
   if (!store.project) {
@@ -151,13 +220,16 @@ const polishScenario: ToolExecutor<{ scenarioId: string }> = (_ctx, params) => {
     return { success: false, error: 'No scenario found' };
   }
 
-  const polishedContent = params.content as string | undefined;
+  store.updateScenario({ content: validation.data.content });
 
-  if (!polishedContent) {
-    return { success: false, error: 'No polished content provided' };
-  }
-
-  store.updateScenario({ content: polishedContent });
+  skillLogger.log({
+    skill: 'scenario',
+    tool: 'polish_scenario',
+    params,
+    result: 'success',
+    message: `시나리오 "${scenario.name}"을(를) 다듬었습니다.`,
+    duration: Date.now() - startTime,
+  });
 
   return {
     success: true,
