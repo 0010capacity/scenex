@@ -1,4 +1,4 @@
-import { Box, Text, Select, TextInput, Textarea, Loader, ActionIcon } from '@mantine/core';
+import { Box, Text, Select, TextInput, Textarea, Loader, ActionIcon, NumberInput, Tooltip } from '@mantine/core';
 import { IconX, IconSquare, IconSparkles, IconTrash } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
@@ -161,23 +161,40 @@ export function InspectorPanel() {
                     }
                     data={SHOT_TYPE_OPTIONS.map((o) => ({
                       value: o.value,
-                      label: `${o.value} — ${o.description}`,
+                      label: o.value,
+                      description: o.description,
                     }))}
                     placeholder="선택"
                     size="sm"
                     clearable
+                    renderOption={({ option }) => (
+                      <Tooltip
+                        label={(option as any).description}
+                        position="left"
+                        withArrow
+                        withinPortal
+                      >
+                        <Text size="sm">{option.label}</Text>
+                      </Tooltip>
+                    )}
                   />
                 </Box>
                 <Box className="insp-field">
                   <label htmlFor="duration">지속 시간</label>
-                  <TextInput
+                  <NumberInput
                     id="duration"
-                    value={panel.duration}
-                    onChange={(e) =>
-                      updatePanel(panel.id, { duration: e.currentTarget.value })
+                    value={panel.duration ? parseFloat(panel.duration) : undefined}
+                    onChange={(value) =>
+                      updatePanel(panel.id, { duration: value ? `${value}s` : '' })
                     }
-                    placeholder="예: 3s"
+                    placeholder="3"
+                    min={0.5}
+                    max={60}
+                    step={0.5}
                     size="sm"
+                    rightSection={<Text size="xs" c="dimmed">초</Text>}
+                    rightSectionWidth={36}
+                    decimalScale={1}
                   />
                 </Box>
               </Box>

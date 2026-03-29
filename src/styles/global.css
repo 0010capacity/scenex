@@ -1689,6 +1689,8 @@ select option {
 .mantine-Menu-item {
   color: var(--text2) !important;
   font-size: 12px !important;
+  padding: 8px 12px !important;
+  line-height: 1.4 !important;
 }
 
 .mantine-Select-option:hover,
