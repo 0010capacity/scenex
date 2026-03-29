@@ -12,6 +12,7 @@ import { AITaskStatus } from './components/AITaskStatus';
 import { useClaude } from './hooks/useClaude';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useWorkspace } from './hooks/useWorkspace';
+import { useMenuEvents } from './hooks/useMenuEvents';
 import './styles/global.css';
 
 // Lazy load modals for code splitting
@@ -105,6 +106,9 @@ function App() {
 
   // Register keyboard shortcuts - always call
   useKeyboardShortcuts();
+
+  // Register menu event listeners - always call
+  useMenuEvents();
 
   // Check Claude availability on mount
   useEffect(() => {
