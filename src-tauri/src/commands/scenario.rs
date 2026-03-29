@@ -6,21 +6,134 @@ use tauri::command;
 
 use super::prompts;
 
-/// Run Claude CLI and return the output
-fn run_claude(prompt: &str) -> Result<String, String> {
+/// Run Claude CLI with --output-format json and return the parsed JSON string
+fn run_claude_json(prompt: &str) -> Result<String, String> {
     let claude_path = which::which("claude").map_err(|_| "Claude CLI not found".to_string())?;
 
     let output = Command::new(&claude_path)
         .arg("--print")
+        .arg("--output-format")
+        .arg("json")
         .arg(prompt)
         .output()
         .map_err(|e| format!("Failed to execute: {}", e))?;
 
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
-    } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).to_string());
     }
+
+    let response = String::from_utf8_lossy(&output.stdout).to_string();
+
+    // Parse the API response to extract the inner JSON
+    #[derive(Debug, Deserialize)]
+    struct ApiResponse {
+        #[serde(alias = "result")]
+        result: Option<String>,
+        #[serde(default)]
+        error: Option<String>,
+    }
+
+    if let Ok(api_resp) = serde_json::from_str::<ApiResponse>(&response) {
+        if let Some(error) = api_resp.error {
+            return Err(format!("API error: {}", error));
+        }
+        if let Some(result_str) = api_resp.result {
+            // The result is a string containing the actual JSON, possibly wrapped in ```json ... ```
+            let inner = result_str.trim();
+            // Try to extract JSON from markdown code fence
+            if let Some(json_start) = inner.find("```json") {
+                let after_fence = &inner[json_start + 7..];
+                if let Some(end_marker) = after_fence.find("```") {
+                    return Ok(after_fence[..end_marker].trim().to_string());
+                }
+            }
+            // Try generic ``` ... ```
+            if let Some(code_start) = inner.find("```") {
+                let after_fence = &inner[code_start + 3..];
+                if let Some(end_marker) = after_fence.find("```") {
+                    let content = after_fence[..end_marker].trim();
+                    if content.starts_with('{') || content.starts_with('[') {
+                        return Ok(content.to_string());
+                    }
+                }
+            }
+            // Otherwise return as-is if it looks like JSON
+            if inner.starts_with('{') || inner.starts_with('[') {
+                return Ok(inner.to_string());
+            }
+            return Err(format!("Response doesn't contain valid JSON: {}", &inner[..inner.len().min(100)]));
+        }
+    }
+
+    // Fallback: try direct parse
+    let trimmed = response.trim();
+    if trimmed.starts_with('{') || trimmed.starts_with('[') {
+        return Ok(trimmed.to_string());
+    }
+
+    Err(format!("Failed to parse Claude response. Snippet: {}", &response[..response.len().min(200)]))
+}
+
+/// Extract JSON from text that may be wrapped in markdown code fences
+fn extract_json(text: &str) -> Option<String> {
+    let trimmed = text.trim();
+
+    // Try ```json ... ``` pattern
+    if let Some(start) = trimmed.find("```json") {
+        let after = &trimmed[start + 7..];
+        if let Some(end) = after.find("```") {
+            return Some(after[..end].trim().to_string());
+        }
+    }
+
+    // Try generic ``` ... ``` pattern
+    if let Some(start) = trimmed.find("```") {
+        let after = &trimmed[start + 3..];
+        if let Some(end) = after.find("```") {
+            let content = after[..end].trim();
+            if content.starts_with('{') || content.starts_with('[') {
+                return Some(content.to_string());
+            }
+        }
+    }
+
+    // Try raw JSON
+    if trimmed.starts_with('{') || trimmed.starts_with('[') {
+        return Some(trimmed.to_string());
+    }
+
+    None
+}
+
+/// Extract SVG content from a string
+fn extract_svg(text: &str) -> Option<String> {
+    // First try to find direct SVG
+    if let Some(start) = text.find("<svg") {
+        if let Some(end) = text.find("</svg>") {
+            return Some(text[start..end + 6].to_string());
+        }
+    }
+
+    // Try to find SVG in JSON-wrapped response
+    if let Some(json_str) = extract_json(text) {
+        // Try to parse as JSON and look for svg field
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&json_str) {
+            // Check various possible field names
+            for field in ["svg", "svg_data", "svgData", "image"] {
+                if let Some(svg) = json.get(field).and_then(|v| v.as_str()) {
+                    if svg.contains("<svg") {
+                        if let Some(start) = svg.find("<svg") {
+                            if let Some(end) = svg.find("</svg>") {
+                                return Some(svg[start..end + 6].to_string());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    None
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -80,11 +193,6 @@ pub struct ScenarioToStoryboardRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct _StoryboardOutput {
-    pub panels: Vec<PanelOutput>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct PanelOutput {
     pub scene_index: usize,
     pub scene_name: String,
@@ -125,10 +233,9 @@ pub fn generate_scenario(request: GenerateScenarioRequest) -> GenerateScenarioRe
         request.mood.as_deref(),
     );
 
-    match run_claude(&prompt) {
-        Ok(output) => {
-            let cleaned = output.trim();
-            match serde_json::from_str::<serde_json::Value>(cleaned) {
+    match run_claude_json(&prompt) {
+        Ok(json_str) => {
+            match serde_json::from_str::<serde_json::Value>(&json_str) {
                 Ok(json) => GenerateScenarioResponse {
                     success: true,
                     scenario: serde_json::from_value(json).ok(),
@@ -137,7 +244,7 @@ pub fn generate_scenario(request: GenerateScenarioRequest) -> GenerateScenarioRe
                 Err(e) => GenerateScenarioResponse {
                     success: false,
                     scenario: None,
-                    error: Some(format!("Failed to parse response: {}", e)),
+                    error: Some(format!("Failed to parse response: {}. JSON snippet: {}", e, &json_str[..json_str.len().min(100)])),
                 },
             }
         }
@@ -154,10 +261,9 @@ pub fn generate_scenario(request: GenerateScenarioRequest) -> GenerateScenarioRe
 pub fn scenario_polish(request: ScenarioPolisherRequest) -> ScenarioResponse {
     let prompt = prompts::scenario_polish::build(&request.scenario_json);
 
-    match run_claude(&prompt) {
-        Ok(output) => {
-            let cleaned = output.trim();
-            match serde_json::from_str::<serde_json::Value>(cleaned) {
+    match run_claude_json(&prompt) {
+        Ok(json_str) => {
+            match serde_json::from_str::<serde_json::Value>(&json_str) {
                 Ok(json) => ScenarioResponse {
                     success: true,
                     scenario: Some(json),
@@ -183,10 +289,9 @@ pub fn scenario_polish(request: ScenarioPolisherRequest) -> ScenarioResponse {
 pub fn scenario_expand(request: ScenarioPolisherRequest) -> ScenarioResponse {
     let prompt = prompts::scenario_expand::build(&request.scenario_json, "add more scenes per act");
 
-    match run_claude(&prompt) {
-        Ok(output) => {
-            let cleaned = output.trim();
-            match serde_json::from_str::<serde_json::Value>(cleaned) {
+    match run_claude_json(&prompt) {
+        Ok(json_str) => {
+            match serde_json::from_str::<serde_json::Value>(&json_str) {
                 Ok(json) => ScenarioResponse {
                     success: true,
                     scenario: Some(json),
@@ -212,10 +317,9 @@ pub fn scenario_expand(request: ScenarioPolisherRequest) -> ScenarioResponse {
 pub fn scenario_condense(request: ScenarioPolisherRequest) -> ScenarioResponse {
     let prompt = prompts::scenario_condense::build(&request.scenario_json, "50% shorter");
 
-    match run_claude(&prompt) {
-        Ok(output) => {
-            let cleaned = output.trim();
-            match serde_json::from_str::<serde_json::Value>(cleaned) {
+    match run_claude_json(&prompt) {
+        Ok(json_str) => {
+            match serde_json::from_str::<serde_json::Value>(&json_str) {
                 Ok(json) => ScenarioResponse {
                     success: true,
                     scenario: Some(json),
@@ -249,10 +353,9 @@ pub fn scenario_to_storyboard(request: ScenarioToStoryboardRequest) -> ScenarioT
         &distribution,
     );
 
-    match run_claude(&prompt) {
-        Ok(output) => {
-            let cleaned = output.trim();
-            match serde_json::from_str::<serde_json::Value>(cleaned) {
+    match run_claude_json(&prompt) {
+        Ok(json_str) => {
+            match serde_json::from_str::<serde_json::Value>(&json_str) {
                 Ok(json) => {
                     let panels: Vec<PanelOutput> = json["panels"]
                         .as_array()
@@ -281,7 +384,7 @@ pub fn scenario_to_storyboard(request: ScenarioToStoryboardRequest) -> ScenarioT
                 Err(e) => ScenarioToStoryboardResponse {
                     success: false,
                     panels: None,
-                    error: Some(format!("Failed to parse response: {}", e)),
+                    error: Some(format!("Failed to parse panels: {}", e)),
                 },
             }
         }
@@ -303,7 +406,7 @@ pub fn regenerate_panel(request: RegeneratePanelRequest) -> RegeneratePanelRespo
         request.scene_context.as_deref(),
     );
 
-    match run_claude(&prompt) {
+    match run_claude_json(&prompt) {
         Ok(output) => {
             let svg_data = extract_svg(&output);
             let has_svg = svg_data.is_some();
@@ -319,15 +422,4 @@ pub fn regenerate_panel(request: RegeneratePanelRequest) -> RegeneratePanelRespo
             error: Some(e),
         },
     }
-}
-
-/// Extract SVG content from a string
-fn extract_svg(text: &str) -> Option<String> {
-    if let Some(start) = text.find("<svg") {
-        if let Some(end) = text.find("</svg>") {
-            let end = end + 6;
-            return Some(text[start..end].to_string());
-        }
-    }
-    None
 }
