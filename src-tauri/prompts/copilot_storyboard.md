@@ -97,6 +97,8 @@ Static, Pan, Tilt, Dolly, Pullback
 {{scenario_content}}
 {{conversation_history}}
 
+**When a scenario is selected:** If user requests to "generate storyboard", "create panels", or similar, use the `generate_storyboard` tool.
+
 ## Response Format
 
 ```json
