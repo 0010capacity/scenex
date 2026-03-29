@@ -699,6 +699,24 @@ select option {
   color: var(--text2);
 }
 
+.scene-name-input {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--text2) !important;
+  background: var(--bg2) !important;
+  border: 1px solid var(--accent) !important;
+  border-radius: 4px !important;
+  padding: 2px 8px !important;
+  height: auto !important;
+  line-height: 1.4 !important;
+}
+
+.scene-name-input:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent) !important;
+}
+
 .scene-dur {
   font-size: 10px;
   color: var(--text3);
