@@ -1,7 +1,8 @@
 mod commands;
 mod error;
+mod menu;
 
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -38,6 +39,14 @@ pub fn run() {
             commands::copilot::copilot_chat,
         ])
         .setup(|app| {
+            let menu = menu::create_menu(app.handle())?;
+            app.set_menu(menu)?;
+
+            app.on_menu_event(|app, event| {
+                let id = event.id().0.as_str();
+                app.emit(&format!("menu:{}", id), None::<()>).ok();
+            });
+
             #[cfg(debug_assertions)]
             {
                 let window = app.get_webview_window("main").unwrap();
