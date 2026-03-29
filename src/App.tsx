@@ -3,6 +3,7 @@ import { Box, Text, Loader } from '@mantine/core';
 import { useProjectStore } from './stores/projectStore';
 import { useUIStore } from './stores/uiStore';
 import { useWorkspaceStore } from './stores/workspaceStore';
+import { useSettingsStore } from './stores/settingsStore';
 import { AUTO_SAVE_INTERVAL_MS, NOTIFICATION_AUTO_DISMISS_MS } from './constants';
 import { TitleBar } from './components/layout/TitleBar';
 import { Toolbar } from './components/layout/Toolbar';
@@ -14,6 +15,9 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useWorkspace } from './hooks/useWorkspace';
 import { useMenuEvents } from './hooks/useMenuEvents';
 import './styles/global.css';
+
+// Lazy load modals for code splitting
+const SettingsModal = lazy(() => import('./components/settings/SettingsModal').then(m => ({ default: m.SettingsModal })));
 
 // Lazy load modals for code splitting
 const AddPanelModal = lazy(() => import('./components/panels/AddPanelModal').then(m => ({ default: m.AddPanelModal })));
@@ -93,6 +97,9 @@ function App() {
 
   const hasProject = project !== null;
 
+  const loadSettings = useSettingsStore(s => s.loadSettings);
+  const openSettingsModal = useUIStore(s => s.openSettingsModal);
+
   // Auto-load last project on app start
   useEffect(() => {
     if (currentProjectPath && currentProjectName && !hasProject && !projectLoadAttemptedRef.current) {
@@ -114,6 +121,20 @@ function App() {
   useEffect(() => {
     checkAvailability();
   }, [checkAvailability]);
+
+  // Load settings on mount
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  // Listen for settings modal open event from menu
+  useEffect(() => {
+    const handleOpenSettings = () => {
+      openSettingsModal();
+    };
+    window.addEventListener('app:show-settings', handleOpenSettings);
+    return () => window.removeEventListener('app:show-settings', handleOpenSettings);
+  }, [openSettingsModal]);
 
   // Auto-save every 30 seconds when dirty - only when project exists
   useEffect(() => {
@@ -178,6 +199,9 @@ function App() {
       </Suspense>
       <Suspense fallback={<ModalLoader />}>
         {projectBrowserOpen && <ProjectBrowserModal />}
+      </Suspense>
+      <Suspense fallback={<ModalLoader />}>
+        <SettingsModal />
       </Suspense>
       <AITaskStatus />
       {/* Notifications */}
