@@ -14,17 +14,22 @@ export interface SluglineHelperProps {
   onClose: () => void;
 }
 
+const TYPE_OPTIONS = [
+  { value: 'INT', label: '실내 (INT.)' },
+  { value: 'EXT', label: '실외 (EXT.)' },
+];
+
 const TIME_OPTIONS = [
-  { value: 'DAY', label: 'DAY' },
-  { value: 'NIGHT', label: 'NIGHT' },
-  { value: 'MORNING', label: 'MORNING' },
-  { value: 'AFTERNOON', label: 'AFTERNOON' },
-  { value: 'EVENING', label: 'EVENING' },
-  { value: 'DUSK', label: 'DUSK' },
-  { value: 'DAWN', label: 'DAWN' },
-  { value: 'CONTINUOUS', label: 'CONTINUOUS' },
-  { value: 'LATER', label: 'LATER' },
-  { value: 'MOMENTS LATER', label: 'MOMENTS LATER' },
+  { value: 'DAY', label: '낮 (DAY)' },
+  { value: 'NIGHT', label: '밤 (NIGHT)' },
+  { value: 'MORNING', label: '아침 (MORNING)' },
+  { value: 'AFTERNOON', label: '오후 (AFTERNOON)' },
+  { value: 'EVENING', label: '저녁 (EVENING)' },
+  { value: 'DUSK', label: '황혼 (DUSK)' },
+  { value: 'DAWN', label: '새벽 (DAWN)' },
+  { value: 'CONTINU', label: '연속 (CONTINUOUS)' },
+  { value: 'LATER', label: '나중에 (LATER)' },
+  { value: 'MOMENTS LATER', label: '잠시 후 (MOMENTS LATER)' },
 ];
 
 export function SluglineHelper({ position, onInsert, onClose }: SluglineHelperProps) {
@@ -112,48 +117,28 @@ export function SluglineHelper({ position, onInsert, onClose }: SluglineHelperPr
         >
           유형
         </Text>
-        <Box style={{ display: 'flex', gap: '16px' }}>
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              color: 'var(--text2)',
-            }}
-          >
-            <input
-              type="radio"
-              name="slug-type"
-              value="INT"
-              checked={type === 'INT'}
-              onChange={() => setType('INT')}
-              style={{ accentColor: 'var(--accent)' }}
-            />
-            실내 (INT.)
-          </label>
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              color: 'var(--text2)',
-            }}
-          >
-            <input
-              type="radio"
-              name="slug-type"
-              value="EXT"
-              checked={type === 'EXT'}
-              onChange={() => setType('EXT')}
-              style={{ accentColor: 'var(--accent)' }}
-            />
-            실외 (EXT.)
-          </label>
-        </Box>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as 'INT' | 'EXT')}
+          style={{
+            width: '100%',
+            background: 'var(--bg2)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--r4)',
+            padding: '8px 10px',
+            color: 'var(--text)',
+            fontSize: '12px',
+            fontFamily: 'var(--sans)',
+            outline: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          {TYPE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </Box>
 
       {/* Location input */}

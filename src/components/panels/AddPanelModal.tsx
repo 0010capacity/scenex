@@ -163,7 +163,7 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
     if (!selectedMethod) return '방식을 선택하세요';
     if (selectedMethod === 'blank') return '빈 패널 추가';
     if (selectedMethod === 'import') return importedImage ? '가져오기 완료' : '파일 선택 후 추가';
-    if (selectedMethod === 'ai') return isGenerating ? '생성 중...' : '✦ AI 생성 후 추가';
+    if (selectedMethod === 'ai') return isGenerating ? '생성 중...' : 'AI 생성';
     return '패널 추가';
   };
 
@@ -264,7 +264,6 @@ export function AddPanelModal({ opened, onClose, sceneId }: AddPanelModalProps) 
                         value={duration}
                         onChange={(e) => setDuration(e.target.value)}
                         placeholder="예: 3s"
-                        style={{ width: '100%', padding: '6px 9px', fontSize: 12 }}
                       />
                     </Box>
                   </Box>
