@@ -2001,3 +2001,220 @@ svg[data-combobox-chevron] {
     gap: 18px;
   }
 }
+
+/* ════════════════ Settings Modal ════════════════ */
+.settings-modal-content {
+  display: flex;
+  min-height: 400px;
+  max-height: 500px;
+}
+
+.settings-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.settings-input {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  font-size: 12px !important;
+  padding: 6px 10px !important;
+  border-radius: var(--r4) !important;
+}
+
+.settings-input:focus {
+  border-color: var(--border2) !important;
+}
+
+.settings-hint {
+  font-size: 11px;
+  color: var(--text3);
+  line-height: 1.4;
+}
+
+.settings-validation {
+  font-size: 12px;
+  color: var(--green);
+}
+
+.settings-segmented {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r6) !important;
+  padding: 2px !important;
+}
+
+.settings-segmented button {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text2) !important;
+  font-size: 12px !important;
+  padding: 4px 12px !important;
+  border-radius: var(--r4) !important;
+}
+
+.settings-segmented button[data-active] {
+  background: var(--accent) !important;
+  color: white !important;
+}
+
+.settings-slider {
+  color: var(--accent) !important;
+}
+
+.settings-number-input {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+  border-radius: var(--r4) !important;
+  height: 28px !important;
+}
+
+.settings-suffix {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.settings-switch-track {
+  background: var(--bg3) !important;
+}
+
+.settings-switch-track[data-checked] {
+  background: var(--accent) !important;
+}
+
+/* Settings Sidebar */
+.settings-sidebar {
+  width: 160px;
+  border-right: 1px solid var(--border);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg2);
+}
+
+.settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r4);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text2);
+  transition: background 0.15s, color 0.15s;
+  border: none;
+  background: transparent;
+  text-align: left;
+  width: 100%;
+}
+
+.settings-tab:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+.settings-tab.active {
+  background: var(--accent);
+  color: white;
+}
+
+/* Shortcuts */
+.shortcuts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.shortcuts-search {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  font-size: 12px !important;
+}
+
+.shortcuts-category {
+  margin-bottom: 16px;
+}
+
+.shortcuts-category-title {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.shortcut-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.shortcut-row:last-child {
+  border-bottom: none;
+}
+
+.shortcut-label {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.shortcut-key {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text2);
+  background: var(--bg3);
+  padding: 3px 8px;
+  border-radius: var(--r4);
+}
+
+.shortcut-conflict {
+  padding: 8px 12px;
+  background: rgba(255, 0, 0, 0.1);
+  border-radius: var(--r4);
+  color: var(--red);
+}
+
+/* Settings Modal Overrides */
+.settings-modal-header {
+  padding: 16px 20px !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.settings-modal-title {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: var(--text) !important;
+}
+
+.settings-modal-body {
+  padding: 0 !important;
+}

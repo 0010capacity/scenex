@@ -35,6 +35,7 @@ interface UIState {
   addPanelSceneId: string | null;
   aiGenModalOpen: boolean;
   projectBrowserOpen: boolean;
+  settingsModalOpen: boolean;
 
   // AI status
   claudeStatus: 'checking' | 'available' | 'unavailable';
@@ -66,6 +67,8 @@ interface UIState {
   closeAiGenModal: () => void;
   openProjectBrowser: () => void;
   closeProjectBrowser: () => void;
+  openSettingsModal: () => void;
+  closeSettingsModal: () => void;
   setClaudeStatus: (status: 'checking' | 'available' | 'unavailable') => void;
   setClaudeModel: (model: 'haiku' | 'sonnet' | 'opus') => void;
   setInsertToScenario: (fn: ((text: string) => void) | null) => void;
@@ -91,6 +94,7 @@ export const useUIStore = create<UIState>()(
       addPanelSceneId: null,
       aiGenModalOpen: false,
       projectBrowserOpen: false,
+      settingsModalOpen: false,
       claudeStatus: 'checking',
       claudeModel: 'sonnet',
       insertToScenario: null,
@@ -115,6 +119,8 @@ export const useUIStore = create<UIState>()(
       closeAiGenModal: () => set({ aiGenModalOpen: false }),
       openProjectBrowser: () => set({ projectBrowserOpen: true }),
       closeProjectBrowser: () => set({ projectBrowserOpen: false }),
+      openSettingsModal: () => set({ settingsModalOpen: true }),
+      closeSettingsModal: () => set({ settingsModalOpen: false }),
       setClaudeStatus: (status) => set({ claudeStatus: status }),
       setClaudeModel: (model) => set({ claudeModel: model }),
       setInsertToScenario: (fn) => set({ insertToScenario: fn }),
