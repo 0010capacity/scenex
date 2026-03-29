@@ -29,6 +29,7 @@ export function useCopilot() {
   const addUserMessage = useCopilotStore(s => s.addUserMessage);
   const addAssistantMessage = useCopilotStore(s => s.addAssistantMessage);
   const setLoading = useCopilotStore(s => s.setLoading);
+  const messages = useCopilotStore(s => s.messages);
 
   /**
    * Find selected panel from project
@@ -65,6 +66,7 @@ export function useCopilot() {
       selectedScenarioId: scenario?.id ?? null,
       selectedScenarioName: scenario?.name ?? null,
       scenarioDescription: scenario?.description || null,
+      scenarioContent: scenario?.content || null,
     };
   }, [editorMode, selectedSceneId, selectedPanelId, project, getSelectedScene, findSelectedPanel]);
 
@@ -112,11 +114,19 @@ export function useCopilot() {
       // Build context
       const context = buildContext();
 
+      // Build history from previous messages (exclude current message)
+      // Strip skill result summary suffixes like "(2개 작업 완료)" or "(2/3개 성공)"
+      const history = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content.replace(/\s*\(\d+개\s*(작업\s*)?완료\)|\s*\(\d+\/\d+개\s*성공\)/g, ''),
+      }));
+
       // Call Tauri copilot_chat command
       const response = await invoke<CopilotChatResponseType>('copilot_chat', {
         request: {
           message: content,
           context,
+          history,
         },
       });
 
@@ -125,7 +135,7 @@ export function useCopilot() {
         return null;
       }
 
-      const { thinking: _thinking, skill_calls, message } = response.response;
+      const { thinking: _thinking, skill_calls = [], message = '' } = response.response;
 
       // Parse skill calls
       const parsedSkillCalls: SkillCall[] = skill_calls.map((call: { skill: string; tool: string; parameters: Record<string, unknown> }) => ({
@@ -168,7 +178,7 @@ export function useCopilot() {
     } finally {
       setLoading(false);
     }
-  }, [project, buildContext, executeSkillCalls, addUserMessage, addAssistantMessage, setLoading]);
+  }, [project, buildContext, executeSkillCalls, addUserMessage, addAssistantMessage, setLoading, messages]);
 
   /**
    * Get available skills for current mode

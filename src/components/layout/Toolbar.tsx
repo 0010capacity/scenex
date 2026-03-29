@@ -1,8 +1,9 @@
 import { Box, ActionIcon } from '@mantine/core';
-import { IconPlus, IconMinus, IconSparkles } from '@tabler/icons-react';
+import { IconPlus, IconMinus, IconSparkles, IconWand } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useCopilot } from '@/hooks/useCopilot';
 
 export function Toolbar() {
   const project = useProjectStore(s => s.project);
@@ -22,6 +23,8 @@ export function Toolbar() {
   const insertToScenario = useUIStore(s => s.insertToScenario);
   const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
   const [newSceneName, setNewSceneName] = useState('');
+
+  const { sendMessage } = useCopilot();
 
   const viewModes = [
     { key: 'grid', label: '그리드' },
@@ -89,6 +92,18 @@ export function Toolbar() {
           패널 추가
         </button>
       </Box>
+
+      <Box className="tool-sep" />
+
+      {/* Generate storyboard from scenario */}
+      <button
+        className="btn btn-ghost btn-sm"
+        onClick={() => sendMessage('스토리보드를 생성해주세요')}
+        disabled={!project?.scenario.content}
+      >
+        <IconWand size={14} stroke={1.5} />
+        전체 생성
+      </button>
 
       <Box className="tool-sep" />
 

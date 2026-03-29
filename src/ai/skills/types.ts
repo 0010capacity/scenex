@@ -70,9 +70,9 @@ export interface SkillCall {
  * AI response containing skill calls
  */
 export interface CopilotResponse {
-  thinking: string;
-  skill_calls: SkillCall[];
-  message: string;
+  thinking?: string;
+  skill_calls?: SkillCall[];
+  message?: string;
 }
 
 /**
@@ -105,19 +105,20 @@ export interface CopilotContext {
   selectedScenarioId: string | null;
   selectedScenarioName: string | null;
   scenarioDescription: string | null;
+  scenarioContent: string | null;
 }
 
 /**
  * Backend copilot response
  */
 export interface CopilotBackendResponse {
-  thinking: string;
-  skill_calls: Array<{
+  thinking?: string;
+  skill_calls?: Array<{
     skill: string;
     tool: string;
     parameters: Record<string, unknown>;
   }>;
-  message: string;
+  message?: string;
 }
 
 /**

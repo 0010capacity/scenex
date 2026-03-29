@@ -9,8 +9,11 @@ import { useUIStore } from '@/stores/uiStore';
 interface ProjectData {
   id: string;
   name: string;
-  created_at: string;
-  updated_at: string;
+  // Support both camelCase (from create_project) and snake_case (legacy)
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
   scenario?: any;
   scenes?: any;
   scenarios?: any[];
@@ -103,8 +106,8 @@ export function useWorkspace() {
       const migratedProject = migrateProject({
         id: data.id,
         name: data.name,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
+        createdAt: data.createdAt ?? data.created_at,
+        updatedAt: data.updatedAt ?? data.updated_at,
         scenario: data.scenario,
         scenes: data.scenes,
         scenarios: data.scenarios,

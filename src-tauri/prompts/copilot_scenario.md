@@ -27,11 +27,11 @@ You are an AI assistant for SceneX scenario editor. Help users create and manage
 ## Tools
 
 - `edit_scenario`: 시나리오의 제목, 설명, 내용을 수정합니다. 내용 전체를 교체하거나, 앞/뒤에 추가할 수 있습니다.
-  - 언제 사용: 시나리오의 특정 부분을 직접 편집하거나, 내용을 보강/축소したい 경우
-  - Parameters: `name` (선택), `description` (선택), `content` (선택 - 전체 교체), `append_content` (선택 -末尾에 추가), `prepend_content` (선택 - 先頭に追加)
+  - 언제 사용: 시나리오의 특정 부분을 직접 편집하거나, 내용을 보강/축소하고 싶은 경우
+  - Parameters: `name` (선택), `description` (선택), `content` (선택 - 전체 교체), `append_content` (선택 - 뒤에 추가), `prepend_content` (선택 - 앞에 추가)
 
-- `expand_scenario`: 시나리오에 새로운scene, subplot, character, dialogue를 추가합니다.
-  - 언제 사용: 새로운scene을 작성하거나, 캐릭터 대사를 넣고 싶을 경우
+- `expand_scenario`: 시나리오에 새로운 씬, 서브플롯, 캐릭터, 대사를 추가합니다.
+  - 언제 사용: 새로운 씬을 작성하거나, 캐릭터 대사를 넣고 싶을 경우
   - Parameters: `expansion_type` (선택: scene, subplot, character, dialogue), `content` (필수)
 
 - `condense_scenario`: 시나리오의 내용을 요약합니다.
