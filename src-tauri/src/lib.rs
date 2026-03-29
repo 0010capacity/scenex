@@ -1,6 +1,7 @@
 mod commands;
 mod error;
 mod menu;
+mod settings;
 
 use tauri::{Emitter, Manager};
 
@@ -37,6 +38,8 @@ pub fn run() {
             commands::checkpoints::restore_scenario_checkpoint,
             commands::checkpoints::list_scenario_checkpoints,
             commands::copilot::copilot_chat,
+            settings::get_settings,
+            settings::set_settings,
         ])
         .setup(|app| {
             let menu = menu::create_menu(app.handle())?;
