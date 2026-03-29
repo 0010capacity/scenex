@@ -1,7 +1,36 @@
 // Skills Registry
 // Central registry for all skills in the system
 
+import { z, ZodError } from 'zod';
 import type { Skill, RegisteredSkill, EditorMode, SkillContext, SkillResult, ToolExecutor } from './types';
+
+export interface ValidationError {
+  path: string;
+  message: string;
+}
+
+export function formatValidationErrors(errors: ValidationError[]): string {
+  return errors.map(e => `- ${e.path}: ${e.message}`).join('\n');
+}
+
+export function validateParams<T extends z.ZodType>(
+  schema: T,
+  params: Record<string, unknown>
+): { success: true; data: z.infer<T> } | { success: false; errors: ValidationError[] } {
+  try {
+    const data = schema.parse(params);
+    return { success: true, data };
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const errors: ValidationError[] = error.issues.map((e) => ({
+        path: e.path.join('.'),
+        message: e.message,
+      }));
+      return { success: false, errors };
+    }
+    return { success: false, errors: [{ path: '', message: String(error) }] };
+  }
+}
 
 /**
  * Global skills registry
