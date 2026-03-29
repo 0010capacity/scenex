@@ -112,10 +112,47 @@ fn build_prompt(message: &str, ctx: &CopilotContext, history: &[ChatMessage]) ->
 
 /// Parse copilot response from JSON
 fn parse_response(text: &str) -> Result<CopilotResponse, String> {
-    // Try to find JSON object in response
+    // Try to parse as outer API response first
+    #[derive(Debug, Deserialize)]
+    struct ApiResponse {
+        #[serde(alias = "result")]
+        result: Option<String>,
+        #[serde(default)]
+        error: Option<String>,
+    }
+
+    // Try to parse as API response with nested result
+    if let Ok(api_resp) = serde_json::from_str::<ApiResponse>(text) {
+        if let Some(result_str) = api_resp.result {
+            // The result is a string containing the actual JSON
+            // It may be wrapped in ```json ... ``` so extract it
+            let inner_text = result_str.trim();
+            let json_str = extract_json_object(inner_text)
+                .or_else(|| Some(inner_text.to_string()));
+
+            if let Some(json_str) = json_str {
+                // Unescape common patterns
+                let unescaped = json_str
+                    .replace("\\n", "\n")
+                    .replace("\\\"", "\"");
+
+                if let Ok(copilot_response) = serde_json::from_str::<CopilotResponse>(&unescaped) {
+                    return Ok(copilot_response);
+                }
+                // Also try the original if unescaped failed
+                if let Ok(copilot_response) = serde_json::from_str::<CopilotResponse>(&json_str) {
+                    return Ok(copilot_response);
+                }
+            }
+        }
+        if let Some(error) = api_resp.error {
+            return Err(format!("API error: {}", error));
+        }
+    }
+
+    // Fallback: try direct extraction from text
     let json_str = extract_json_object(text)
         .ok_or_else(|| {
-            // Include a snippet of the raw response for debugging
             let snippet = text.chars().take(200).collect::<String>();
             format!("Failed to find JSON object in response. Snippet: {}", snippet)
         })?;
